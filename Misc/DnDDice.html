@@ -161,6 +161,7 @@
 			};
 
 			document.getElementById("historyBox").innerHTML = output;
+			localStorage.setItem('history', JSON.stringify(history));
 		};
 
 		function clearHistory(){
@@ -316,6 +317,8 @@
 			initialiseNumbers();
 			setDivHeights();
 			setFocus();
+			history = JSON.parse(localStorage.getItem('history'));
+			updateHistory();
 		});
 	</script>
 </head>
