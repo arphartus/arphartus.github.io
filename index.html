@@ -59,7 +59,8 @@
 		//AUTOMATION
 		window.onload = function(){
 			//Rainbow text with specific start and end conditions
-			animatedRainbow("rainbowHeader", rainbow, 100, "mouseenter", "mouseleave");
+			animatedRainbow("rainbowHeader", rainbow, 150, "mouseenter", "mouseleave");
+			animatedRainbow("h3", rainbow, 150, "mouseenter", "mouseleave");
 
 			//Rainbow animate all elements of class "animated-rainbow-text"
 			let allRainbows = document.getElementsByClassName("animated-rainbow-text");
@@ -69,12 +70,8 @@
 					element.id = uid();
 				};
 
-				animatedRainbow(element.id, rainbow, 100);
+				animatedRainbow(element.id, rainbow, 150);
 			};
-
-			//Example of rainbowCharacters()
-			rainbowCharacters("rbText", rainbow);
-			rainbowCharacters("rbText2", rainbow2);
 		};
 
 		//Make an element have each character a different color
@@ -160,7 +157,7 @@
 		</header>
 
 		<div>
-			<h3><span id="h3" class="animated-rainbow-text">Here are some links to webpages I have made</span></h3>
+			<h3><span id="h3">Here are some links to webpages I have made</span></h3>
 			<h4 style="color:red">DnD 5</h4>
 			<ul>
 				<li><a href=".\Misc\DnDDice.html">Dice Roller</a></li>
@@ -212,44 +209,6 @@
 				<li><a href=".\Misc\LoDorLon.html">Legacy of Dreams or Legacy of Nightmares?</a></li>
 				<li><a href=".\Misc\TestDistribution.html">Test Distribution</a></li>
 			</ul>
-			<h4 style="color:#8040ff">Under Development</h4>
-			<ul>
-				<li><a href=".\Graphics\nowWhat.html" style="color:orange">Now What?</a></li>
-				<li><a href=".\Graphics\expandedTetrahedron.html">Expanding a Tetrahedron</a></li>
-				<li><a href=".\Graphics\three1.html">Stellated Rainbow Cubes</a></li>
-				<li><a href=".\Graphics\three3.html">Working out tube geometry</a></li>
-				<li><a href=".\Graphics\ThreeHtmlGuiTest1.html">Three test page</a></li>
-				<li><a href=".\Graphics\planets2.html">Planets 2.0</a></li>
-				<li><a href=".\Graphics\Transformations.html">Some 2D Transformations</a></li>
-				<li><a href=".\Graphics\NewTHREE3.html">A new THREE test page</a></li>
-				<li><a href=".\Maths\CyTest.html">Cytoscape Test Page</a></li>
-				<li><a href=".\Maths\TrainGame.html">Train Game</a></li>
-				<li><a href=".\Graphics\GLTFTest.html">GLTF test page</a></li>
-			</ul>
-
-			<h4 style="color:violet">To Do</h4>
-			<ul>
-				<li>Lights and Objects<ul>
-					<li>CCapture</li>
-					<li>Multi material options</li>
-					<li>Drag to rotate object</li>
-					<li>Koch tetrahedron</li>
-					<li>Pokeball object</li>
-					<li>Make uncolored Sudoku Cube faces</li>
-				</ul></li>
-				<li>FSA<ul>
-					<li>State diagrams</li>
-					<li>Language output</li>
-					<li>Table input</li>
-				</ul></li>
-				<li><span class="animated-rainbow-text">Fix BMC</span></li>
-				<li>Redo maths stuff using js best practices</li>
-			</ul>
-
-			<h3>Raf's pages</h3>
-			<a href=".\Raf\RCCP.html" style="color:violet">RCCP (Raf's cat cat page)</a><br>
-			<a href=".\Raf\pokefun.html" style="color:purple">Pok&egrave;fun</a><br>
-			<a href=".\Raf\Meow.html" style="color:#00ff00">Meow</a>
 		</div>
 
 		<div id="testing" style="margin-top: 20px; display:block;">
