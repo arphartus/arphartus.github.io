@@ -1,0 +1,97 @@
+body{
+	background-color: #202124;
+	color: white;
+}
+a:link{
+	color: #a1d5ec;
+}
+a:visited{
+	color: #a040ff;
+}
+a:hover{
+	color: #ff5080;
+}
+a:active{
+	color: #506976;
+}
+::selection {
+	background: #a040ff; /* WebKit/Blink Browsers */
+}
+::-moz-selection {
+	background: #a040ff; /* Gecko Browsers */
+}
+input[type="checkbox"]{
+	accent-color: #a040ff;
+}
+input{
+	text-align: center;
+	color: inherit;
+	border: 1px solid grey;
+	background-color: inherit;
+	font-family: inherit;
+}
+select{
+	text-align: center;
+	color: inherit;
+	background-color: inherit;
+	font-family: inherit;
+}
+option{
+	text-align: center;
+	color: inherit;
+	background-color: #202124;
+	font-family: inherit;
+}
+#jaznet{
+	font-family: Times New Roman;
+	font-size: 12pt;
+}
+.myButton{
+	padding: 2px 5px 2px 5px;
+	background-color: #000000;
+	box-shadow: -1.5px -1.5px 0.5px #888888;
+	cursor:pointer;
+}
+.myButton:active{
+	box-shadow: 1.5px 1.5px 0.5px #888888;
+}
+.pm{
+	margin: auto;
+	padding: 8px 5px 0px 5px;
+	text-align: bottom;
+	border: none;
+	display: inline;
+}
+.pmNumber{
+	margin: 0px;
+	padding: 0px;
+	position: relative;
+	bottom: 0.35em;
+	width: 1.5em;
+	text-align: center;
+	display: inline-block;
+	color: inherit;
+	background-color: inherit;
+	border: none;
+}
+.pmNumber::-webkit-outer-spin-button, .pmNumber::-webkit-inner-spin-button{
+	-webkit-appearance: none;
+	margin: 0;
+}
+::-webkit-scrollbar{
+	width: 5px;
+}
+::-webkit-scrollbar:hover{
+	width: 15px;
+}
+::-webkit-scrollbar-track{
+	box-shadow: inset 0 0 5px grey;
+	border-radius: 15px;
+}
+::-webkit-scrollbar-thumb{
+	background: #470077;
+	border-radius: 15px;
+}
+::-webkit-scrollbar-thumb:hover{
+	background: #b30000;
+}
