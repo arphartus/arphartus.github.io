@@ -360,8 +360,9 @@
 			initialiseNumbers();
 			setDivHeights();
 			setFocus();
+			history = JSON.parse(localStorage.getItem('history'));
 			updateHistory();
-			console.log(history);
+			console.log("history: ", history);
 		});
 	</script>
 </head>
