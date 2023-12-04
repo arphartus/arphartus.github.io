@@ -14,16 +14,16 @@ a:hover{
 a:active{
 	color: #506976;
 }
-::selection{
+::selection {
 	background: #a040ff; /* WebKit/Blink Browsers */
 }
-::-moz-selection{
+::-moz-selection {
 	background: #a040ff; /* Gecko Browsers */
 }
 input[type="checkbox"]{
 	accent-color: #a040ff;
 }
-input, textarea{
+input{
 	text-align: center;
 	color: inherit;
 	border: 1px solid grey;
@@ -46,14 +46,18 @@ option{
 	font-family: Times New Roman;
 	font-size: 12pt;
 }
-.myButton, button{
-	padding: 2px 5px 2px 5px;
-	background-color: #000000;
-	color: #ffffff;
+.myButton{
+	font-size: inherit;
+	display: inline;
+	position: absolute;
+	background-color: black;
+	color: inherit;
+	border: none;
 	box-shadow: -1.5px -1.5px 0.5px #888888;
-	cursor:pointer;
+	cursor: pointer;
 }
 .myButton:active{
+	border: none;
 	box-shadow: 1.5px 1.5px 0.5px #888888;
 }
 .pm{
@@ -62,6 +66,18 @@ option{
 	text-align: bottom;
 	border: none;
 	display: inline;
+}
+.pmButton{
+	margin: 0px;
+	padding: 0px;
+	height: 24px; 
+	width: 24px;
+	background-color: #000000;
+	border: none;
+	box-shadow: -1.5px -1.5px 0.5px #888888;
+}
+.pmButton:active{
+	box-shadow: 1.5px 1.5px 0.5px #888888;
 }
 .pmNumber{
 	margin: 0px;

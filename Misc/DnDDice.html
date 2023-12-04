@@ -78,44 +78,6 @@
 		#outputType:focus{
 			outline: none;
 		}
-		#jaznet{
-			font-family: Times New Roman;
-			font-size: 12pt;
-		}
-		.pm{
-			margin: auto;
-			padding: 8px 5px 0px 5px;
-			text-align: bottom;
-			border: none;
-			display: inline;
-		}
-		.pmButton{
-			margin: 0px;
-			padding: 0px;
-			height: 24px; 
-			width: 24px;
-			background-color: #000000;
-			box-shadow: -1.5px -1.5px 0.5px #888888;
-		}
-		.pmButton:active{
-			box-shadow: 1.5px 1.5px 0.5px #888888;
-		}
-		.pmNumber{
-			margin: 0px;
-			padding: 0px;
-			position: relative;
-			bottom: 0.35em;
-			width: 1.5em;
-			text-align: center;
-			display: inline-block;
-			color: inherit;
-			background-color: inherit;
-			border: none;
-		}
-		.pmNumber::-webkit-outer-spin-button, .pmNumber::-webkit-inner-spin-button{
-			-webkit-appearance: none;
-			margin: 0;
-		}
 		.dice{
 			margin: 0px 0px 5px 0px;
 			padding: 0px;
@@ -123,7 +85,6 @@
 			width: 75px;
 			object-fit: contain;
 			color: white;
-
 		}
 		.dice:focus{
 			outline: 2px solid red;
@@ -152,7 +113,7 @@
 	</style>
 
 	<link rel="stylesheet" type="text/css" href="../CSS/DarkTheme.css">
-	<!--<link rel="shortcut icon" href="../favicon.ico"><!--Generates website's favicon-->
+	<link rel="shortcut icon" href="../favicon.ico"><!--Generates website's favicon-->
 
 	<script>
 		//global variables
@@ -204,7 +165,6 @@
 			};
 
 			document.getElementById("historyBox").innerHTML = output;
-			localStorage.setItem('history', JSON.stringify(history));
 		};
 
 		function clearHistory(){
@@ -360,8 +320,6 @@
 			initialiseNumbers();
 			setDivHeights();
 			setFocus();
-			history = JSON.parse(localStorage.getItem('history'));
-			updateHistory();
 		});
 	</script>
 </head>
