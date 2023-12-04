@@ -49,7 +49,6 @@ option{
 .myButton{
 	font-size: inherit;
 	display: inline;
-	position: absolute;
 	background-color: black;
 	color: inherit;
 	border: none;
