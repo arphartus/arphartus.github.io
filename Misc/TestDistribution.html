@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Test Distribution</title>
+	<style>
+		body{
+			font-family: Arial;
+			font-size: 14pt;
+			line-height: 2;
+		}
+	</style>
+</head>
+
+<script src="TestDistribution.js"></script>
+
+<script>
+	function go(){
+		totalProblems = Number(document.getElementById("totalProblems").value);
+		testLength = Number(document.getElementById("testLength").value);
+		maxIntersections = Number(document.getElementById("maxIntersections").value);
+		maxTests = 10000;
+
+		buildTests();
+
+		document.getElementById("outputBox").innerText = tests.length.toString() + " tests prepared."
+		document.getElementById("downloadButton").style.display = "inline"
+	};
+
+	function download(){
+		let output = "";
+		let saveLink = document.getElementById("saveLink");
+
+		for(const test of tests){
+			for(const elt of test.values()){
+				output += elt + ',';
+			};
+
+			//remove last comma
+			output = output.substring(0, output.length-1);
+			output += '\n';
+		};
+
+		let file = new Blob([output], {type: "text/plain"});
+		saveLink.href = URL.createObjectURL(file);
+		saveLink.download = "tests.csv";
+		saveLink.click();
+	};
+</script>
+
+<body>
+	<div style="text-align: center">
+		<label for="totalProblems">Total number of problems</label>
+		<input type="number" id="totalProblems" value="1000"><br>
+
+		<label for="testLength">Number of problems per paper</label>
+		<input type="number" id="testLength" value="100"><br>
+
+		<label for="maxIntersections">Maximum number of problems in common</label>
+		<input type="number" id="maxIntersections" value="10"><br>
+
+		<button onclick="go()">Build Random Tests</button>
+	</div>
+
+	<div style="text-align: center; margin-top: 20px">
+		<div id="outputBox"></div>
+		<button id="downloadButton" onclick="download()" style="display: none">Download csv</button>
+	</div>
+
+	<a id="saveLink" style="display:none">Click me!</a>
+</body>
+</html>

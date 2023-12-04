@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Dreams or Nightmares</title>
+		<style>
+		.flex-container{
+			display: flex;
+			justify-content: center;
+			font-size: 36px;
+		}
+		body{
+			margin: 0;
+			height: 100%;
+			overflow: hidden;
+			font-size: 24px;
+			font-family: verdana;
+		}
+	</style>
+
+	<script>
+		function output(){
+			let numLegendariesBox = document.getElementById("numLegendaries");
+			let numAncientsBox = document.getElementById("numAncients");
+			let lodLevelBox = document.getElementById("lodLevel");
+			let outputBox = document.getElementById("outputBox");
+			let bonusBox = document.getElementById("bonusBox");
+			let otherBox = document.getElementById("otherBox");
+
+			let numLegendaries = Number(numLegendariesBox.value);
+			if(numLegendaries > 13){
+				numAncientsBox.value = numLegendaries = 13;
+			};
+
+			let numAncients = Number(numAncientsBox.value);
+			numAncientsBox.max = numLegendaries;
+			if(numAncients > numLegendaries){
+				numAncientsBox.value = numAncients = numLegendaries;
+			};
+
+			let lodLevel = Number(lodLevelBox.value);
+			if(numLegendaries > 99){
+				lodLevelBox.value = lodLevel = 99;
+			};
+
+			let lodMultiplier = 3.75*(lodLevel + 1)*numLegendaries;
+			let lonMultiplier = 750*numAncients;
+
+			if(lodLevel > 24){
+				lodMultiplier += 3.75*(lodLevel + 1)*numAncients;
+			};
+
+			let outText = "";
+			let bonusText = "";
+			let otherText = "";
+			let outColor = "orange";
+			let otherColor = "grey";
+
+			if(lodMultiplier > lonMultiplier){
+				outText = "Legacy of Dreams!";
+				bonusText = lodMultiplier.toString() + "%";
+				otherText = "Legacy of Nightmares bonus: " + lonMultiplier.toString() + "%";
+			}
+			else if(lodMultiplier < lonMultiplier){
+				outText = "Legacy of Nightmares!";
+				bonusText = lonMultiplier.toString() + "%";
+				outColor = "green";
+				//otherColor = "orange";
+				otherText = "Legacy of Dreams bonus: " + lodMultiplier.toString() + "%";
+			}
+			else{
+				outText = "They're the Same!!!";
+				bonusText = lodMultiplier.toString() + "%";
+				outColor = "Red";
+			};
+
+			outputBox.innerText = outText;
+			bonusBox.innerText = bonusText;
+			otherBox.innerText = otherText;
+			outputBox.style.color = outColor;
+			bonusBox.style.color = outColor;
+			otherBox.style.color = otherColor;
+
+			//console.log(lodLevel, 3.75*(lodLevel + 1), lodMultiplier, lonMultiplier)
+		};
+	</script>
+</head>
+<body onload="output()">
+	<div style="text-align: center">
+		<p>
+			Number of Legendary Items: <input type="number" id="numLegendaries" value=13 step=1 min=0 max=13 onchange="output()">
+		</p>
+		<p>
+			Number of Ancient Items: <input type="number" id="numAncients" value=0 step=1 min=0 max=13 onchange="output()">
+		</p>
+		<p>
+			Level of Legacy of Dreams: <input type="number" id="lodLevel" value=0 step=1 min=0 max=99 onchange="output()">
+		</p>
+		<p>
+			<div class="flex-container">
+				Best to use: <div id="outputBox" style="margin-left:3pt"></div>
+			</div>
+			<div class="flex-container" style="margin-top:10pt">
+				Total damage bonus: <div id="bonusBox" style="margin-left:3pt"></div>
+			</div>
+			<div class="flex-container" style="margin-top:10pt">
+				<div id="otherBox" style="margin-left:3pt"></div>
+			</div>
+		</p>
+	</div>
+
+	<div style="position: absolute; bottom: 10px; right: 10px; font-size: 16px">
+		<a href="../index.html">&lt;&lt; Back to Jaznet</a>
+	</div>
+</body>
+</html>

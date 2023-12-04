@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Random Encounters</title>
+	<style>
+		html, body{
+			font-family: Arial;
+			font-size: 16pt;
+		}
+		input{
+			font-size: 14pt;
+		}
+		select{
+			text-align: center;
+			color: inherit;
+			background-color: inherit;
+			font-family: inherit;
+			font-size: 12pt;
+		}
+		option{
+			text-align: center;
+			color: inherit;
+			background-color: #202124;
+			font-family: inherit;
+			font-size: 10pt;
+		}
+		#jaznet{
+			font-family: Times New Roman;
+			font-size: 12pt;
+		}
+		.myButton{
+			padding: 2px 5px 2px 5px;
+			background-color: #000000;
+			box-shadow: -1.5px -1.5px 0.5px #888888;
+			cursor:pointer;
+		}
+		.myButton:active{
+			box-shadow: 1.5px 1.5px 0.5px #888888;
+		}
+		.pm{
+			margin: auto;
+			padding: 8px 5px 0px 5px;
+			text-align: bottom;
+			border: none;
+			display: inline;
+		}
+		.pmNumber{
+			margin: 0px;
+			padding: 0px;
+			position: relative;
+			bottom: 0.35em;
+			width: 1.5em;
+			text-align: center;
+			display: inline-block;
+			color: inherit;
+			background-color: inherit;
+			border: none;
+		}
+		.pmNumber::-webkit-outer-spin-button, .pmNumber::-webkit-inner-spin-button{
+			-webkit-appearance: none;
+			margin: 0;
+		}
+		::-webkit-scrollbar{
+  		width: 5px;
+		}
+		::-webkit-scrollbar:hover{
+  		width: 15px;
+		}
+		::-webkit-scrollbar-track{
+			box-shadow: inset 0 0 5px grey;
+			border-radius: 15px;
+		}
+		::-webkit-scrollbar-thumb{
+			background: #470077;
+			border-radius: 15px;
+		}
+		::-webkit-scrollbar-thumb:hover{
+			background: #b30000;
+		}
+		@font-face{
+			font-family: SW;
+			src: url("../Fonts/SW.otf") format("opentype");
+		}
+	</style>
+
+	<link rel="stylesheet" type="text/css" href="../CSS/DarkTheme.css">
+	<link rel="shortcut icon" href="../favicon.ico"><!--Generates website's favicon-->
+	<script src="MonsterData.js"></script>
+
+	<script>
+		function getRandomMonsterByCR(cr){
+			let monsterList = [];
+
+			for(const monster of monsters){
+				if(monster.challenge == cr){
+					monsterList.push(monster);
+				};
+			};
+
+			return(monsterList[Math.floor(Math.random()*monsterList.length)])
+		};
+
+		function getCRByXP(xp){
+			for(const [index, elt] of xpBycr.entries()){
+				if(elt.xp == xp){
+					return elt.cr;
+				}
+				else if(elt.xp > xp){
+					if(index == 0){
+						return elt.cr;
+					}
+					else if(elt.xp - xp <= xp - xpBycr[index-1].xp){
+						return elt.cr;
+					}
+					else{
+						return xpBycr[index-1].cr;
+					};
+				};
+			};
+		};
+
+		function generateEncounter(numPlayers, level, difficulty){
+			let encounter = {};
+			let xpAmount = challenges[level-1][difficulty]*numPlayers;
+			let groupSize1 = 1;
+			let groupSize2 = 0;
+			let xpModifier = 1;
+			let groupXP1 = 0;
+			let groupXP2 = 0;
+			let numGroups = 1;
+			let monster1;
+			let monster2;
+			let xpTotal = 0;
+
+			//while(groupXP1 <= 7.5 || (groupXP2 <= 7.5 && numGroups === 2)){
+			while(xpTotal < 0.8*xpAmount || xpTotal > 1.2*xpAmount){
+				switch(randomNumber = Math.floor(Math.random()*20)){
+					case 0:
+					case 1:
+					case 2:
+					case 3:
+					case 4:
+						numGroups = 1;
+						groupSize1 = 1;
+						groupSize2 = 0;
+						xpModifier = 1;
+						break;
+					case 5:
+					case 6:
+						numGroups = 2;
+						groupSize1 = 1;
+						groupSize2 = 1;
+						xpModifier = 1.5;
+						break;
+					case 7:
+					case 8:
+						numGroups = 2;
+						groupSize1 = 1;
+						groupSize2 = 2;
+						xpModifier = 2;
+						break;
+					case 9:
+						groupSize1 = 1;
+						groupSize2 = 5;
+						xpModifier = 2;
+						break;
+					case 10:
+					case 11:
+					case 12:
+						numGroups = 1;
+						groupSize1 = 2;
+						groupSize2 = 0;
+						xpModifier = 1.5;
+						break;
+					case 13:
+					case 14:
+						numGroups = 2;
+						groupSize1 = 2;
+						groupSize2 = 2;
+						xpModifier = 2;
+						break;
+					case 15:
+						numGroups = 2;
+						groupSize1 = 2;
+						groupSize2 = 5;
+						xpModifier = 2.5;
+						break;
+					case 16:
+					case 17:
+						numGroups = 1;
+						groupSize1 = 5;
+						groupSize2 = 0;
+						xpModifier = 2;
+						break;
+					case 18:
+						numGroups = 2;
+						groupSize1 = 5;
+						groupSize2 = 5;
+						xpModifier = 2.5;
+						break;
+					case 19:
+						numGroups = 1;
+						groupSize1 = 10;
+						groupSize2 = 0;
+						xpModifier = 2.5;
+						break;
+				};
+
+				groupXP1 = xpAmount / xpModifier / groupSize1;
+				monster1 = getRandomMonsterByCR(getCRByXP(groupXP1));
+				xpTotal = monster1.xp * groupSize1 * xpModifier;
+
+				if(numGroups === 1){
+					groupXP2 = 0;
+				}
+				else{
+					groupXP2 = (xpAmount - xpTotal) / xpModifier / groupSize2;
+					monster2 = getRandomMonsterByCR(getCRByXP(groupXP2));
+					xpTotal += monster2.xp * groupSize2 * xpModifier;
+				};
+			};
+
+			encounter[1] = {monster: monster1, numMonsters: groupSize1};
+
+			if(numGroups === 2){
+				encounter[2] = {monster: monster2, numMonsters: groupSize2};
+			};
+
+			encounter.xpTotal = xpTotal;
+
+			return encounter;
+		};
+
+		function generate(){
+			let level = Number(document.getElementById("levelSelect").value);
+			let difficulty = document.getElementById("difficultySelect").value;
+			let encounter = generateEncounter(1, level, difficulty);
+			let monsterOutput = "";
+			let sourceOutput = "";
+
+			if(encounter[1].numMonsters > 1){
+				monsterOutput += encounter[1].numMonsters.toString() + "&times;";
+			};
+
+			monsterOutput += encounter[1].monster.name;
+			sourceOutput += encounter[1].monster.source;
+
+			if(encounter[2] !== undefined){
+				monsterOutput += " &plus; "
+				sourceOutput += " &plus; "
+
+				if(encounter[2].numMonsters > 1){
+					monsterOutput += encounter[2].numMonsters.toString() + "&times;";
+				};
+
+				monsterOutput += encounter[2].monster.name;
+				sourceOutput += encounter[2].monster.source;
+			};
+
+			document.getElementById("monsterBox").innerHTML = monsterOutput;
+			document.getElementById("sourceBox").innerHTML = sourceOutput;
+			document.getElementById("xpBox").innerHTML = encounter.xpTotal.toString() + "xp";
+		};
+	</script>
+</head>
+
+<body>
+	<h1 style="text-align: center">Random Encounter Generator</h1>
+
+	<div style="text-align: center">
+		<label for="levelSelect">Level</label>
+		<select id="levelSelect">
+			<option value="1">1</option>
+			<option value="5">5</option>
+			<option value="10">10</option>
+			<option value="15">15</option>
+			<option value="20">20</option>
+		</select>
+
+		<label for="difficultySelect" style="margin-left:25px">Difficulty</label>
+		<select id="difficultySelect">
+			<option value="easy">Easy</option>
+			<option value="medium">Medium</option>
+			<option value="hard">Hard</option>
+			<option value="deadly">Deadly</option>
+			<option value="fatal">Fatal</option>
+		</select>
+	</div>
+
+	<div style="text-align: center; margin-top:20px" onclick="generate()">
+		<span class="myButton">Generate!</span>
+	</div>
+
+	<div style="text-align: center; margin-top:15px">
+		<div id="monsterBox"></div>
+		<div id="sourceBox" style="margin-top:5px"></div>
+		<div id="xpBox" style="margin-top:5px"></div>
+	</div>
+
+	<div id="jaznet" style="position: fixed; bottom: 10px; right: 10px">
+		<a href="../index.html">&lt;&lt; Back to Jaznet</a>
+	</div>
+</body>
+</html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Dice Roller</title>
+	<style>
+		html, body{
+			font-family: Arial;
+			font-size: 16pt;
+		}
+		.centreDiv{
+			text-align: center;
+			margin-top: 15px;
+			line-height: 150%;
+			font-size: 16pt;
+		}
+		.spacer{
+			min-width: 16%;
+		}
+		#outerBox{
+			display:flex;
+			text-align: center;
+		}
+		#mainBox{
+			width: 72%;
+			margin: 5px auto;
+			margin-top: -4px;
+		}
+		#sideBox{
+			width: 22%;
+			margin: 5px auto;
+			border: 1px solid grey;
+			max-height: 92vh;
+		}
+		#diceBox{
+			display:flex;
+			text-align: center;
+			margin-top: 0px;
+		}
+		#displayBox{
+			display: flex;
+			text-align: center;
+			margin-top: -10px;
+			max-height: 9em;
+			overflow-y: auto;
+		}
+		#stringBox{
+			line-height: 175%;
+			margin: 5px auto;
+			width: 13%;
+			min-width: 13%;
+			min-height: 1.75em;
+			word-wrap: break-word;
+			border: 1px solid grey;
+		}
+		#randomBox{
+			line-height: 175%;
+			margin: 5px auto;
+			padding-left: 10px;
+			text-align: left;
+			width: 83%;
+			min-width: 83%;
+			word-wrap: break-word;
+			border: 1px solid grey;
+		}
+		#historyBox{
+			max-height: 95px;
+			overflow-y: auto;
+		}
+		input{
+			font-size: 14pt;
+		}
+		#outputType{
+			line-height: 200%;
+			margin-top: 15px;
+			font-size: 16pt;
+			border: none;
+		}
+		#outputType:focus{
+			outline: none;
+		}
+		#jaznet{
+			font-family: Times New Roman;
+			font-size: 12pt;
+		}
+		.pm{
+			margin: auto;
+			padding: 8px 5px 0px 5px;
+			text-align: bottom;
+			border: none;
+			display: inline;
+		}
+		.pmButton{
+			margin: 0px;
+			padding: 0px;
+			height: 24px; 
+			width: 24px;
+			background-color: #000000;
+			box-shadow: -1.5px -1.5px 0.5px #888888;
+		}
+		.pmButton:active{
+			box-shadow: 1.5px 1.5px 0.5px #888888;
+		}
+		.pmNumber{
+			margin: 0px;
+			padding: 0px;
+			position: relative;
+			bottom: 0.35em;
+			width: 1.5em;
+			text-align: center;
+			display: inline-block;
+			color: inherit;
+			background-color: inherit;
+			border: none;
+		}
+		.pmNumber::-webkit-outer-spin-button, .pmNumber::-webkit-inner-spin-button{
+			-webkit-appearance: none;
+			margin: 0;
+		}
+		.dice{
+			margin: 0px 0px 5px 0px;
+			padding: 0px;
+			height: 75px;
+			width: 75px;
+			object-fit: contain;
+			color: white;
+
+		}
+		.dice:focus{
+			outline: 2px solid red;
+		}
+		::-webkit-scrollbar{
+  		width: 5px;
+		}
+		::-webkit-scrollbar:hover{
+  		width: 15px;
+		}
+		::-webkit-scrollbar-track{
+			box-shadow: inset 0 0 5px grey;
+			border-radius: 15px;
+		}
+		::-webkit-scrollbar-thumb{
+			background: #470077;
+			border-radius: 15px;
+		}
+		::-webkit-scrollbar-thumb:hover{
+			background: #b30000;
+		}
+		@font-face{
+			font-family: SW;
+			src: url("../Fonts/SW.otf") format("opentype");
+		}
+	</style>
+
+	<link rel="stylesheet" type="text/css" href="../CSS/DarkTheme.css">
+	<link rel="shortcut icon" href="../favicon.ico"><!--Generates website's favicon-->
+
+	<script>
+		//global variables
+		let dice = [4, 6, 8, 10, 12, 20, 100];
+		let numDice = 1;
+		let history = [];
+		let focus = 20;
+
+		//roll dice
+		function roll(dType){
+			let rollstring = numDice.toString() + "D" + dType.toString();
+			let rolls = [];
+			let sum = 0;
+
+			for(let i = 0; i < numDice; i++){
+				let rng = Math.floor(Math.random()*dType) + 1;
+				rolls.push(rng.toString());
+				sum += rng;
+			};
+
+			//add to history
+			history.unshift({string: rollstring, roll: rolls, sum: sum});
+			updateHistory();
+
+			//output results
+			let output = "(" + sum + ") ";
+
+			for(const roll of rolls){
+				output += roll + " ";
+			};
+
+			document.getElementById("randomBox").innerHTML = output.substring(0, output.length - 1);
+			document.getElementById("stringBox").innerHTML = rollstring;
+		};
+
+		//update history
+		function updateHistory(){
+			let output = ""
+		
+			for(const rollSet of history){
+				output += "<div style='border: 1px solid grey; text-align: left'>" + rollSet.string + ": "
+				+ "(" + rollSet.sum + ") ";
+
+				for(const roll of rollSet.roll){
+					output += roll + " ";
+				};
+
+				output = output.substring(0, output.length - 1) + "</div>";
+			};
+
+			document.getElementById("historyBox").innerHTML = output;
+		};
+
+		function clearHistory(){
+			history = [];
+			updateHistory();
+			document.getElementById("stringBox").innerHTML = "";
+			document.getElementById("randomBox").innerHTML = "";
+		};
+
+		//update number "inputs"
+		function updateNumber(divId, pm){
+			let div = document.getElementById(divId);
+			let diceName = divId.substring(4);
+
+			let value = div.value//Number(div.getAttribute("value"));
+			let minValue = Number(div.getAttribute("min"));
+			let maxValue = Number(div.getAttribute("max"));
+
+			switch(pm){
+				case "minus":
+					if(value > minValue){
+						(value--).toString();
+					};
+					break;
+				case "plus":
+					if(value < maxValue){
+						(value++).toString();
+					};
+					break;
+				case "reset":
+					value = 1;
+					break
+			};
+
+			//div.setAttribute("value", value);
+			div.value = value;
+			//div.innerHTML = value;
+			numDice = value;
+		};
+
+		//initialise number "inputs" and diceBox values
+		function initialiseNumbers(){
+			for(const key of Object.keys(dice)){
+				let div = document.getElementById("num-dice");
+
+				div.setAttribute("value", numDice.toString());
+				div.setAttribute("min",'1');
+				div.setAttribute("max",'100');
+				div.innerHTML = numDice.toString();
+			};
+		};
+
+		//auto set up dice
+		function makeDice(){
+			let output = "";
+
+			for(const key of dice){
+				output += "<div class='pm'><input type='image' src='../Images/DnDDice/d"
+					+ key + ".png' alt='d" + key + "' class='dice' id='d" + key + "' onClick='roll(" + key + ")' "
+					+ "/></div>";
+					/*"'><br>"
+					+ "<input type='image' class='pmButton' src='../Images/minus.png' onClick='updateNumber(&quot;num-d"
+					+ key + "&quot;, &quot;minus&quot;)'/>"
+					+ "<span id='num-d" + key + "' class='pmNumber'>0</span>"
+					+ "<input type='image' class='pmButton' src='../Images/plus.png' onClick='updateNumber(&quot;num-d"
+					+ key + "&quot;, &quot;plus&quot;)'/></div>";*/
+			};
+
+			document.getElementById("diceBox").innerHTML = output;
+		};
+
+		//set history div max height
+		function setDivHeights(){
+			let historyBox = document.getElementById("historyBox");
+			let top = historyBox.getBoundingClientRect().top	
+
+			historyBox.style["max-height"] = (window.innerHeight - top - 40).toString() + "px";
+
+			let displayBox = document.getElementById("displayBox").getBoundingClientRect();
+			let histCont = document.getElementById("histCont");
+
+			histCont.style["margin-left"] = (displayBox.left + 1).toString() + "px";
+			histCont.style["margin-right"] = (window.innerWidth - displayBox.right + 1).toString() + "px";
+		};
+
+		function setFocus(direction){
+			//let index = dice.indexOf(focus);
+			let index = dice.indexOf(Number(document.activeElement.id.substring(1)));
+
+			if(index === -1){
+				index = dice.indexOf(focus);
+			};
+
+			switch(direction){
+				case "up":
+					index++;
+					if(index === dice.length){
+						index = 0;
+					};
+					break;
+				case "down":
+					index--;
+					if(index === -1){
+						index = dice.length - 1;
+					};
+					break;
+			};
+
+			focus = dice[index];
+			document.getElementById("d" + focus).focus();
+		};
+
+		//keyboard controls
+		function keyboardControls(event){
+			let keyCode = event.keyCode;
+
+			switch(keyCode){
+				case 9:
+					//tab
+					break;
+				case 27:
+					//esc
+					updateNumber("num-dice", "reset");
+					break;
+				case 46:
+					//del
+					clearHistory();
+					updateNumber("num-dice", "reset");
+					break;
+				case 37:
+					//left arrow
+					setFocus("down");
+					break;
+				case 39:
+					//right arrow
+					setFocus("up");
+					break;
+				case 38:
+					//up arrow
+					updateNumber("num-dice", "plus");
+					break;
+				case 40:
+					//down arrow
+					updateNumber("num-dice", "minus");
+					break;
+			};
+		};
+
+		//run on document load
+		document.addEventListener("DOMContentLoaded", function(event){
+			document.addEventListener("keydown", keyboardControls, false);
+			makeDice();
+			initialiseNumbers();
+			setDivHeights();
+			setFocus();
+		});
+	</script>
+</head>
+
+<body>
+	<div id="diceBox"></div>
+
+	<div class="centreDiv" style="margin-bottom: 15px;">
+		<input type="image" class="pmButton" src="../Images/minus.png" onClick="updateNumber('num-dice', 'minus')"/>
+		<!--<span id="num-dice" class="pmNumber">0</span>-->
+		<input type="number" id="num-dice" class="pmNumber" onChange="updateNumber('num-dice')">
+		<input type="image" class="pmButton" src="../Images/plus.png" onClick="updateNumber('num-dice', 'plus')"/>
+	</div>
+
+	<div id="displayBox">
+		<div id="stringBox"></div>
+		<div id="randomBox"></div>
+	</div>
+
+	<div id="histCont" class="centreDiv" style="border: 1px solid grey; margin: 5px; position: relative;">
+		<div id="clearHistory" onClick="clearHistory()" style="position: absolute; right: 15px; top: 0.25em; cursor: pointer;">&#10006</div>
+		<h4 style="margin: 5px">History</h4>
+		<div id="historyBox"></div>
+	</div>
+
+
+	<div id="jaznet" style="position: fixed; bottom: 10px; right: 10px">
+		<a href="../index.html">&lt;&lt; Back to Jaznet</a>
+	</div>
+</body>
+</html>

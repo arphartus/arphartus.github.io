@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Simple Cipher</title>
+
+	<style>
+		td{
+			text-align: center;
+		}
+		.textareaDiv{
+			-moz-appearance: textfield-multiline;
+			-webkit-appearance: textarea;
+			border: 1px solid gray;
+			font: medium -moz-fixed;
+			font: -webkit-small-control;
+			overflow: auto;
+			resize: vertical;
+			width: 98%;
+			height: 40vh;
+			margin: 0;
+			padding: 2px;
+			text-align: justify;
+		}
+	</style>
+
+	<script>
+		let inputAlphabet = [];
+		let outputAlphabet = [];
+
+		function cloneArray(inputArray){
+			let outputArray = [];
+
+			for(const e of inputArray){
+				outputArray.push(e);
+			};
+
+			return outputArray;
+		};
+
+		function shuffleArray(inputArray){
+			let outputArray = [];
+			let workingArray = cloneArray(inputArray);
+
+			while(workingArray.length > 0){
+				outputArray.push(workingArray.splice(Math.floor(Math.random()*Math.floor(workingArray.length)), 1)[0]);
+			};
+
+			return outputArray;
+		};
+
+		function isLetter(character){
+			let code = character.charCodeAt(0);
+
+			if((code >= 65 && code <= 90) || (code >= 97 && code <= 122)){
+				return true;
+			}
+			else{
+				return false;
+			};
+		};
+
+		function isLowerCase(character){
+			let code = character.charCodeAt(0);
+
+			if(code >= 97 && code <= 122){
+				return true;
+			}
+			else{
+				return false;
+			};
+		};
+
+		function translate(inputText){
+			let outputText = "";
+
+			for(let i = 0; i < inputText.length; i++){
+				let inputCharacter = inputText[i];
+				let inputIndex = inputAlphabet.indexOf(inputCharacter.toUpperCase());
+				let outputCharacter = outputAlphabet[inputIndex] || inputCharacter;
+				let outputColor = document.getElementById("alphabetBox" + inputIndex.toString()).style.color || "black";
+
+				if(outputCharacter.charCodeAt(0) == 10){
+					outputCharacter = "<br>";
+
+					let nextCharacter = inputText[i+1]
+					if(nextCharacter != undefined && nextCharacter.charCodeAt(0) == 10){
+						i++;
+					};
+				}
+				else if(outputCharacter == ""){
+					outputCharacter = inputCharacter;
+				}
+				else if(isLowerCase(inputCharacter)){
+					outputCharacter = outputCharacter.toLowerCase();
+				};
+
+				outputText += "<span style='color: " + outputColor + "'>" + outputCharacter + "</span>";
+			};
+
+			return outputText;
+		};
+
+		function fillAlphabetDiv(){
+			let html = "<table style='margin-left: auto; margin-right: auto; margin-top: 0;'>";
+
+			for(let i = 0; i < inputAlphabet.length; i++){
+				html += "<tr><td>" + inputAlphabet[i] + "</td><td>→</td><td><input type='text' style='width: 1em; border: none' value='" + outputAlphabet[i] + "' onInput='editAlphabet(" + i +")' id='alphabetBox" + i.toString() + "'/></td></tr>";
+			};
+
+			html += "</table>";
+
+			document.getElementById("alphabetTable").innerHTML = html;
+		};
+
+		function shuffleAlphabet(){
+			outputAlphabet = shuffleArray(inputAlphabet);
+			fillAlphabetDiv();
+			go();
+		};
+
+		function editAlphabet(index){
+			let box = document.getElementById("alphabetBox" + index.toString());
+			let letter = box.value[0] || "";
+
+			if(isLetter(letter)){
+				letter = box.value = letter.toUpperCase();
+			}
+			else{
+				letter = box.value = "";
+			};
+
+			outputAlphabet[index] = letter;
+			checkOutputAlphabet();
+			go();
+		};
+
+		function checkOutputAlphabet(){
+			for(let i = 0; i < outputAlphabet.length; i++){
+				document.getElementById("alphabetBox" + i.toString()).style.color = "black";
+			};
+
+			for(let i = 0; i < outputAlphabet.length; i++){
+				if(outputAlphabet[i] == ""){
+					document.getElementById("alphabetBox" + i.toString()).style.color = "blue";
+				}
+				else{
+					for(let j = i + 1; j < outputAlphabet.length; j++){
+						if(outputAlphabet[i] == outputAlphabet[j]){
+							document.getElementById("alphabetBox" + i.toString()).style.color = "red";
+							document.getElementById("alphabetBox" + j.toString()).style.color = "red";
+						};
+					};
+				};
+			};
+		};
+
+		function init(){
+			for(let i = 0; i < 26; i++){
+				inputAlphabet.push(String.fromCharCode(i + 65));
+				outputAlphabet.push("");
+			};
+
+			fillAlphabetDiv();
+			checkOutputAlphabet();
+		};
+
+		function clearOutputAlphabet(){
+			for(let i=0; i < outputAlphabet.length; i++){
+				outputAlphabet[i] = "";
+			};
+
+			fillAlphabetDiv();
+			checkOutputAlphabet();
+			go();
+		};
+
+		function go(){
+			document.getElementById("outputBox").innerHTML = translate(document.getElementById("inputBox").innerText);
+		};
+	</script>
+</head>
+<body onload="init()">
+	<div style="display: flex">
+		<div style="text-align: center; width: 10%; padding: none; margin: 0 2% 0 4%;">
+			<div id = "alphabetTable"></div>
+			<button onclick="shuffleAlphabet()" style="margin-top: 5px">Randomise</button>
+			<button onclick="clearOutputAlphabet()" style="margin-top: 5px">Clear</button>
+		</div>
+
+		<div style="text-align: center; flex-grow: 1; padding: none; margin: 0 4% 0 2%;">
+			<div id="inputBox" class="textareaDiv" onInput="go()" contentEditable="true" style="margin-top: 5px;"></div>
+			<div style="margin: 0.5em; font-size: 36px">↓</div>
+			<div id="outputBox" class="textareaDiv"></div>
+			<div style="position: absolute; right: 3.8%; margin: 2%">
+				<a href="../index.html">&lt;&lt; Back to Jaznet</a>
+			</div>
+		</div>
+	</div>
+
+	<div id="alphabetBox-1" style="display: none;"></div>
+</body>
+</html>

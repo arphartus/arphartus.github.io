@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Permutations</title>
+	<style>
+		.centreDiv{
+			position: absolute;
+			width: 500px;
+			left: 50%;
+			margin: 0 20px 0 -250px;
+		}
+	</style>
+	<script type="text/javascript" src="../JS/jquery-2.1.4.min.js"></script>
+	<script type="text/javascript" src="../JS/DicTionarY.js"></script>
+	<script type='text/javascript' src='../JavaScriptSpellCheck/include.js' ></script>
+	<script>
+		String.prototype.splice = function(index, howmany, item){
+			if(index < 0){
+				index += this.length;
+			};
+
+			var s1 = this.substring(0, index);
+			var s2 = this.substring(index + howmany, this.length);
+
+			return s1+item+s2;
+		};
+
+		Array.prototype.removeRepeats = function(){
+			for(var i = 0; i < this.length; i++){
+				if(this.indexOf(this[i]) != i){
+					this.splice(i, 1);
+					i--;
+				};
+			};
+		};
+
+		function permutations(word, length){
+			var list = [""];
+			var sublist = [];
+			for(var i=0; i<list.length;i++){
+				for(var j=0; j<word.length;j++){
+					if(list[i].indexOf(word.charAt(j))<0){
+						list.push(list[i]+word.charAt(j));
+					};
+				};
+				if(list[i].length == length){
+					sublist.push(list[i]);
+				};
+			};
+
+			return sublist;
+		};
+
+		function removeDoubleUps(word){
+			for(var i=0; i < word.length - 1; i++){
+				var character = word.charAt(i);
+				var characterCode = character.charCodeAt(0);
+				var indexList = [i];
+				for(var j = i+1; j < word.length; j++){
+					if(word.charAt(j) === character){
+						indexList.push(j);
+					};
+				};
+				if(indexList.length > 0){
+					for(var j=0; j < indexList.length; j++){
+						word = word.splice(indexList[j],1,String.fromCharCode(characterCode + 400*j));
+					};
+				};
+			};
+
+			return word;
+		};
+
+		function returnDoubleUps(word){
+			for(var i=0; i<word.length; i++){
+				var characterCode = word.charAt(i).charCodeAt(0);
+				word = word.splice(i,1,String.fromCharCode(characterCode%400));
+			};
+
+			return word;
+		};
+
+		function autoGrow(element) {
+			element.style.height = "5px";
+			element.style.height = (element.scrollHeight)+"px";
+		};
+
+		function go(){
+
+			var word = document.getElementById("wordBox").value;// "ASCION";
+			var length = document.getElementById("nBox").value;//6;
+			word = word.toLowerCase();
+			word = removeDoubleUps(word);
+			var list = permutations(word, length);
+			var checkedList = [];
+			var output = "";
+
+			for(var i = 0; i < list.length; i++){
+				list[i] = returnDoubleUps(list[i]);
+			};
+
+			list.removeRepeats();
+
+			if(document.getElementById("spellcheck").checked){
+				var dict = new DicTionarY;
+
+				for(var i = 0; i < list.length; i++){
+					var checkword = list[i];
+					if(dict.spellcheck(checkword, false)){
+						checkedList.push(checkword);
+					};
+				};
+
+				for(var i = 0; i < checkedList.length; i++){
+					output+=checkedList[i];
+					output+=" ";
+				};
+			}
+			else{
+				for(var i = 0; i < list.length; i++){
+					output+=list[i];
+					output+=" ";
+				};
+			}
+
+			output=output.substring(0,output.length-1);//remove last space
+
+			document.getElementById("outputBox").innerHTML = output;
+			autoGrow(document.getElementById("outputBox"));
+		}
+	</script>
+</head>
+<body>
+	<div class ="centreDiv">
+		<label for="wordBox">Word:</label>
+		<input id="wordBox" type = "text">
+		<label for="nBox">Length:</label>
+		<input id="nBox" type = "number" style = "width: 2em" min=1>
+		<button type = "button" onClick="go()">Permute</button>
+		<input id="spellcheck" type = "checkbox" checked>Spellcheck
+	</div>
+	<textarea id = "outputBox" spellcheck="true" style="width:98%; margin:25px 10px 0 10px"></textarea>
+
+	<div style="position: absolute; bottom: 10px; right: 10px">
+		<a href="../index.html">&lt;&lt; Back to Jaznet</a>
+	</div>
+</body>
+</html>
