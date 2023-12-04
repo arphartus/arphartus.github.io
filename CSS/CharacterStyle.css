@@ -1,0 +1,72 @@
+body{margin: 0 auto 0 auto; text-align: left; padding: 5px;}
+
+header{margin: 0px; width: 100%; display: table; background-color: #ffffff; text-align:center}
+nav{left: 10px; bottom: 10px; float: bottom; display: table; position: fixed}
+article{width: 100%; display: block; margin: 0px; padding: 0px}
+
+h1{text-align:center;}
+h3{margin-top: 0px; margin-bottom: 0px;}
+ul{margin-top: 0px;}
+
+.spell{
+	list-style: none;
+	padding: 0;
+}
+
+.spell li:before{
+	content: "\2728";
+	margin: 0 0.75em;
+	color: #0000B0;
+	font-size: 90%;
+}
+
+li.evoc:before{
+	content: "\1F525";
+	margin: 0 0.9em;
+	color: red;
+	font-size: 90%;
+}
+
+.fire li{
+	list-style-image: url('../Images/fire_ball-2.png');
+}
+
+.container{
+	display: flex;
+	margin-top:0px;
+	width: 100%;
+	justify-content: center;
+	align-content: flex-start;
+	flex-wrap: wrap;
+}
+.fixed{
+	width: 275px;
+	text-align: left;
+	padding: 5px;
+	margin: 5px;
+	margin-top: 0px;
+}
+.flex-item{
+	flex-grow: 0;
+	padding: 5px;
+	margin-left: 20px;
+	margin-right: 20px;
+	margin-bottom: 10px;
+}
+.spacer{
+	width: 20px;
+}
+.footer{
+	align-self: flex-end;
+	margin-left: 10px;
+	width: 100%;
+}
+
+.columned{
+	-webkit-column-count: 3; /* Chrome, Safari, Opera */
+	-moz-column-count: 3; /* Firefox */
+	column-count: 3;
+	-webkit-column-gap: 40px;
+	-moz-column-gap: 40px;
+	column-gap: 40px;
+}
