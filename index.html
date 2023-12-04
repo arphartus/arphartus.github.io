@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Jaznet</title>
+	<style>
+		body{
+			font-family: Arial;
+			font-size: 14pt;
+			line-height: 1.35;
+		}
+		h4{margin-bottom: -15px;}/*remove white space after a h4*/
+		.rainbow-text{
+			/*CSS for rainbow text*/
+			background-image: linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff);
+			-webkit-background-clip: text;
+			display: inline;
+			color: transparent;
+		}
+		.rainbow-text-alt{
+			/*CSS for rainbow text using rainbow names*/
+			background-image: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
+			-webkit-background-clip: text;
+			display: inline;
+			color: transparent;
+		}
+		::-webkit-scrollbar{
+  		width: 5px;
+		}
+		::-webkit-scrollbar:hover{
+  		width: 15px;
+		}
+		::-webkit-scrollbar-track{
+			box-shadow: inset 0 0 5px grey;
+			border-radius: 15px;
+		}
+		::-webkit-scrollbar-thumb{
+			background: #470077;
+			border-radius: 15px;
+		}
+		::-webkit-scrollbar-thumb:hover{
+			background: #b30000;
+		}
+	</style>
+
+	<link rel="stylesheet" type="text/css" href="./CSS/DarkTheme.css">
+	<link rel="shortcut icon" href="favicon.ico"><!--Generates website's favicon-->
+	<link rel="icon" type="image/gif" href="animated_favicon1.gif"><!--Generates website's animated favicon-->
+
+	<!--<script src="./JS/mathJax.js"></script>
+	<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+	<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>-->
+
+	<script async>
+		//SET RAINBOW COLORS
+		let rainbow2 = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
+
+		//MORE UNIFORM RAINBOW
+		let rainbow = ["#ff0000", "#ffff00", "#00ff00", "#00ffff", "#0000ff", "#ff00ff"];
+
+		//AUTOMATION
+		window.onload = function(){
+			//Rainbow text with specific start and end conditions
+			animatedRainbow("rainbowHeader", rainbow, 100, "mouseenter", "mouseleave");
+
+			//Rainbow animate all elements of class "animated-rainbow-text"
+			let allRainbows = document.getElementsByClassName("animated-rainbow-text");
+			for(const element of allRainbows){
+				//If element has no id, give it a unique random id
+				if(element.id === ""){
+					element.id = uid();
+				};
+
+				animatedRainbow(element.id, rainbow, 100);
+			};
+
+			//Example of rainbowCharacters()
+			rainbowCharacters("rbText", rainbow);
+			rainbowCharacters("rbText2", rainbow2);
+		};
+
+		//Make an element have each character a different color
+		function rainbowCharacters(elementID, colors){
+			let element = document.getElementById(elementID);
+			let newText = "";
+
+			let colorIndex = 0;
+			for(const c of element.innerText){
+				switch(c){
+					case " ":
+						//if space, don't change the color
+						newText += c;
+						break;
+					default:
+						//move to the next color
+						newText += "<span style='color:" + colors[colorIndex%colors.length] + "'>" + c + "</span>";
+						colorIndex++;
+						break;
+				};
+			};
+
+			element.innerHTML = newText;
+		};
+
+		//Make an element have animated rainbow colors
+		function animatedRainbow(element, colors, period = 100, startCondition, endCondition){
+			let interval;
+
+			//Set css for gradient color background
+			document.getElementById(element).style["-webkit-background-clip"] = "text";
+			document.getElementById(element).style["color"] = "transparent";
+			setColors();
+
+			//Set event listeners for start and stop conditions
+			if(startCondition === undefined){
+				//if no start condition, then animate automatically
+				interval = setInterval(function(){animate()}, period);
+			}
+			else{
+				document.getElementById(element).addEventListener(startCondition, function(){
+					interval = setInterval(function(){animate()}, period);
+				});
+			};
+
+			if(endCondition !== undefined){
+				document.getElementById(element).addEventListener(endCondition, function(){
+					clearInterval(interval);
+				});
+			};
+
+			//Builds linear gradient
+			function setColors(){
+				let backgroundImageStyle = "linear-gradient(to right";
+
+				for(const color of colors){
+					backgroundImageStyle += "," + color;
+				};
+				backgroundImageStyle += ")";
+
+				document.getElementById(element).style["background-image"] = backgroundImageStyle;
+			};
+
+			//Cycle throught the colors
+			function animate(){
+				let last = colors.pop();
+				colors.unshift(last);
+
+				setColors()
+			};
+		};
+
+		//GENERATE UNIQUE RANDOM ID
+		function uid(){
+			return Date.now().toString(36) + Math.random().toString(36).substr(2);
+		};
+	</script>
+</head>
+
+	<body>
+		<header>
+			<h1><span id="rainbowHeader">Jasmine's Webpages</span></h1>
+		</header>
+
+		<div>
+			<h3><span id="h3" class="animated-rainbow-text">Here are some links to webpages I have made</span></h3>
+			<h4 style="color:red">DnD 5</h4>
+			<ul>
+				<li><a href=".\Misc\DnDDice.html">Dice Roller</a></li>
+				<li><a href=".\Graphics\Dice.html">3d Dice</a></li>
+				<li><a href=".\DnD5\SpellLists.html">Spell lists for DnD5</a></li>
+				<li><a href=".\DnD5\VarisSpells.html">Varis' Spellbook</a></li>
+				<li><a href=".\DnD5\BennysSpells.html">Some spells that Benny uses</a></li>
+			</ul>
+
+			<h4 style="color:aquamarine">Star Wars</h4>
+			<ul>
+				<li><a href=".\SW\SWDice.html">Star Wars Dice Roller</a></li>
+				<li><a href=".\Graphics\3dSWDice.html">3d Dice Model</a></li>
+				<li><a href=".\Graphics\lightsabers.html">Lightsaber Fun!</a></li>
+			</ul>
+
+			<h4 style="color:orange">Pathfinder</h4>
+			<ul>
+				<li><a href=".\Pathfinder\Sulu.html">Character sheet for Mr Sulu</a></li>
+			</ul>
+
+			<h4 style="color:#4040ff">Web GL</h4>
+			<ul>
+				<li><a href=".\Graphics\lesson1.html">Learning WebGL - Lessons 1-3: 2D graphics with colour and simple movement</a></li>
+				<li><a href=".\Graphics\lesson4.html">Learning WebGL - Lesson 4: 3D graphics</a></li>
+				<li><a href=".\Graphics\lesson5.html">Learning WebGL - Lesson 5: Added textures</a></li>
+				<li><a href=".\Graphics\lesson6.html">Learning WebGL - Lesson 6: Added keyboard control</a></li>
+				<li><a href=".\Graphics\lesson7.html">Learning WebGL - Lesson 7: Added lighting</a></li>
+				<li><a href=".\Graphics\TetrahedronPlusCube.html">My Cube and Tetrahedron</a></li>
+				<li><a href=".\Graphics\truncatedCube.html">A Truncated Cube</a></li>
+				<li><a href=".\Graphics\truncatedTetrahedron2.html">Truncating a Tetrahedron</a></li>
+				<li><a href=".\Graphics\TorusKnot.html">A Torus Knot</a></li>
+				<li><a href=".\Graphics\HappyBirthdayRafael.html">Happy Birthday Rafael!</a></li>
+				<li><a href=".\Graphics\ThankYou.html">Thank You!</a></li>
+				<li><a href=".\Graphics\planets.html">The Planets!</a></li>
+				<li><a href=".\Graphics\SudokuCube.html">A Sudoku Cube</a></li>
+				<li><a href=".\Graphics\LightsandObjects.2.html">Lights and Objects</a></li>
+			</ul>
+			<h4 style="color:green">Maths</h4>
+			<ul>
+				<li><a href=".\Maths\RandomMaths.html">Random Maths</a></li>
+				<li><a href=".\Maths\rsa.html">RSA</a></li>
+				<li><a href=".\Maths\FSA.html">FSA</a></li>
+				<li><a href=".\Maths\Dyck.html">Dyck Stuff</a></li>
+				<li><a href=".\Graphics\Sierpinski.html">Some Sierpinski Fractals</a></li>
+				<li><a href=".\Maths\GraphMaker.html">Graph Maker</a></li>
+			</ul>
+			<h4 style="color:orchid">Miscellaneous</h4>
+			<ul>
+				<li><a href=".\Misc\Permutations.html">Permutations</a></li>
+				<li><a href=".\Misc\SimpleCipher.html">Simple Shuffle Cipher</a></li>
+				<li><a href=".\Misc\LoDorLon.html">Legacy of Dreams or Legacy of Nightmares?</a></li>
+				<li><a href=".\Misc\TestDistribution.html">Test Distribution</a></li>
+			</ul>
+			<h4 style="color:#8040ff">Under Development</h4>
+			<ul>
+				<li><a href=".\Graphics\nowWhat.html" style="color:orange">Now What?</a></li>
+				<li><a href=".\Graphics\expandedTetrahedron.html">Expanding a Tetrahedron</a></li>
+				<li><a href=".\Graphics\three1.html">Stellated Rainbow Cubes</a></li>
+				<li><a href=".\Graphics\three3.html">Working out tube geometry</a></li>
+				<li><a href=".\Graphics\ThreeHtmlGuiTest1.html">Three test page</a></li>
+				<li><a href=".\Graphics\planets2.html">Planets 2.0</a></li>
+				<li><a href=".\Graphics\Transformations.html">Some 2D Transformations</a></li>
+				<li><a href=".\Graphics\NewTHREE3.html">A new THREE test page</a></li>
+				<li><a href=".\Maths\CyTest.html">Cytoscape Test Page</a></li>
+				<li><a href=".\Maths\TrainGame.html">Train Game</a></li>
+				<li><a href=".\Graphics\GLTFTest.html">GLTF test page</a></li>
+			</ul>
+
+			<h4 style="color:violet">To Do</h4>
+			<ul>
+				<li>Lights and Objects<ul>
+					<li>CCapture</li>
+					<li>Multi material options</li>
+					<li>Drag to rotate object</li>
+					<li>Koch tetrahedron</li>
+					<li>Pokeball object</li>
+					<li>Make uncolored Sudoku Cube faces</li>
+				</ul></li>
+				<li>FSA<ul>
+					<li>State diagrams</li>
+					<li>Language output</li>
+					<li>Table input</li>
+				</ul></li>
+				<li><span class="animated-rainbow-text">Fix BMC</span></li>
+				<li>Redo maths stuff using js best practices</li>
+			</ul>
+
+			<h3>Raf's pages</h3>
+			<a href=".\Raf\RCCP.html" style="color:violet">RCCP (Raf's cat cat page)</a><br>
+			<a href=".\Raf\pokefun.html" style="color:purple">Pok&egrave;fun</a><br>
+			<a href=".\Raf\Meow.html" style="color:#00ff00">Meow</a>
+		</div>
+
+		<div id="testing" style="margin-top: 20px; display:block;">
+			<div id="rbText">Some words of sufficient length to be a useful example!</div>
+			<div class="rainbow-text">Some words of sufficient length to be a useful example!</div><br>
+			<div id="rbText2">Some words of sufficient length to be a useful example!</div>
+			<div class="rainbow-text-alt">Some words of sufficient length to be a useful example!</div>
+		</div>
+	</body>
+</html>
