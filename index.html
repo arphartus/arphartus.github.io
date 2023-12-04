@@ -50,6 +50,8 @@
 	<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>-->
 
 	<script async>
+		let shiftPeriod = 125;
+
 		//SET RAINBOW COLORS
 		let rainbow2 = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
 
@@ -59,8 +61,8 @@
 		//AUTOMATION
 		window.onload = function(){
 			//Rainbow text with specific start and end conditions
-			animatedRainbow("rainbowHeader", rainbow, 150, "mouseenter", "mouseleave");
-			animatedRainbow("h3", rainbow, 150, "mouseenter", "mouseleave");
+			animatedRainbow("rainbowHeader", rainbow, shiftPeriod, "mouseenter", "mouseleave");
+			animatedRainbow("h3", rainbow, shiftPeriod, "mouseenter", "mouseleave");
 
 			//Rainbow animate all elements of class "animated-rainbow-text"
 			let allRainbows = document.getElementsByClassName("animated-rainbow-text");
@@ -70,7 +72,7 @@
 					element.id = uid();
 				};
 
-				animatedRainbow(element.id, rainbow, 150);
+				animatedRainbow(element.id, rainbow, shiftPeriod);
 			};
 		};
 
@@ -98,7 +100,7 @@
 		};
 
 		//Make an element have animated rainbow colors
-		function animatedRainbow(element, colors, period = 100, startCondition, endCondition){
+		function animatedRainbow(element, colors, period = shiftPeriod, startCondition, endCondition){
 			let interval;
 
 			//Set css for gradient color background
