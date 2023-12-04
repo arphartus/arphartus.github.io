@@ -317,8 +317,13 @@
 			initialiseNumbers();
 			setDivHeights();
 			setFocus();
-			history = JSON.parse(localStorage.getItem('history'));
+
+			//reload history from local storage
+			let oldHistory = JSON.parse(localStorage.getItem('history'));
+			if(oldHistory !== null){
+				history = oldHistory;
 			updateHistory();
+			};
 		});
 	</script>
 </head>
