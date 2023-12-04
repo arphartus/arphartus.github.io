@@ -23,7 +23,7 @@ a:active{
 input[type="checkbox"]{
 	accent-color: #a040ff;
 }
-input{
+input, textarea{
 	text-align: center;
 	color: inherit;
 	border: 1px solid grey;
@@ -46,7 +46,7 @@ option{
 	font-family: Times New Roman;
 	font-size: 12pt;
 }
-.myButton{
+.myButton, button{
 	padding: 2px 5px 2px 5px;
 	background-color: #000000;
 	box-shadow: -1.5px -1.5px 0.5px #888888;
