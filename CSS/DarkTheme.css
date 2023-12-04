@@ -14,10 +14,10 @@ a:hover{
 a:active{
 	color: #506976;
 }
-::selection {
+::selection{
 	background: #a040ff; /* WebKit/Blink Browsers */
 }
-::-moz-selection {
+::-moz-selection{
 	background: #a040ff; /* Gecko Browsers */
 }
 input[type="checkbox"]{
