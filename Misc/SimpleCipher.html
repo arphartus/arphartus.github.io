@@ -16,7 +16,7 @@
 			overflow: auto;
 			resize: vertical;
 			width: 98%;
-			height: 40vh;
+			height: 38vh;
 			margin: 0;
 			padding: 2px;
 			text-align: justify;
@@ -79,7 +79,7 @@
 				let inputCharacter = inputText[i];
 				let inputIndex = inputAlphabet.indexOf(inputCharacter.toUpperCase());
 				let outputCharacter = outputAlphabet[inputIndex] || inputCharacter;
-				let outputColor = document.getElementById("alphabetBox" + inputIndex.toString()).style.color || "black";
+				let outputColor = document.getElementById("alphabetBox" + inputIndex.toString()).style.color || "white";
 
 				if(outputCharacter.charCodeAt(0) == 10){
 					outputCharacter = "<br>";
@@ -138,18 +138,18 @@
 
 		function checkOutputAlphabet(){
 			for(let i = 0; i < outputAlphabet.length; i++){
-				document.getElementById("alphabetBox" + i.toString()).style.color = "black";
+				document.getElementById("alphabetBox" + i.toString()).style.color = "white";
 			};
 
 			for(let i = 0; i < outputAlphabet.length; i++){
 				if(outputAlphabet[i] == ""){
-					document.getElementById("alphabetBox" + i.toString()).style.color = "blue";
+					document.getElementById("alphabetBox" + i.toString()).style.color = "aquamarine";
 				}
 				else{
 					for(let j = i + 1; j < outputAlphabet.length; j++){
 						if(outputAlphabet[i] == outputAlphabet[j]){
-							document.getElementById("alphabetBox" + i.toString()).style.color = "red";
-							document.getElementById("alphabetBox" + j.toString()).style.color = "red";
+							document.getElementById("alphabetBox" + i.toString()).style.color = "orchid";
+							document.getElementById("alphabetBox" + j.toString()).style.color = "orchid";
 						};
 					};
 				};
