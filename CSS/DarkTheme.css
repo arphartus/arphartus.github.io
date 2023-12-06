@@ -26,7 +26,7 @@ input[type="checkbox"]{
 input{
 	text-align: center;
 	color: inherit;
-	border: 1px solid grey;
+	border: 1px solid Gray;
 	background-color: inherit;
 	font-family: inherit;
 }
@@ -106,7 +106,7 @@ textarea{
 	width: 15px;
 }
 ::-webkit-scrollbar-track{
-	box-shadow: inset 0 0 5px grey;
+	box-shadow: inset 0 0 5px Gray;
 	border-radius: 15px;
 }
 ::-webkit-scrollbar-thumb{
