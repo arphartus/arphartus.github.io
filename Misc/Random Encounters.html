@@ -191,8 +191,8 @@
 				monsterOutput += encounter[2].monster.name;
 				sourceOutput += encounter[2].monster.source;
 			};
-
-			document.getElementById("monsterBox").innerHTML = monsterOutput;
+console.log(navigator.userAgentData.mobile, monsterOutput)
+			document.getElementById("monsterBox").innerHTML = navigator.userAgentData.mobile//monsterOutput;
 			document.getElementById("sourceBox").innerHTML = sourceOutput;
 			document.getElementById("xpBox").innerHTML = encounter.xpTotal.toString() + "xp";
 		};
