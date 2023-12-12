@@ -1,0 +1,1 @@
+magick convert <input file> -threshold 50% -blur 2x1 <output file>
