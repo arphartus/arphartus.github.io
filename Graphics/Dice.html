@@ -1,0 +1,3295 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Dice!</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+			border: 0;
+			background-color: black;
+			overflow: hidden;
+			height: 100%;
+		}
+		canvas{width: 100%; height: 100%}
+		#webGLDiv{
+			width: 100%;
+			height: 100%;
+			display: block;
+			border: 0px solid black;
+			position: absolute;
+			top:0;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			margin: 0;
+			background-color: black;
+		}
+		#loading{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			display: none;
+			font-size: 20pt;
+			color: white;
+			width: 100%;
+			text-align: center
+		}
+		.br{
+			display: block;
+			margin-bottom: 0em;
+		}
+		.brsmall{
+			display: block;
+			margin-bottom: 0.5em;
+		}
+		.brmedium{
+			display: block;
+			margin-bottom: 0.75em;
+		}
+		.brlarge{
+			display: block;
+			margin-bottom: 1em;
+		}
+		input[type="checkbox"]{
+			position: relative;
+			top: 1.5px;
+		}
+		::-webkit-scrollbar{
+  		width: 5px;
+		}
+		::-webkit-scrollbar:hover{
+  		width: 15px;
+		}
+		::-webkit-scrollbar-track{
+			box-shadow: inset 0 0 5px grey;
+			border-radius: 15px;
+		}
+		::-webkit-scrollbar-thumb{
+			background: #470077;
+			border-radius: 15px;
+		}
+		::-webkit-scrollbar-thumb:hover{
+			background: #b30000;
+		}
+		.mySwal .mySwal-popup{
+			width: 90vw;
+			max-height: 95vh;
+		}
+		.mySwal-confirm{
+			width: 100px !important;
+			font-size: 0.8333333rem !important;
+		}
+		.mySwal-cancel{
+			width: 100px !important;
+			font-size: 0.8333333rem !important;
+			background-color: #b30000 !important;
+		}
+		.mySwal-actions{
+			margin-top: 10px !important;
+		}
+		.mySwal-title{
+			margin: auto !important;
+		}
+		.mySwal-hidden{
+			display: none !important;
+		}
+		.mySwal-html{
+			font-family: Arial;
+			font-size: 10pt;
+			line-height: 1.5;
+			display: flex;
+			text-align: left;
+			padding: none;
+		}
+		.inner{
+			width: 30%;
+			height: 70vh;
+			overflow-y: auto;
+			margin: none;
+		}
+		.spacer{
+			min-width: 2.5%;
+		}
+	</style>
+
+	<link rel="shortcut icon" href="../favicon.ico"><!--Generates website's favicon-->
+	<link rel="icon" type="image/gif" href="../animated_favicon1.gif"><!--Generates website's animated favicon-->
+
+	<script src="../JS/threeBundle.js"></script>
+	<script src="../JS/ParametricGeometries.js"></script>
+	<script src="../JS/TeapotBufferGeometry.js"></script>
+	<script src="../JS/GLTFExporter.js"></script>
+
+	<script src="../JS/TrackballControls.js"></script>
+	<script src="../JS/DragControls.js"></script>
+	<script src="../JS/polyhedra.js"></script>
+	<script src="../JS/mergedDualCubeData.js"></script>
+
+	<script src="../dat.gui/build/dat.gui.js"></script>
+	<script type="text/javascript" src="../JS/stats.min.js"></script>
+
+	<script src='../JS/threex.dilategeometry.js'></script>
+	<script src='../JS/threex.atmospherematerial.js'></script>
+	<script src="../JS/threex.geometricglowmesh.js"></script>
+	<script src="../JS/threex.basiclighting.js"></script>
+
+	<script src="../JS/indeterminateCheckbox.js"></script>
+
+	<!--COLOR PICKER-->
+	<link rel="stylesheet" href="../CSS/pickr.theme.monolith.min.css">
+	<link rel="stylesheet" href="../CSS/Pickr1.css">
+	<script type="text/javascript" src="../JS/pickr.js"></script>
+	<script type="text/javascript" src="../JS/pickrAugments.js"></script>
+
+	<!--SWEET ALERT-->
+	<link rel="stylesheet" href="../CSS/swal-dark.css">
+	<script src="../JS/modernizr-custom.js"></script>
+	<script src="../JS/sweetalert2.min.js"></script>
+
+	<script>
+//FUNDAMENTALS
+		let scene = new THREE.Scene();
+		let backgroundScene = new THREE.Scene();
+		let renderer = new THREE.WebGLRenderer({preserveDrawingBuffer: true, antialias: false});
+		let needsRedraw = false;
+
+//GLOBAL VARIABLES
+		let animateId;
+		let webGLDiv;
+		let loadingDiv;
+		let divHeight;
+		let divWidth;
+		let camera;
+		let backgroundCamera;
+		let initialLights = {};
+		let controls;
+		let gui;
+		let glowObject;
+		let objects = {};
+		let textures = {};
+		let bumps = {};
+		let environments = {};
+		let cubeMaps = {};
+		let cubeBumps = {};
+		let frameCount = 0;
+
+//INITIAL SETUP
+		let state = {
+			objectType: "d4",
+
+			colors: {
+				material: "#482683",
+				number: "#ff0080",
+				background: "#202124",
+				innerGlow: "#ff69b4",
+				outerGlow: "#ff69b4",
+				emissive: "#ff69b4",
+			},
+
+			rotate: false,
+			rotateSpeed: {x: 0, y: 0.004, z: 0, f: 25, m: 5},
+
+			metalness: 1,
+			roughness: 0.25,
+			transparency: 0,
+			side: THREE.DoubleSide,
+			flatShading: true,
+			reflectivity: 0.5,
+			clearcoat: 0,
+			clearcoatRoughness: 0,
+			emissiveIntensity: 0,
+
+			currentTexture: "Rainbow",
+			currentBump: "Earth",
+			currentEnvironment: "Generic Reflection",
+			currentBackground: "None",
+			fractalTexture: false,
+			envMapIntensity: 1.7,
+			bumpScale: 0.5,
+
+			innerGlow: {coefficient: 1.1, power: 1.4},
+			outerGlow: {coefficient: 0.5, power: 2.5},
+			glow: false,
+			visible: true,
+
+			lights: {},
+			fixTorchPosition: false,
+			torchOn: false,
+
+			camera: {},
+			maxDistance: 45,
+			shadows: false,
+
+			demo: {
+				on: false,
+				speed: 3,
+				rotate: true,
+				bump: false,
+				randomColor: false,
+				randomNumberColor: false,
+				cycleSwap: false,
+				shape: [],
+				map: []
+			}
+		};
+
+		let lights = {
+			light1: new THREE.PointLight("#ffffff", 40, 0, 2),
+			light2: new THREE.PointLight("#ffffff", 20, 0, 2),
+			light3: new THREE.PointLight("#ffffff", 10, 0, 2),
+			ambient: new THREE.AmbientLight("#ffffff", 5),
+			torch: new THREE.PointLight("#ffffff", 5, 0, 0)
+		};
+
+		let planetList = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Moon", "Callisto", "Io", "Triton", "Stars"]
+		let mapList = ["None", "Raf", "Rainbow", "Rainbow Stripes", "Pokeball", "Sudoku Cube"].concat(planetList);
+		let bumpList = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Moon", "Callisto", "Io", "Triton", "Stars", "Frosted Glass"];
+		let bumpScales = {sun: 0.02, mercury: 0.04, venus: 0.02, earth: 1, mars: 0.2, jupiter: 0.02, saturn: 0.02, uranus: 0.1, neptune: 0.05, pluto: 0.05, moon: 0.1, stars: 0.05, frostedglass: 0.04, callisto: 0.08, io: 0.2, triton: 0.2};
+
+		let environmentList = [];
+		for(const map of mapList){
+			environmentList.push(map);
+		};
+		environmentList.splice(1, 0, "Generic Reflection");
+
+		let stats = {
+			object: new Stats(),
+			on: false,
+			enable: function(){
+				stats.object.setMode(0);//0: fps, 1: ms, 2: mb
+
+				stats.object.domElement.style.position = 'absolute';
+				stats.object.domElement.style.left = '10px';
+				stats.object.domElement.style.top = '0px';
+
+				document.body.appendChild(stats.object.domElement);
+			},
+			disable: function(){
+				document.body.removeChild(stats.object.domElement);
+			}
+		};
+
+		let shapeList = ["d4", "d6", "d8", "d10", "d12", "d20", "d30", "d100"];
+
+//PIVOTS & OBJECTS
+		let parent = new THREE.Object3D();
+		scene.add(parent);
+
+		let object1;
+		let object2;
+
+//MATERIALS
+		let material = new THREE.MeshBasicMaterial({color: state.colors["innerGlow"]});
+
+		let metalMaterial = new THREE.MeshPhysicalMaterial({
+			color: state.colors["material"],
+			metalness: state.metalness,
+			roughness: state.roughness,
+			flatShading: state.flatShading,
+			transparency: state.transparency,
+			wireframe: false,
+			transparent: false,
+			side: state.side,
+			reflectivity: state.reflectivity,
+			envMapIntensity: state.envMapIntensity,
+			clearcoat: state.clearcoat,
+			clearcoatRoughness: state.clearcoatRoughness,
+			emissive: state.colors["emissive"],
+			emissiveIntensity: state.emissiveIntensity
+		});
+
+		let cubeMaterial = [];
+
+		for(let i = 0; i < 6; i++){
+			cubeMaterial.push(metalMaterial.clone());
+		};
+
+		let numberMaterials = {textures: []};
+
+		function buildNumberMaterials(){
+			let mat = new THREE.MeshPhysicalMaterial({
+				color: state.colors["number"],
+				metalness: 0,
+				roughness: 1,
+				flatShading: true,
+				transparency: 0,
+				wireframe: false,
+				transparent: true,
+				side: THREE.FrontSide,
+				reflectivity: 0.5,
+				envMapIntensity: 1,
+				clearcoat: 0,
+				clearcoatRoughness: 0,
+				emissive: state.colors["number"],
+				emissiveIntensity: 0
+			});
+
+			for(const dice of shapeList){
+				let diceSize = Number(dice.substring(1));
+				let materialArray = numberMaterials[dice] = [];
+
+				if(diceSize === 100){
+					diceSize = 10;
+				};
+
+				for(let i = 0; i < diceSize; i++){
+					materialArray.push(mat.clone());
+
+					materialArray[i].map = numberMaterials.textures[i].clone();
+					materialArray[i].map.needsUpdate = true;
+				};
+
+				if(diceSize >= 9){
+					materialArray[5].map = numberMaterials.dot6Texture.clone();
+					materialArray[5].map.needsUpdate = true;
+
+					materialArray[8].map = numberMaterials.dot9Texture.clone();
+					materialArray[8].map.needsUpdate = true;
+				};
+
+				switch(dice){
+					case "d4":
+						for(let i = 0; i < 4; i++){
+							materialArray[i].map = numberMaterials["d4Texture" + (i+1).toString()];
+						};
+						break;
+					case "d10":
+						materialArray[9].map = numberMaterials.zeroTexture;
+						break;
+					case "d100":
+						for(let i = 0; i < 10; i++){
+							materialArray[i].map = numberMaterials["d100Texture" + ((i+1)%10).toString()];
+							materialArray[i].map.needsUpdate = true;
+						};
+						break;
+				};
+			};
+		};
+
+		let backgroundMaterial = new THREE.MeshBasicMaterial({
+			color: state.colors["background"],
+			side: THREE.BackSide,
+			depthTest: false,
+			depthWrite: false,
+		});
+
+//LOADING MANAGER
+		let manager = new THREE.LoadingManager();
+
+		manager.onStart = function(url, itemsLoaded, itemsTotal){
+			loadingDiv.style.display = "block";
+			loadingDiv.innerHTML = 'Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.';
+		};
+
+		manager.onLoad = function(){
+			buildNumberMaterials();
+			rotateNumbers();
+			loadingDiv.innerHTML = 'Loading complete!';
+			loadingDiv.style.display = "none";
+			needsRedraw = true;
+		};
+
+		manager.onProgress = function(url, itemsLoaded, itemsTotal){
+			loadingDiv.innerHTML = 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.';
+		};
+
+		manager.onError = function(url){
+			loadingDiv.innerHTML = 'There was an error loading ' + url;
+		};
+
+//LOAD TEXTURES
+		function flatten(string){
+			return string.replace(/\s+/g, '').toLowerCase();
+		};
+
+		function loadMaps(){
+			//TEXTURE LOADER
+			let textureLoader = new THREE.TextureLoader(manager);
+			textureLoader.setPath('../Images/');
+
+			for(const map of mapList){
+				let mapName = flatten(map);
+
+				switch(map){
+					case "None":
+						cubeMaps.none = [];
+						break;
+					default:
+						let texture = textureLoader.load(map+'/'+mapName+'.png');
+						texture.wrapS = THREE.RepeatWrapping;
+						texture.wrapT = THREE.MirroredRepeatWrapping;
+
+						textures[mapName] = texture;
+
+						cubeMaps[mapName] = [
+							textureLoader.load(map+'/px.png'), textureLoader.load(map+'/nx.png'),
+							textureLoader.load(map+'/py.png'), textureLoader.load(map+'/ny.png'),
+							textureLoader.load(map+'/pz.png'), textureLoader.load(map+'/nz.png')
+						];
+
+						break;
+				};
+			};
+
+			//LOAD NUMBER MAPS
+			for(let i = 0; i < 30; i++){
+				numberMaterials.textures.push(textureLoader.load("/DnDDice/n" + (Number(i)+1).toString() + ".png"));
+				numberMaterials.textures[i].center.set(0.5, 0.5);
+			};
+
+			for(let i = 0; i < 10; i++){
+				numberMaterials["d100Texture" + i.toString()] = textureLoader.load("/DnDDice/n" + i + "0.png");
+				numberMaterials["d100Texture" + i.toString()].center.set(0.5, 0.5);
+			}
+
+			for(let i = 0; i < 4; i++){
+				numberMaterials["d4Texture" + (i+1).toString()] = textureLoader.load("/DnDDice/t" + (Number(i)+1).toString() + ".png");
+				numberMaterials["d4Texture" + (i+1).toString()].center.set(0.5, 0.5);
+			};
+
+			numberMaterials.dot6Texture = textureLoader.load("/DnDDice/dot6.png");
+			numberMaterials.dot6Texture.center.set(0.5, 0.5);
+			numberMaterials.dot9Texture = textureLoader.load("/DnDDice/dot9.png");
+			numberMaterials.dot9Texture.center.set(0.5, 0.5);
+			numberMaterials.zeroTexture = textureLoader.load("/DnDDice/n0.png");
+			numberMaterials.zeroTexture.center.set(0.5, 0.5);
+
+			//ENVIRONMENT LOADER
+			let loader = new THREE.CubeTextureLoader();
+			loader.setPath('../Images/');
+
+			for(const map of environmentList){
+				let mapName = flatten(map);
+
+				switch(map){
+					case "None":
+						environments.none = loader.load(['none.png', 'none.png', 'none.png',
+							'none.png', 'none.png', 'none.png'
+						]);
+						break;
+					default:
+						environments[mapName] = loader.load([
+							map+'/px.png', map+'/nx.png',
+							map+'/py.png', map+'/ny.png',
+							map+'/pz.png', map+'/nz.png'
+						]);
+						break;
+				};
+			};
+
+			for(const map of bumpList){
+				let mapName = flatten(map);
+				let bump = textureLoader.load(map+'/Bump/'+mapName+'bump.png');
+				bump.wrapS = THREE.RepeatWrapping;
+				bump.wrapT = THREE.RepeatWrapping;
+
+				bumps[mapName]  = bump;
+
+				cubeBumps[mapName] = [
+					textureLoader.load(map+'/Bump/px.png'), textureLoader.load(map+'/Bump/nx.png'),
+					textureLoader.load(map+'/Bump/py.png'), textureLoader.load(map+'/Bump/ny.png'),
+					textureLoader.load(map+'/Bump/pz.png'), textureLoader.load(map+'/Bump/nz.png')
+				];
+			};
+		};
+
+//SCENE
+		function makeScene(){
+			object1 = new THREE.Mesh(new THREE.Geometry(), material);
+			object2 = new THREE.Mesh(new THREE.Geometry(), material);
+			parent.add(object1);
+			addGlow(object1);
+
+			camera.position.set(0, 0, 9);
+		};
+
+		function makeBackground(){
+			let backgroundGeometry = new THREE.SphereGeometry(2.2*state.maxDistance, 20, 20);
+			mirrorUVs(backgroundGeometry);
+			backgroundGeometry.rotateY(3*Math.PI / 2);
+
+			backgroundScene.add(new THREE.Mesh(backgroundGeometry, backgroundMaterial));
+		};
+
+//ANIMATION
+		function animate(){
+			if(stats.on){
+				stats.object.begin();
+			};
+
+			animateId = requestAnimationFrame(animate);
+			controls.update();
+
+			if(state.rotate){
+				parent.rotation.x += state.rotateSpeed.x;
+				parent.rotation.y += state.rotateSpeed.y;
+				parent.rotation.z += state.rotateSpeed.z;
+			};
+
+			if(!state.fixTorchPosition && state.torchOn){
+				lights.torch.position.copy(camera.position);
+			};
+
+			backgroundCamera = camera.clone();
+			backgroundCamera.position.normalize().multiplyScalar(state.maxDistance);//set(0, 0, 0);
+			//backgroundCamera.fov = 15;
+			//backgroundCamera.zoom = 0.9;
+			backgroundCamera.updateProjectionMatrix();
+
+			renderer.clear();
+			renderer.render(backgroundScene, backgroundCamera);
+			renderer.render(scene, camera);
+
+			if(state.demo.on){
+				demoMode();
+			};
+
+			if(needsRedraw){
+				draw(state.objectType);
+				needsRedraw = false;
+			};
+
+			if(stats.on){
+				stats.object.end();
+			};
+		};
+
+//MOUSE & TOUCH
+		function mouseControl(){
+			controls = new THREE.TrackballControls(camera, renderer.domElement);
+			controls.rotateSpeed = 5.0;
+			controls.minDistance = 0.1;
+			controls.maxDistance = state.maxDistance;
+			//controls = new DragControls([parent], camera, renderer.domElement);
+		};
+
+//KEYBOARD
+		function onDocumentKeyDown(event){
+			let activeElementTag = document.activeElement.tagName;
+
+			if(activeElementTag != "INPUT" && activeElementTag != "SELECT"){
+				switch(event.which){
+					case 27:
+					//escape
+						
+						break;
+					case 32:
+					//spacebar
+						document.getElementById("autoRotate").click();
+						break;
+					case 37:
+					//left arrow
+						let prevShape = shapeList.indexOf(state.objectType) - 1;
+						if(prevShape < 0){
+							prevShape = shapeList.length - 1;
+						};
+						gui.objectSelect.setValue(shapeList[prevShape]);
+						break;
+					case 39:
+					//right arrow
+						let nextShape = shapeList.indexOf(state.objectType) + 1;
+						if(nextShape === shapeList.length){
+							nextShape = 0;
+						};
+						gui.objectSelect.setValue(shapeList[nextShape]);
+						break;
+					case 67:
+					//c for console
+						//console.log(gui.changeTextLine1)
+						//camera.lookAt(camera.getWorldDirection(new THREE.Vector3(0, 0, 0)));
+						//console.log(controls)
+						//console.log(parent.rotation.y)
+						//download(JSON.stringify(object1.geometry), "geo.txt", 'text/plain', "saveLink");
+						/*console.log(object1.geometry.vertices.length, object1.geometry.faces.length);
+						for(const face of object1.geometry.faces){
+							console.log(face.materialIndex)
+						}*/
+						//console.log(metalMaterial.emissiveIntensity, metalMaterial.emissive)
+						//dualPolyhedron("Icosidodecahedron", true);
+						break;
+					case 68:
+					//d for demo
+						document.getElementById("demo").click();
+						break;
+					case 69:
+					//e for export
+						//exportObject();
+						break;
+					case 70:
+					//f
+						snapshotView();
+						/*setTimeout(function(){
+							screenshot();
+						}, 100);*/
+						break;
+					case 81:
+					//q
+						document.getElementById("randomColorButton").click();
+						document.getElementById("randomNumberColorButton").click();
+						break;
+					case 82:
+					//r for reset
+						controls.reset();
+						parent.rotation.set(0, 0, 0);
+						break;
+					case 83:
+					//s for stats
+						stats.on = !stats.on;
+						if(stats.on){
+							stats.enable();
+						}
+						else{
+							stats.disable();
+						};
+						break;
+				};
+			};
+		};
+
+//LIGHTS
+		function lighting(){
+			//build lights
+			for(const [name, light] of Object.entries(lights)){
+				initialLights[name] = {color: '#'+light.color.getHexString(), intensity: light.intensity};
+			};
+
+			//Set light position
+			lights.light1.position.setFromSphericalCoords(5, Math.PI / 4, -1*Math.PI / 3);
+			lights.light2.position.setFromSphericalCoords(5, 3*Math.PI / 4, Math.PI / 3);
+			lights.light3.position.setFromSphericalCoords(5, Math.PI / 2, Math.PI);
+
+			//let lighting = new THREEx.ThreePointsLighting()
+
+			//shadows
+			if(state.shadows){
+				lights.light1.castShadow = true;
+				lights.light2.castShadow = true;
+				lights.light3.castShadow = true;
+				lights.torch.castShadow = true;
+			};
+
+			//add to the scene
+			scene.add(lights.ambient);//ambient
+			scene.add(lights.light1);
+			scene.add(lights.light2);
+			scene.add(lights.light3);
+			//scene.add(lighting);
+		};
+
+//VECTOR OPERATIONS
+		function midpoint2(points){
+			let midpoint = new THREE.Vector2(0, 0, 0);
+
+			for(const p of points){
+				midpoint.add(p);
+			};
+
+			midpoint.multiplyScalar(1 / points.length);
+			return midpoint;
+		};
+
+		function midpoint3(points){
+			let midpoint = new THREE.Vector3(0, 0, 0);
+
+			for(const p of points){
+				midpoint.add(p);
+			};
+
+			midpoint.multiplyScalar(1 / points.length);
+			return midpoint;
+		};
+
+		function rotateAtoB(A, B){
+			let a = A.clone().normalize();
+			let b = B.clone().normalize();
+			let aDotb = a.dot(b);
+			let aCrossb = new THREE.Vector3().crossVectors(a, b);
+			let w = aCrossb.clone().normalize();
+			let bRejecta = b.clone().sub(a.clone().multiplyScalar(aDotb)).normalize();
+			let F = new THREE.Matrix3();
+			let G = new THREE.Matrix3();
+			let H = new THREE.Matrix3();
+			let U = new THREE.Matrix3();
+
+			if(aCrossb.equals(new THREE.Vector3(0, 0, 0))){
+				return U;
+			};
+
+			H.set(
+				a.x, bRejecta.x, -1*w.x,
+				a.y, bRejecta.y, -1*w.y,
+				a.z, bRejecta.z, -1*w.z
+			);
+
+			F.getInverse(H); 
+
+			G.set(
+				aDotb, -1*aCrossb.length(), 0,
+				aCrossb.length(), aDotb, 0,
+				0, 0, 1
+			);
+
+			U.getInverse(F).multiply(G).multiply(F);
+			return U;
+		};
+
+//UV GENERATION & MANIPULATION
+		function cloneUVs(UVArray){
+			let clone = [];
+
+			for(const faceUV of UVArray[0]){
+				clone.push([faceUV[0].clone(), faceUV[1].clone(), faceUV[2].clone()]);
+			};
+
+			return [clone];
+		};
+
+		function assignSphericalUVs(geometry){
+			let uvArray = [];
+			let vertices = geometry.vertices;
+			let tolerence = 0.1;
+			let delta = 0.1
+
+			function calculateSphericalUV(p){
+				return new THREE.Vector2(0.5 + Math.atan2(p.x, p.z) / (2*Math.PI), 0.5 + Math.asin(p.y) / Math.PI);
+			};
+
+			for(const [i,face] of geometry.faces.entries()){
+				let a = vertices[face.a].clone().normalize();
+				let b = vertices[face.b].clone().normalize();
+				let c = vertices[face.c].clone().normalize();
+				let northPole = new THREE.Vector3(0, 1, 0);
+				let southPole = new THREE.Vector3(0, -1, 0);
+				let needsMoving;
+
+				if(a.distanceTo(northPole) < delta || a.distanceTo(southPole) < delta){
+					needsMoving = 'A';
+				}
+				else if(b.distanceTo(northPole) < delta || b.distanceTo(southPole) < delta){
+					needsMoving = 'B';
+				}
+				else if(c.distanceTo(northPole) < delta || c.distanceTo(southPole) < delta){
+					needsMoving = 'C';
+				};
+
+				let m = calculateSphericalUV(midpoint3([a, b, c]));
+				let A = calculateSphericalUV(a);
+				let B = calculateSphericalUV(b);
+				let C = calculateSphericalUV(c);
+
+				let M = midpoint2([A, B, C]);
+
+				if(Math.abs(M.x - m.x) > tolerence){
+					if(A.x <= M.x){
+						A.x++;
+					};
+
+					if(B.x <= M.x){
+						B.x++;
+					};
+
+					if(C.x <= M.x){
+						C.x++;
+					};
+				};
+
+				switch(needsMoving){
+					case 'A':
+						A.x = 0.5*(B.x + C.x);
+						break;
+					case 'B':
+						B.x = 0.5*(A.x + C.x);
+						break;
+					case 'C':
+						C.x = 0.5*(B.x + A.x);
+						break;
+					default:
+						break;
+				};
+
+				uvArray.push([
+					new THREE.Vector2(A.x, A.y),
+					new THREE.Vector2(B.x, B.y),
+					new THREE.Vector2(C.x, C.y)
+				]);
+			};
+
+			geometry.faceVertexUvs[0] = uvArray;
+			geometry.uvsNeedUpdate = true;
+		};
+
+		function insideOutUVs(geometry){
+			//Moves baseline to middle of geometry
+			let uvArray = [];
+
+			for(const face of geometry.faceVertexUvs[0]){
+				let a = face[0];
+				let b = face[1];
+				let c = face[2];
+
+				if(a.y < 0.5 && b.y < 0.5 && c.y < 0.5){
+					uvArray.push([new THREE.Vector2(a.x, a.y + 0.5), new THREE.Vector2(b.x, b.y + 0.5), new THREE.Vector2(c.x, c.y + 0.5)]);
+				}
+				else{
+					uvArray.push([new THREE.Vector2(a.x, a.y - 0.5), new THREE.Vector2(b.x, b.y - 0.5), new THREE.Vector2(c.x, c.y - 0.5)]);
+				}
+			};
+
+			geometry.faceVertexUvs[0] = uvArray;
+			geometry.uvsNeedUpdate = true;
+		};
+
+		function rotateUVs(geometry){
+			//Rotate uvs 90° clockwise
+			let uvArray = [];
+
+			for(const face of geometry.faceVertexUvs[0]){
+				let a = face[0];
+				let b = face[1];
+				let c = face[2];
+
+				uvArray.push([new THREE.Vector2(-a.y, a.x), new THREE.Vector2(-b.y, b.x), new THREE.Vector2(-c.y, c.x)]);
+			};
+
+			geometry.faceVertexUvs[0] = uvArray;
+			geometry.uvsNeedUpdate = true;
+		};
+
+		function mirrorUVs(geometry){
+			//Mirrors uvs left to right
+			let uvArray = [];
+
+			for(const face of geometry.faceVertexUvs[0]){
+				let a = face[0];
+				let b = face[1];
+				let c = face[2];
+
+				uvArray.push([new THREE.Vector2(1 - a.x, a.y), new THREE.Vector2(1 - b.x, b.y), new THREE.Vector2(1 - c.x, c.y)]);
+			};
+
+			geometry.faceVertexUvs[0] = uvArray;
+			geometry.uvsNeedUpdate = true;
+		};
+
+		function triangleUVs(geometry, zoom){
+			let uvArray = [];
+
+			if(isNaN(zoom) || zoom <= 0){
+				zoom = 0.5
+			};
+
+			for(const [i, f] of Object.entries(geometry.faces)){
+				f.materialIndex = i;
+
+				uvArray.push([
+					new THREE.Vector2(zoom*Math.sin(2*Math.PI / 3)+0.5, zoom*Math.cos(2*Math.PI / 3)+0.5),
+					new THREE.Vector2(0.5, zoom + 0.5),
+					new THREE.Vector2(zoom*Math.sin(4*Math.PI / 3)+0.5, zoom*Math.cos(4*Math.PI / 3)+0.5)
+				]);
+			};
+
+			geometry.faceVertexUvs[0] = uvArray;
+			geometry.uvsNeedUpdate = true;
+		};
+
+		function dodecahedronUVs(geometry, zoom){
+			let uvArray = [];
+
+			if(isNaN(zoom) || zoom <= 0){
+				zoom = 0.5
+			};
+
+			for(let i = 0; i < 12; i++){
+				for(let j = 0; j < 3; j++){
+					geometry.faces[3*i+j].materialIndex = i;
+				};
+
+				uvArray.push([
+					new THREE.Vector2(zoom*Math.sin(8*Math.PI / 5)+0.5, zoom*Math.cos(8*Math.PI / 5)+0.5),
+					new THREE.Vector2(zoom*Math.sin(6*Math.PI / 5)+0.5, zoom*Math.cos(6*Math.PI / 5)+0.5),
+					new THREE.Vector2(0.5, zoom+0.5)
+				]);
+
+				uvArray.push([
+					new THREE.Vector2(zoom*Math.sin(6*Math.PI / 5)+0.5, zoom*Math.cos(6*Math.PI / 5)+0.5),
+					new THREE.Vector2(zoom*Math.sin(4*Math.PI / 5)+0.5, zoom*Math.cos(4*Math.PI / 5)+0.5),
+					new THREE.Vector2(0.5, zoom+0.5)
+				]);
+
+				uvArray.push([
+					new THREE.Vector2(zoom*Math.sin(4*Math.PI / 5)+0.5, zoom*Math.cos(4*Math.PI / 5)+0.5),
+					new THREE.Vector2(zoom*Math.sin(2*Math.PI / 5)+0.5, zoom*Math.cos(2*Math.PI / 5)+0.5),
+					new THREE.Vector2(0.5, zoom+0.5)
+				]);
+			};
+
+			geometry.faceVertexUvs[0] = uvArray;
+			geometry.uvsNeedUpdate = true;
+		};
+
+		function tetrahedronUVs(geometry, zoom){
+			let uvArray = [];
+
+			if(isNaN(zoom) || zoom <= 0){
+				zoom = 0.5
+			};
+
+			for(let [i, f] of Object.entries(geometry.faces)){
+				i = Number(i);
+				switch(i){
+					case 0:
+						f.materialIndex = 0;
+						break;
+					case 4:
+						f.materialIndex = 1;
+						break;
+					case 5:
+						f.materialIndex = 2;
+						break;
+					default:
+						f.materialIndex = 3;
+						break;
+				};
+
+				let basePoint = new THREE.Vector2(0.5, 0.5);
+				let otherPoints = [
+					new THREE.Vector2(0.5, 0.5 + zoom),
+					new THREE.Vector2(0.5 - 0.5*zoom*Math.sqrt(3), 0.5 - 0.5*zoom),
+					new THREE.Vector2(0.5 + 0.5*zoom*Math.sqrt(3), 0.5 - 0.5*zoom)
+				];
+
+				if(i >= 1 && i <= 3){
+					uvArray.push([otherPoints[(i - 1)%3], otherPoints[i%3], basePoint]);
+				}
+				else{
+					uvArray.push([
+						new THREE.Vector2(zoom*Math.sin(2*Math.PI / 3)+0.5, zoom*Math.cos(2*Math.PI / 3)+0.5),
+						new THREE.Vector2(0.5, zoom + 0.5),
+						new THREE.Vector2(zoom*Math.sin(4*Math.PI / 3)+0.5, zoom*Math.cos(4*Math.PI / 3)+0.5)
+					]);
+				};
+			};
+
+			geometry.faceVertexUvs[0] = uvArray;
+			geometry.uvsNeedUpdate = true;
+		};
+
+		function pentagonalTrapezohedronUVs(geometry, zoom, shift){
+			let uvArray = [];
+
+			if(isNaN(zoom) || zoom <= 0){
+				zoom = 0.5
+			};
+
+			if(isNaN(shift)){
+				zoom = 0.5
+			};
+
+			let face1 = geometry.faces[1];
+
+			let u1 = new THREE.Vector3().subVectors(geometry.vertices[face1.a], geometry.vertices[face1.b]).normalize();
+			let u2 = new THREE.Vector3().subVectors(geometry.vertices[face1.b], geometry.vertices[face1.c]).normalize();
+			let u3 = new THREE.Vector3().subVectors(geometry.vertices[face1.c], geometry.vertices[face1.a]).normalize();
+
+			const y = zoom*Math.sin(Math.acos(u2.dot(u1.clone().multiplyScalar(-1)))) / Math.sin(Math.acos(u1.dot(u3.clone().multiplyScalar(-1))));
+
+			for(const [i, face] of Object.entries(geometry.faces)){
+				face.materialIndex = Math.floor(Number(i) / 4);
+
+				let v1 = new THREE.Vector3().subVectors(geometry.vertices[face.a], geometry.vertices[face.b]).normalize();
+				let v2 = new THREE.Vector3().subVectors(geometry.vertices[face.b], geometry.vertices[face.c]).normalize();
+				let v3 = new THREE.Vector3().subVectors(geometry.vertices[face.c], geometry.vertices[face.a]).normalize();
+
+				let angles = [];
+				let sortedAngles = [];
+
+				angles.push(
+					Math.acos(v1.dot(v3.clone().multiplyScalar(-1))),
+					Math.acos(v2.dot(v1.clone().multiplyScalar(-1))),
+					Math.acos(v3.dot(v2.clone().multiplyScalar(-1)))
+				);
+
+				sortedAngles = angles.slice(0);
+
+				sortedAngles.sort();
+
+				let order = angles.indexOf(sortedAngles[0]) - angles.indexOf(sortedAngles[2]);
+
+				if(sortedAngles[2] > Math.PI / 2 && (order === 1 || order === -2)){
+					let uvs = [
+						new THREE.Vector2(0.5, zoom + shift),
+						new THREE.Vector2(0.5 - y*Math.sin(sortedAngles[2]), shift + y*Math.cos(sortedAngles[2])),
+						new THREE.Vector2(0.5, shift)
+					];
+
+					uvArray.push([
+						uvs[angles.indexOf(sortedAngles[0])],
+						uvs[angles.indexOf(sortedAngles[1])],
+						uvs[angles.indexOf(sortedAngles[2])]
+					]);
+				}
+				else if(sortedAngles[2] > Math.PI / 2){
+					let uvs = [
+						new THREE.Vector2(0.5, zoom + shift),
+						new THREE.Vector2(0.5 + y*Math.sin(sortedAngles[2]), shift + y*Math.cos(sortedAngles[2])),
+						new THREE.Vector2(0.5, shift)
+					];
+
+					uvArray.push([
+						uvs[angles.indexOf(sortedAngles[0])],
+						uvs[angles.indexOf(sortedAngles[1])],
+						uvs[angles.indexOf(sortedAngles[2])]
+					]);
+				}
+				else if(order === 1 || order === -2){
+					let uvs = [
+						new THREE.Vector2(0.5 - y*Math.sin(sortedAngles[2]), shift - y*Math.cos(sortedAngles[2])),
+						new THREE.Vector2(0.5, shift - y*Math.sin(sortedAngles[0]) / Math.sin(sortedAngles[1])),
+						new THREE.Vector2(0.5, shift)
+					];
+
+					uvArray.push([
+						uvs[angles.indexOf(sortedAngles[0])],
+						uvs[angles.indexOf(sortedAngles[1])],
+						uvs[angles.indexOf(sortedAngles[2])]
+					]);
+				}
+				else{
+					let uvs = [
+						new THREE.Vector2(0.5 + y*Math.sin(sortedAngles[2]), shift - y*Math.cos(sortedAngles[2])),
+						new THREE.Vector2(0.5, shift - y*Math.sin(sortedAngles[0]) / Math.sin(sortedAngles[1])),
+						new THREE.Vector2(0.5, shift)
+					];
+
+					uvArray.push([
+						uvs[angles.indexOf(sortedAngles[0])],
+						uvs[angles.indexOf(sortedAngles[1])],
+						uvs[angles.indexOf(sortedAngles[2])]
+					]);
+				};
+			};
+
+			geometry.faceVertexUvs[0] = uvArray;
+			geometry.uvsNeedUpdate = true;
+		};
+
+		function triacontahedronUVs(geometry, zoom){
+			let uvArray = [];
+
+			if(isNaN(zoom) || zoom <= 0){
+				zoom = 0.5
+			};
+
+			for(let i = 0; i < 30; i++){
+				for(let j = 0; j < 4; j++){
+					geometry.faces[4*i+j].materialIndex = i;
+				};
+
+				let face = geometry.faces[4*i];
+
+				let v1 = new THREE.Vector3().subVectors(geometry.vertices[face.a], geometry.vertices[face.b]).normalize();
+				let v2 = new THREE.Vector3().subVectors(geometry.vertices[face.b], geometry.vertices[face.c]).normalize();
+				let v3 = new THREE.Vector3().subVectors(geometry.vertices[face.c], geometry.vertices[face.a]).normalize();
+
+				let angles = [];
+
+				angles.push(
+					Math.acos(v1.dot(v3.clone().multiplyScalar(-1))),
+					Math.acos(v2.dot(v1.clone().multiplyScalar(-1))),
+					Math.acos(v3.dot(v2.clone().multiplyScalar(-1)))
+				);
+
+				let mp = new THREE.Vector2(0.5, 0.5);
+
+				if(angles[0] < angles[1]){
+					let points = [
+						new THREE.Vector2(0.5 - zoom, 0.5),
+						new THREE.Vector2(0.5, 0.5 - zoom*Math.tan(angles[0])),
+						new THREE.Vector2(0.5 + zoom, 0.5),
+						new THREE.Vector2(0.5, 0.5 + zoom*Math.tan(angles[0]))
+					];
+
+					for(let j = 0; j < 4; j++){
+						uvArray.push([points[j], points[(j+1)%4], mp]);
+					};
+				}
+				else{
+					let points = [
+						new THREE.Vector2(0.5, 0.5 - zoom*Math.tan(angles[1])),
+						new THREE.Vector2(0.5 + zoom, 0.5),
+						new THREE.Vector2(0.5, 0.5 + zoom*Math.tan(angles[1])),
+						new THREE.Vector2(0.5 - zoom, 0.5)
+					];
+
+					for(let j = 0; j < 4; j++){
+						uvArray.push([points[j], points[(j+1)%4], mp]);
+					};
+				};
+			};
+
+			geometry.faceVertexUvs[0] = uvArray;
+			geometry.uvsNeedUpdate = true;
+		};
+
+		function alignGeometry(geometry, vertexIndex, vector){
+			//Aligns a geometry so that given vertex lies on given vector
+			if(typeof vector === "undefined" || typeof vector.constructor === "undefined" || vector.constructor.name !== "Vector3"){
+				vector = new THREE.Vector3(0, 1, 0);
+			};
+
+			if(!Number.isInteger(vertexIndex) || vertexIndex < 0 || vertexIndex >= geometry.vertices.length){
+				vertexIndex = 0;
+			};
+
+			let rotationMatrix = rotateAtoB(geometry.vertices[vertexIndex], vector);
+			for(const v of geometry.vertices){
+				v.applyMatrix3(rotationMatrix);
+			};
+
+			geometry.computeFaceNormals();
+			geometry.computeVertexNormals();
+		};
+
+//POLYHEDRA
+		function polyhedronGeometry(polyhedron, options){
+			let geometry = new THREE.Geometry();
+			let poly = POLYHEDRA[polyhedron];
+
+			for(const vertex of poly.vertex){
+				geometry.vertices.push(new THREE.Vector3().fromArray(vertex));
+			};
+
+			for(const [i, face] of Object.entries(poly.face)){
+				let materialIndex = 0;
+				let faceSize = face.length;
+
+				switch(options){
+					case "prism":
+						if(i == 0 || i == 1){
+							materialIndex = 6;
+						}
+						else{
+							materialIndex = 7;
+						};
+						break;
+					default:
+						switch(faceSize){
+							case 4:
+								materialIndex = 1;
+								break;
+							case 5:
+								materialIndex = 2;
+								break;
+							case 6:
+								materialIndex = 3;
+								break;
+							case 8:
+								materialIndex = 4;
+								break;
+							case 10:
+								materialIndex = 5;
+								break;
+						};
+				};
+
+				let mp = geometry.vertices.length;
+				let faceVertices = [];
+				let sidelengthSum = 0;
+
+				for(const i of face){
+					faceVertices.push(geometry.vertices[i]);
+				};
+
+				for(let i = 0; i < faceSize; i++){
+					geometry.faces.push(new THREE.Face3(face[i], face[(i+1)%faceSize], mp, undefined, undefined, materialIndex));
+
+					sidelengthSum += geometry.vertices[face[i]].distanceTo(geometry.vertices[face[(i+1)%faceSize]]);
+				};
+				/*for(let i = 0; i < faceSize - 2; i++){
+					geometry.faces.push(new THREE.Face3(face[0], face[i+1], face[i+2], midpoint3(faceVertices).normalize(), undefined, materialIndex));
+				};*/
+
+				let sidelength = sidelengthSum / faceSize;
+				let restrictedFaceSize = Math.min(faceSize, 3);
+				let angle = Math.PI*(restrictedFaceSize - 2) / (2*restrictedFaceSize);
+				let vec1 = new THREE.Vector3().subVectors(geometry.vertices[face[1]], geometry.vertices[face[0]]);
+				let vec2 = new THREE.Vector3().subVectors(geometry.vertices[face[2]], geometry.vertices[face[0]]);
+				let normal = new THREE.Vector3().crossVectors(vec1, vec2).normalize();
+				let scaleFactor = 0;//state.polyhedronOptions.stellation*sidelength*(Math.sqrt(1 - 1 / Math.pow(2*Math.cos(angle), 2)));
+
+				geometry.vertices.push(midpoint3(faceVertices).addScaledVector(normal, scaleFactor));
+			};
+
+			geometry.sortFacesByMaterialIndex();
+			geometry.computeFaceNormals();
+			geometry.computeVertexNormals();
+
+			return geometry;
+		};
+
+//DUAL POLYHEDRA
+		function dualPolyhedron(polyhedron, print){
+			let poly = POLYHEDRA[polyhedron];
+			let vertices = [];
+			let dualVertices = [];
+			let dualEdges = [];
+			let dualFaces = [];
+			let dualPoly = {name: poly.name + " Dual", vertex: dualVertices, edge: dualEdges, face: dualFaces};
+			POLYHEDRA[polyhedron + "Dual"] = dualPoly;
+
+			//Determine category
+			switch(poly.category[0]){
+				case "Platonic Solid":
+					dualPoly.category = ["Platonic Solid"];
+					break;
+				case "Archimedean Solid":
+					dualPoly.category = ["Catalan Solid"];
+					break;
+				case "Antiprism":
+					dualPoly.category = ["Trapezohedron"];
+					break;
+				case "Prism":
+					dualPoly.category = ["Bipyramid"];
+					break;
+				case "Catalan Solid":
+					dualPoly.category = ["Archimedean Solid"];
+					break;
+				case "Trapezohedron":
+					dualPoly.category = ["Antiprism"];
+					break;
+				case "Bipyramid":
+					dualPoly.category = ["Prism"];
+					break;
+				default:
+					dualPoly.category = ["Dual Solid"];
+					break;
+			};
+
+			for(const vertex of poly.vertex){
+				vertices.push(new THREE.Vector3().fromArray(vertex));
+			};
+
+			//Build vertex list
+			for(const face of poly.face){
+				faceVertices = [];
+				for(const vertex of face){
+					faceVertices.push(new THREE.Vector3().fromArray(poly.vertex[vertex]));
+				};
+				let v = midpoint3(faceVertices);
+				dualVertices.push(v.divideScalar(v.lengthSq()).toArray());
+			};
+
+			//Build edge list
+			for(const edge of poly.edge){
+				let dualEdge = [];
+				for(const [i, face] of Object.entries(poly.face)){
+					if(face.includes(edge[0]) && face.includes(edge[1])){
+						dualEdge.push(Number(i));
+					};
+				};
+				dualEdges.push(dualEdge);
+			};
+
+			//Build face list
+			for(let i = 0; i < poly.vertex.length; i++){
+				let dualFace = [];
+				let faceVertices = [];
+				let indexedVertices = [];
+
+				for(let j = 0; j < poly.face.length; j++){
+					if(poly.face[j].includes(i)){
+						let dualVertex = new THREE.Vector3().fromArray(dualVertices[j]).clone();
+						faceVertices.push(dualVertex);
+						indexedVertices.push({index: j, vertex: dualVertex});
+					};
+				};
+
+				//Sort face array into anticlockwise order by using theta value in spherical coordinates around the midpoint
+				let mp = midpoint3(faceVertices).normalize();
+				let rotationMatrix = rotateAtoB(mp, new THREE.Vector3(0, 1, 0));
+				let direction = 1;
+
+				if(mp.applyMatrix3(rotationMatrix).y < 0){
+					direction = -1;
+				};
+
+				for(const v of indexedVertices){
+					v.vertex.normalize().applyMatrix3(rotationMatrix);
+					v.theta = Math.atan2(v.vertex.x, v.vertex.z)*direction;
+				};
+
+				indexedVertices.sort((a, b) => a.theta - b.theta);
+
+				for(const v of indexedVertices){
+					dualFace.push(v.index);
+				};
+
+				dualFaces.push(dualFace);
+			};
+
+			//option to export geometry attributes
+			if(print){
+				download(JSON.stringify(dualPoly), "poly.txt", 'text/plain', "saveLink");
+			};
+		};
+
+//GEOMETRY FOR POLYHEDRON MERGED WITH ITS DUAL
+		function mergedDual(polyhedron, scale, options){
+			if(POLYHEDRA[polyhedron + "Dual"] == undefined){
+				dualPolyhedron(polyhedron);
+			};
+
+			let geometry = polyhedronGeometry(polyhedron, options);
+			let dualGeometry = polyhedronGeometry(polyhedron + "Dual");
+
+			//Merge geometries
+			switch(options){
+				case "prism":
+					dualGeometry.merge(geometry, new THREE.Matrix4(), 0);
+					geometry = dualGeometry;
+					break;
+				default:
+					geometry.merge(dualGeometry, new THREE.Matrix4(), 6);
+			};
+
+			alignGeometry(geometry);
+
+			//Scale
+			if(typeof scale === "number"){
+				scale = new THREE.Vector3(scale, scale, scale);
+			};
+
+			geometry.normalize();
+			geometry.scale(scale.x, scale.y, scale.z);
+
+			//Calculate UVs
+			geometry.computeVertexNormals();
+			geometry.computeFaceNormals();
+			assignSphericalUVs(geometry);
+			switch(options){
+				case "cube":
+					geometry.faceVertexUvs[0] = mergedDualCubeData.faceVertexUvs;
+					geometry.uvsNeedUpdate = true;
+					break;
+			};
+
+			//Set material indices
+			for(const [i, face] of Object.entries(geometry.faces)){
+				switch(options){
+					case "swap":
+						if(face.materialIndex < 6){
+							face.materialIndex = 8;
+						}
+						else{
+							face.materialIndex -= 6;
+						};
+						break;
+					case "prism":
+						if(face.materialIndex < 6){
+							face.materialIndex = 8;
+						};
+						break;
+					case "cube":
+						face.materialIndex = mergedDualCubeData.materialIndices[i];
+						break;
+					default:
+						if(face.materialIndex >= 6){
+							face.materialIndex = 8;
+						};
+				};
+			};
+			geometry.sortFacesByMaterialIndex();
+
+			return geometry;
+		};
+
+//PRISMS
+		function prism(n){
+			let vertices= [];
+			let edges= [];
+			let faces= [];
+			let top= [];
+			let base= [];
+
+			POLYHEDRA[n.toString() + "Prism"] = {name: n.toString() + "Prism", vertex: vertices, edge: edges, face: faces, category: "Prism"};
+
+			for(let i= 0; i < n; i++){
+				vertices.push([Math.sin(2*i*Math.PI / n), Math.cos(2*i*Math.PI / n), Math.sin(Math.PI / n)]);
+				vertices.push([Math.sin(2*i*Math.PI / n), Math.cos(2*i*Math.PI / n), -1*Math.sin(Math.PI / n)]);
+
+				edges.push([2*i, 2*i + 1]);
+				edges.push([i, (i + 2)%n]);
+
+				faces.push([2*i, (2*i + 2)%(2*n), (2*i + 3)%(2*n), 2*i + 1]);
+
+				top.push(2*i);
+				base.push(2*i + 1);
+			};
+
+			faces.unshift(base);
+			faces.unshift(top.reverse());
+		};
+
+//ANTI PRISMS
+		function antiprism(n){
+			let vertices= [];
+			let edges= [];
+			let faces= [];
+			let top= [];
+			let base= [];
+
+			POLYHEDRA[n.toString() + "AntiPrism"] = {name: n.toString() + "AntiPrism", vertex: vertices, edge: edges, face: faces, category: "Antiprism"};
+
+			let theta = Math.PI / n;
+			let radius = 1 / Math.cos(theta / 2);
+			let height = Math.sqrt(0.5*Math.cos(theta) - 0.5*Math.cos(2*theta));
+
+			for(let i= 0; i < n; i++){
+				vertices.push([Math.sin(2*i*theta)*radius, Math.cos(2*i*theta)*radius, height*radius]);
+				vertices.push([Math.sin((2*i+1)*theta)*radius, Math.cos((2*i+1)*theta)*radius, -1*height*radius]);
+
+				edges.push([2*i, 2*i + 1]);
+				edges.push([2*i + 1, (2*i + 2)%(2*n)]);
+				edges.push([i, (i + 2)%(2*n)]);
+
+				faces.push([2*i, (2*i + 2)%(2*n), 2*i + 1]);
+				faces.push([2*i + 1, (2*i + 2)%(2*n), (2*i + 3)%(2*n)]);
+
+				top.push(2*i);
+				base.push(2*i + 1);
+			};
+
+			faces.unshift(base);
+			faces.unshift(top.reverse());
+		};
+
+//BUILDING AN EDGE GEOMETRY
+		function polyhedronEdgeGeometry(polyhedron, scale, radius){
+			let poly = POLYHEDRA[polyhedron];
+
+			function buildGeometry(rad){
+				let geometry = new THREE.Geometry();
+
+				for(const edge of poly["edge"]){
+					let top = new THREE.Vector3().fromArray(poly.vertex[edge[0]]);
+					let bot = new THREE.Vector3().fromArray(poly.vertex[edge[1]]);
+					let vec = new THREE.Vector3().subVectors(top, bot);
+					let mp = new THREE.Vector3().addVectors (top, bot).multiplyScalar(0.5);
+					let rotationMatrix = rotateAtoB(new THREE.Vector3(0, 1, 0), vec);
+
+					let geo = new THREE.CylinderGeometry(rad, rad, top.distanceTo(bot), 32);
+
+					for(const v of geo.vertices){
+						v.applyMatrix3(rotationMatrix);
+						v.add(mp);
+					};
+
+					geometry.merge(geo, new THREE.Matrix4(), 0);
+				};
+
+				return geometry;
+			};
+
+			let tempGeometry = buildGeometry(radius);
+			tempGeometry.computeBoundingSphere();
+
+			return buildGeometry(radius*tempGeometry.boundingSphere.radius).normalize().scale(scale, scale, scale);
+		};
+
+//GLOW MESH
+		function glowMesh(mesh, insideDilation, outsideDilation, option){
+			let glowMesh	= new THREEx.GeometricGlowMesh(mesh, insideDilation, outsideDilation, option);
+
+			//inner glow parameters
+			glowMesh.insideMesh.material.uniforms.glowColor.value.set(state.colors["innerGlow"]);
+			glowMesh.insideMesh.material.uniforms.coeficient.value = state.innerGlow.coefficient;
+			glowMesh.insideMesh.material.uniforms.power.value =  state.innerGlow.power;
+
+			//inner glow parameters
+			glowMesh.outsideMesh.material.uniforms.glowColor.value.set(state.colors["outerGlow"]);
+			glowMesh.outsideMesh.material.uniforms.coeficient.value = state.outerGlow.coefficient;
+			glowMesh.outsideMesh.material.uniforms.power.value = state.outerGlow.power;
+
+			return glowMesh;
+		};
+
+		function addGlow(){
+			object1.geometry.computeVertexNormals();
+			glowObject = glowMesh(object1, 0.01, 0.15, "double");
+			object1.add(glowObject.object3d);
+		};
+
+		function removeGlow(){
+			object1.remove(glowObject.object3d);
+			object2.remove(object2.children[1]);
+		};
+
+//NUMBER ROTATION
+		function rotateNumbers(){
+			let rotations = {
+				d4: [0, -1, -1, -1],
+				d6: [0, 0, 1, -1, 0, 0],
+				d8: [-1, -1, 0, 0, -1, -1, 0, 0],
+				d12: [1, 1, -1, 1, 1, 2, -1, -1, -1, 1, -1, -1],
+				d20: [-1, 1, -1, 1, -1, 1, 1, 1, 0, -1, 1, -1, -1, -1, 1, 1, -1, 0, 1, -1],
+				d30: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+				//d100: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+			};
+
+			let angle = 0;
+
+			for(const [dice, faces] of Object.entries(rotations)){
+				switch(dice){
+					case "d4":
+						angle = 2*Math.PI / 3;
+						break;
+					case "d6":
+						angle = Math.PI / 2;
+						break;
+					case "d8":
+						angle = 2*Math.PI / 3;
+						break;
+					case "d12":
+						angle = 2*Math.PI / 5;
+						break;
+					case "d20":
+						angle = 2*Math.PI / 3;
+						break;
+					case "d30":
+						angle = Math.PI;
+						break;
+					case "d100":
+						angle = Math.PI / 2;
+						break;
+				};
+
+				for(const [i, f] of Object.entries(faces)){
+					numberMaterials[dice][i].map.rotation = f*angle;
+				};
+			};
+		};
+
+//FACE ORDERING
+		let faceOrders = {
+			d4: [3, 2, 1, 0],
+			d6: [3, 2, 1, 4, 5, 0],
+			d8: [5, 6, 0, 3, 1, 2, 4, 7],
+			d10: [1, 5, 0, 8, 7, 3, 6, 4, 9, 2],
+			d12: [3, 1, 9, 4, 10, 0, 5, 2, 8, 7, 6, 11],
+			d20: [11, 1, 17, 4, 14, 19, 9, 6, 12, 3, 15, 2, 18, 8, 5, 7, 16, 0, 10, 13],
+			d30: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 29, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 16],
+			d100: [1, 5, 0, 8, 7, 3, 6, 4, 9, 2]
+		};
+
+//SHAPE PICKER
+		function draw(shape){
+			removeGlow();
+			renderer.renderLists.dispose();
+			parent.remove(object1);
+			parent.remove(object2);
+
+			let geometry, numberGeometry, frontVertex, angle;
+
+			switch(shape){
+				case "d4":
+					geometry = new THREE.TetrahedronGeometry(2.2);
+
+					//orient geometry point up and point forward
+					alignGeometry(geometry, 0, new THREE.Vector3(0, 1, 0));
+					frontVertex = geometry.vertices[1];
+					angle = Math.atan(frontVertex.z / frontVertex.x);
+					geometry.rotateY(-1*angle + Math.PI);
+
+					//add extra vertex and faces to make texture look better on the base
+					let vertices = geometry.vertices;
+					let base = geometry.faces[1];
+					let basePoint = vertices.length;
+
+					vertices.push(midpoint3([vertices[1], vertices[2], vertices[3]]));
+
+					geometry.faces.splice(1, 1, 
+						new THREE.Face3(base.a, base.b, basePoint),
+						new THREE.Face3(base.b, base.c, basePoint),
+						new THREE.Face3(base.c, base.a, basePoint)
+					);
+
+					//calculate UVs
+					assignSphericalUVs(geometry);
+
+					//fix base UVs
+					let uvArray = geometry.faceVertexUvs[0];
+					uvArray[2] = [uvArray[0][2], uvArray[0][1], new THREE.Vector2(1 / 3, 0)];
+
+					numberGeometry = geometry.clone();
+					tetrahedronUVs(numberGeometry, 0.65);
+
+					object1 = new THREE.Mesh(geometry, metalMaterial);
+					break;
+				case "d6":
+					geometry = new THREE.BoxGeometry(2.5, 2.5, 2.5);
+					numberGeometry = geometry.clone();
+
+					object1 = new THREE.Mesh(geometry, cubeMaterial);
+					break;
+				case "d8":
+					geometry = new THREE.OctahedronGeometry(2);
+
+					//align texture with other dice
+					geometry.rotateY(Math.PI / 2);
+
+					numberGeometry = geometry.clone();
+					triangleUVs(numberGeometry, 0.9);
+
+					object1 = new THREE.Mesh(geometry, metalMaterial);
+					break;
+				case "d10":
+					geometry = polyhedronGeometry("PentagonalTrapezohedron");
+
+					//orient geometry point up and point forward
+					alignGeometry(geometry, 0, new THREE.Vector3(0, 1, 0));
+					frontVertex = geometry.vertices[2];
+					angle = Math.atan2(frontVertex.z, frontVertex.x);
+					geometry.rotateY(angle + Math.PI / 2);
+
+					//scale geometry
+					geometry.scale(1.7, 1, 1.7);
+
+					//calculate UVs
+					assignSphericalUVs(geometry);
+
+					//add numbers
+					numberGeometry = geometry.clone();
+					pentagonalTrapezohedronUVs(numberGeometry, 1.2, 0.4);
+
+					object1 = new THREE.Mesh(geometry, metalMaterial);
+					break;
+				case "d12":
+					geometry = new THREE.DodecahedronGeometry(2);
+
+					//orient geometry point up
+					alignGeometry(geometry);
+
+					//calculate UVs
+					assignSphericalUVs(geometry);
+
+					//add numbers
+					numberGeometry = geometry.clone();
+					dodecahedronUVs(numberGeometry, 0.7);
+
+					object1 = new THREE.Mesh(geometry, metalMaterial);
+					break;
+				case "d20":
+					geometry = new THREE.IcosahedronGeometry(2);
+
+					//orient geometry point up and face forward
+					alignGeometry(geometry, 0, new THREE.Vector3(0, 1, 0));
+					frontVertex = geometry.vertices[1];
+					angle = Math.atan(frontVertex.x / frontVertex.z);
+					geometry.rotateY(-1*angle);
+
+					//calculate UVs
+					assignSphericalUVs(geometry);
+
+					//add numbers
+					numberGeometry = geometry.clone();
+					triangleUVs(numberGeometry, 1.1);
+
+					object1 = new THREE.Mesh(geometry, metalMaterial);
+					break;
+				case "d30":
+					geometry = polyhedronGeometry("RhombicTriacontahedron");
+
+					//orient geometry point up and point forward
+					alignGeometry(geometry, 0, new THREE.Vector3(0, 1, 0));
+					frontVertex = geometry.vertices[1];
+					angle = Math.atan2(frontVertex.z, frontVertex.x);
+					geometry.rotateY(angle);
+
+					//scale geometry
+					geometry.scale(1.8, 1.8, 1.8);
+
+					//calculate UVs
+					assignSphericalUVs(geometry);
+
+					//add numbers
+					numberGeometry = geometry.clone();
+					triacontahedronUVs(numberGeometry, 1.2, 0.4);
+
+					object1 = new THREE.Mesh(geometry, metalMaterial);
+					break;
+				case "d100":
+					geometry = polyhedronGeometry("PentagonalTrapezohedron");
+
+					//orient geometry point up and point forward
+					alignGeometry(geometry, 0, new THREE.Vector3(0, 1, 0));
+					frontVertex = geometry.vertices[2];
+					angle = Math.atan2(frontVertex.z, frontVertex.x);
+					geometry.rotateY(angle + Math.PI / 2);
+
+					//scale geometry
+					geometry.scale(1.7, 1, 1.7);
+
+					//calculate UVs
+					assignSphericalUVs(geometry);
+
+					//add numbers
+					numberGeometry = geometry.clone();
+					pentagonalTrapezohedronUVs(numberGeometry, 1.8, 0.4);
+
+					draw("d10");
+					object2 = object1.clone();
+					parent.remove(object1);
+					parent.add(object2);
+					object1 = new THREE.Mesh(geometry, metalMaterial);
+					object1.rotation.z = Math.PI / 6;
+					object2.rotation.z = -1*Math.PI / 6;
+					object1.position.set(-1,0,1);
+					object2.position.set(1,0,-1);
+					object1.scale.set(0.65, 0.65, 0.65);
+					object2.scale.set(0.65, 0.65, 0.65);
+					break;
+				default:
+					geometry = polyhedronEdgeGeometry("RhombicTriacontahedron", 2, 0.06);
+					object1 = new THREE.Mesh(geometry, metalMaterial);
+			};
+
+			//CENTER MARkER
+/*			let marker  = new THREE.Mesh(centerGeometry = new THREE.SphereGeometry(0.1), material);
+			marker.position.set(0,0,5);
+			scene.add(marker)*/
+
+			//FACE ORDERING
+			if(typeof faceOrders[shape] !== "undefined"){
+				for(const [i, f] of Object.entries(numberGeometry.faces)){
+					f.materialIndex = faceOrders[shape][f.materialIndex];
+				};
+			};
+
+			if(state.shadows){
+				object1.castShadow = true;
+				object1.receiveShadow = true;
+			};
+
+			object1.add(new THREE.Mesh(numberGeometry, numberMaterials[shape]));
+			parent.add(object1);
+
+			if(state.glow){
+				addGlow()
+			};
+		};
+
+//GUI
+		gui = {
+			parameters: {
+				materialColor: function(){},
+				materialR: hexToRGB(state.colors["material"]).r,
+				materialG: hexToRGB(state.colors["material"]).g,
+				materialB: hexToRGB(state.colors["material"]).b,
+				randomColor: function(){},
+				numberColor: function(){},
+				randomNumberColor: function(){},
+				transparency: state.transparency,
+				backgroundColor: function(){},
+				innerGlowColor: function(){},
+				outerGlowColor: function(){},
+				base: function(){},
+				sides: function(){},
+				dual: function(){},
+				text0: function(){},
+				text1: function(){},
+				text2: function(){},
+				text3: function(){},
+				text4: function(){},
+				text5: function(){},
+				emissive: function(){},
+				light1Intensity: lights.light1.intensity,
+				light1Color: function(){},
+				light2Intensity: lights.light2.intensity,
+				light2Color: function(){},
+				light3Intensity: lights.light3.intensity,
+				light3Color: function(){},
+				ambientIntensity: lights.ambient.intensity,
+				ambientColor: function(){},
+				torchIntensity: lights.torch.intensity,
+				torchColor: function(){},
+				useTorch: state.torchOn,
+				metalness: state.metalness,
+				roughness: state.roughness,
+				reflectivity: state.reflectivity,
+				envMapIntensity: state.envMapIntensity,
+				emissiveIntensity: state.emissiveIntensity,
+				clearcoat: state.clearcoat,
+				clearcoatRoughness: state.clearcoatRoughness,
+				flatShading: state.flatShading,
+				rotate: state.rotate,
+				rotateX: state.rotateSpeed.x*state.rotateSpeed.f,
+				rotateY: state.rotateSpeed.y*state.rotateSpeed.f,
+				rotateZ: state.rotateSpeed.z*state.rotateSpeed.f,
+				glow: state.glow,
+				glowOnly: !state.visible,
+				fixTorch: state.fixTorchPosition,
+				object: state.objectType,
+				side: "Both",
+				texture: state.currentTexture,
+				bump: state.currentBump,
+				bumpScale: state.bumpScale,
+				environment: state.currentEnvironment,
+				background: state.currentBackground,
+				innerGlowCoefficient: state.innerGlow.coefficient,
+				innerGlowPower: state.innerGlow.power,
+				outerGlowCoefficient: state.outerGlow.coefficient,
+				outerGlowPower: state.outerGlow.power,
+				resetPosition: function(){},
+				resetCamera: function(){},
+				snapshot: function(){},
+				resetLights: function(){},
+				screenshot: function(){},
+				saveScene: function(){},
+				loadScene: function(){},
+				exportObject: function(){},
+				fractalTexture: state.fractalTexture,
+				jaznet: function(){},
+				demo: state.demo.on,
+				demoOptions: function(){},
+			},
+
+			maxSwatches: 28,
+
+			swatches: [
+				'#ff0000',
+				'#ff8000',
+				'#ffff00',
+				'#80ff00',
+				'#00ff00',
+				'#00ff80',
+				'#00ffff',
+				'#0080ff',
+				'#0000ff',
+				'#8000ff',
+				'#ff00ff',
+				'#ff0080',
+				'#ffffff',
+				'#000000',
+				state.colors.material,
+				state.colors.innerGlow,
+				state.colors.background,
+				'#91753c',
+				'#808080',
+				'#885826',
+				'#DE862B',
+			],
+
+			blurOnClose: false,
+		};
+
+		function makeGUI(){
+			//COLOUR PICKER
+			let pickr = new Pickr({
+				el: document.getElementById("pickr"),
+				theme: 'monolith',
+				lockOpacity: true,
+				closeOnScroll: true,
+				comparison: true,
+				closeWithKey: 'Enter',
+
+				swatches: gui.swatches,
+
+				components: {
+					preview: true,
+					opacity: true,
+					hue: true,
+
+					interaction: {
+						hex: true,
+						rgba: true,
+						hsva: false,
+						input: true,
+						clear: false,
+						save: false,
+						cancel: false,
+					},
+				},
+			});
+
+			//Make pickr accessible
+			gui.pickr = pickr;
+
+			//add close button and random button to pickr
+			pickrAugments.addCloseButton(pickr);
+			pickrAugments.addRandomColorButton(pickr);
+
+			//Set max swatches
+			gui.permanentSwatchesIndex = gui.swatches.length;
+
+			function activatePickr(element){
+				let selectColor = function(color, instance){
+					setColor(element, color.toHEXA().toString());
+				};
+
+				let closePickr = function(){
+					let newColor = pickr.getColor().toHEXA().toString().toLowerCase();
+					let found = false;
+
+					for(const color of gui.swatches){
+						if(color.toLowerCase() == newColor){
+							found = true;
+							break;
+						};
+					};
+
+					if(!found){
+						gui.pickr.addSwatch(newColor);
+						gui.swatches.push(newColor);
+					};
+
+					if(gui.swatches.length > gui.maxSwatches){
+						gui.pickr.removeSwatch(gui.permanentSwatchesIndex);
+						gui.swatches.splice(gui.permanentSwatchesIndex, 1);
+					};
+
+					pickr.off('change', selectColor);
+					pickr.off('hide', closePickr);
+					document.removeEventListener("keydown", cancelPickr);
+				};
+
+				let cancelPickr = function(event){
+					if(event.which == 27){
+						pickr.setColor(pickr._lastColor.toHEXA().toString());
+						pickr.hide();
+					};
+				};
+
+				pickr.setColor(document.getElementById(element+"ColorButton").style["background-color"]);
+				pickr.on('change', selectColor);
+				pickr.on('hide', closePickr);
+				document.addEventListener("keydown", cancelPickr, {passive: true});
+				document.getElementsByClassName('pcr-button')[0].click();
+			};
+
+			//GUI OBJECT
+			gui.gui = new dat.GUI({autoPlace: true, width: 300, hideable: true});
+			gui.gui.close();
+
+			gui.objectSelect = gui.gui.add(gui.parameters, 'object', shapeList).name("Dice")
+			.onChange(function(newValue){
+				state.objectType = newValue;
+				needsRedraw = true;
+			});
+
+			//LOAD/SAVE FOLDER
+			gui.fSave = gui.gui.addFolder("Load/Save");
+
+			gui.loadScene = gui.fSave.add(gui.parameters, "loadScene").name("Load Scene")
+			.onChange(function(){
+				document.getElementById('fileInput').click();
+			});
+
+			gui.saveScene = gui.fSave.add(gui.parameters, "saveScene").name("Save Scene")
+			.onChange(function(){
+				saveState();
+			});
+
+			gui.exportObject = gui.fSave.add(gui.parameters, "exportObject").name("Export as GLTF Binary")
+			.onChange(function(){
+				exportObject();
+			});
+
+			gui.screenshot = gui.fSave.add(gui.parameters, "screenshot").name("Take Screenshot")
+			.onChange(function(){
+				screenshot();
+			});
+
+			//ROTATION FOLDER
+			gui.fRotation = gui.gui.addFolder("Rotation");
+
+			gui.resetPosition = gui.fRotation.add(gui.parameters, "resetPosition").name("Reset Position")
+			.onChange(function(){
+				controls.reset();
+				parent.rotation.set(0, 0, 0);
+			});
+
+			gui.rotate = gui.fRotation.add(gui.parameters, "rotate").name("Auto Rotate")
+			.onChange(function(newValue){
+				state.rotate = newValue;
+				document.getElementById("autoRotate").blur();
+			});
+			gui.rotate.domElement.childNodes[0].id = "autoRotate";
+
+			gui.rotateX = gui.fRotation.add(gui.parameters, "rotateX").min(-1*state.rotateSpeed.m).max(state.rotateSpeed.m)
+			.step(0.05).name("x")
+			.onChange(function(newValue){
+				state.rotateSpeed.x = newValue / state.rotateSpeed.f;
+			});
+
+			gui.rotateY = gui.fRotation.add(gui.parameters, "rotateY").min(-1*state.rotateSpeed.m).max(state.rotateSpeed.m)
+			.step(0.05).name("y")
+			.onChange(function(newValue){
+				state.rotateSpeed.y = newValue / state.rotateSpeed.f;
+			});
+
+			gui.rotateZ = gui.fRotation.add(gui.parameters, "rotateZ").min(-1*state.rotateSpeed.m).max(state.rotateSpeed.m)
+			.step(0.05).name("z")
+			.onChange(function(newValue){
+				state.rotateSpeed.z = newValue / state.rotateSpeed.f;
+			});
+
+			gui.resetCamera = gui.fRotation.add(gui.parameters, "resetCamera").name("Reset Camera")
+			.onChange(function(){
+				controls.reset();
+			});
+
+			gui.snapshot = gui.fRotation.add(gui.parameters, "snapshot").name("Snapshot View")
+			.onChange(function(){
+				snapshotView();
+			});
+
+			//COLORS FOLDER
+			gui.fColor = gui.gui.addFolder("Colours");
+
+			gui.color1 = gui.fColor.add(gui.parameters, "materialColor").name("Object")
+			.onChange(function(){
+				activatePickr("material");
+			});
+			gui.color1.domElement.parentElement.parentElement.id = "materialColorButton";
+
+			gui.materialR = gui.fColor.add(gui.parameters, "materialR").min(0).max(255).step(1).name("R")
+			.onChange(function(newValue){
+				setColor("material", '#' + twoDigitHex(newValue) + state.colors["material"].substring(3,7));
+			});
+			gui.materialR.domElement.childNodes[0].childNodes[0].id = "Rbox";
+			gui.materialR.domElement.childNodes[1].childNodes[0].id = "Rslider";
+
+			gui.materialG = gui.fColor.add(gui.parameters, "materialG").min(0).max(255).step(1).name("G")
+			.onChange(function(newValue){
+				setColor("material", state.colors["material"].substring(0,3) + twoDigitHex(newValue) + state.colors["material"].substring(5,7));
+			});
+			gui.materialG.domElement.childNodes[0].childNodes[0].id = "Gbox";
+			gui.materialG.domElement.childNodes[1].childNodes[0].id = "Gslider";
+
+			gui.materialB = gui.fColor.add(gui.parameters, "materialB").min(0).max(255).step(1).name("B")
+			.onChange(function(newValue){
+				setColor("material", state.colors["material"].substring(0,5) + twoDigitHex(newValue));
+			});
+			gui.materialB.domElement.childNodes[0].childNodes[0].id = "Bbox";
+			gui.materialB.domElement.childNodes[1].childNodes[0].id = "Bslider";
+
+			gui.randomColor = gui.fColor.add(gui.parameters, "randomColor").name("Random Object Colour")
+			.onChange(function(){
+				let rand = Math.floor(Math.random() * Math.pow(16, 6)).toString(16);
+
+				while(rand.length < 6){
+					rand = '0' + rand;
+				};
+
+				setColor("material", '#' + rand);
+			});
+			gui.randomColor.domElement.parentElement.parentElement.id = "randomColorButton";
+			gui.randomColor.domElement.parentElement.childNodes[0].style.width = "12em";
+			hide("randomColorButton");
+
+			gui.color3 = gui.fColor.add(gui.parameters, "numberColor").name("Number")
+			.onChange(function(){
+				activatePickr("number");
+			});
+			gui.color3.domElement.parentElement.parentElement.id = "numberColorButton";
+
+			gui.randomNumberColor = gui.fColor.add(gui.parameters, "randomNumberColor").name("Random Number Colour")
+			.onChange(function(){
+				let rand = Math.floor(Math.random() * Math.pow(16, 6)).toString(16);
+
+				while(rand.length < 6){
+					rand = '0' + rand;
+				};
+
+				setColor("number", '#' + rand);
+			});
+			gui.randomNumberColor.domElement.parentElement.parentElement.id = "randomNumberColorButton";
+			gui.randomNumberColor.domElement.parentElement.childNodes[0].style.width = "12em";
+			hide("randomNumberColorButton");
+
+			gui.color2 = gui.fColor.add(gui.parameters, "backgroundColor").name("Background")
+			.onChange(function(){
+				activatePickr("background");
+			});
+			gui.color2.domElement.parentElement.parentElement.id = "backgroundColorButton";
+
+			//MATERIALS FOLDER
+			gui.fMaterial = gui.gui.addFolder("Material");
+
+			gui.metalness = gui.fMaterial.add(gui.parameters, "metalness").min(0).max(1).step(0.01).name("Metalness")
+			.onChange(function(newValue){
+				state.metalness = newValue;
+				applyToAllMaterials("metalness", newValue);
+			});
+
+			gui.roughness = gui.fMaterial.add(gui.parameters, "roughness").min(0).max(1).step(0.01).name("Roughness")
+			.onChange(function(newValue){
+				state.roughness = newValue;
+				applyToAllMaterials("roughness", newValue);
+			});
+
+			gui.transparency = gui.fMaterial.add(gui.parameters, "transparency").min(0).max(1).step(0.1).name("Transparency")
+			.onChange(function(newValue){
+				state.transparency = newValue;
+				applyToAllMaterials("transparency", newValue);
+
+				if(newValue == 0){
+					applyToAllMaterials("transparent", false);
+				}
+				else{
+					applyToAllMaterials("transparent", true);
+				};
+			});
+
+			gui.side = gui.fMaterial.add(gui.parameters, 'side', ["Front", "Back", "Both"]).name("Side")
+			.onChange(function(newValue){
+				switch(newValue){
+					case "Front":
+						state.side = THREE.FrontSide;
+						applyToAllMaterials("side", THREE.FrontSide);
+						break;
+					case "Back":
+						state.side = THREE.BackSide;
+						applyToAllMaterials("side", THREE.BackSide);
+						break;
+					case "Both":
+						state.side = THREE.DoubleSide;
+						applyToAllMaterials("side", THREE.DoubleSide);
+						break;
+				};
+			});
+
+			gui.flatShading = gui.fMaterial.add(gui.parameters, "flatShading").name("Flat Shading")
+			.onChange(function(newValue){
+				state.flatShading = newValue;
+				applyToAllMaterials("flatShading", newValue);
+			});
+			gui.flatShading.domElement.parentElement.parentElement.id = "flatShading";
+			hide("flatShading");
+
+			gui.reflectivity = gui.fMaterial.add(gui.parameters, "reflectivity").min(0).max(1).step(0.01).name("Reflectivity")
+			.onChange(function(newValue){
+				state.reflectivity = newValue;
+				applyToAllMaterials("reflectivity", newValue);
+			});
+
+			gui.clearcoat = gui.fMaterial.add(gui.parameters, "clearcoat").min(0).max(1).step(0.01).name("Clearcoat")
+			.onChange(function(newValue){
+				state.clearcoat = newValue;
+				applyToAllMaterials("clearcoat", newValue);
+			});
+
+			gui.clearcoatRoughness = gui.fMaterial.add(gui.parameters, "clearcoatRoughness").min(0).max(1).step(0.01).name("Clearcoat Roughness")
+			.onChange(function(newValue){
+				state.clearcoatRoughness = newValue;
+				applyToAllMaterials("clearcoatRoughness", newValue);
+			});
+
+			//TEXTURES FOLDER
+			gui.fTextures = gui.gui.addFolder("Textures");
+
+			gui.setTex = gui.fTextures.add(gui.parameters, 'texture', mapList).name("Texture")
+			.onChange(function(newValue){setTexture(newValue)});
+
+			gui.fractalTexture = gui.fTextures.add(gui.parameters, "fractalTexture").name("Fractal Texture")
+			.onChange(function(newValue){
+				state.fractalTexture = newValue;
+				needsRedraw = true;
+			});
+			gui.fractalTexture.domElement.parentElement.parentElement.id = "fractalTexture";
+			hide("fractalTexture");
+
+			gui.setBump = gui.fTextures.add(gui.parameters, 'bump', bumpList).name("Bump Map")
+			.onChange(function(newValue){setBump(newValue)});
+
+			gui.bumpScale = gui.fTextures.add(gui.parameters, "bumpScale").min(0).max(1).step(0.1).name("Bump Scale")
+			.onChange(function(newValue){
+				state.bumpScale = newValue;
+				applyToAllMaterials("bumpScale", newValue*bumpScales[flatten(state.currentBump)]);
+			});
+
+			gui.background = gui.fTextures.add(gui.parameters, 'background', mapList).name("Background")
+			.onChange(function(newValue){setBackground(newValue)});
+
+			gui.environment = gui.fTextures.add(gui.parameters, 'environment', environmentList).name("Reflection")
+			.onChange(function(newValue){setEnv(newValue)});
+
+			gui.envMapIntensity = gui.fTextures.add(gui.parameters, "envMapIntensity").min(0).max(5).step(0.1).name("Reflection Intensity")
+			.onChange(function(newValue){
+				state.envMapIntensity = newValue;
+				applyToAllMaterials("envMapIntensity", newValue);
+			});
+
+			//GLOW FOLDER
+			gui.fGlow = gui.gui.addFolder("Glow Effects");
+
+			gui.glowSelect = gui.fGlow.add(gui.parameters, "glow").name("Glow")
+			.onChange(function(newValue){
+				state.glow = newValue;
+				if(state.glow){
+					addGlow();
+					if(state.objectType === "d100"){
+						object2.add(glowObject.object3d.clone());
+					};
+				}
+				else{
+					removeGlow();
+					if(!state.visible){
+						document.getElementById("glowOnly").click();
+					};
+				};
+			});
+			gui.glowSelect.domElement.id = "glowSelect";
+
+			gui.color3 = gui.fGlow.add(gui.parameters, "innerGlowColor").name("Inner Glow")
+			.onChange(function(){
+				activatePickr("innerGlow");
+			});
+			gui.color3.domElement.parentElement.parentElement.id = "innerGlowColorButton";
+
+			gui.innerGlowCoefficient = gui.fGlow.add(gui.parameters, "innerGlowCoefficient").min(0).max(2).step(0.1)
+			.name("Coefficient")
+			.onChange(function(newValue){
+				glowObject.insideMesh.material.uniforms.coeficient.value = state.innerGlow.coefficient = newValue;
+			});
+
+			gui.innerGlowPower = gui.fGlow.add(gui.parameters, "innerGlowPower").min(0).max(5).step(0.1).name("Power")
+			.onChange(function(newValue){
+				glowObject.insideMesh.material.uniforms.power.value = state.innerGlow.power = newValue;
+			});
+
+			gui.color4 = gui.fGlow.add(gui.parameters, "outerGlowColor").name("Outer Glow")
+			.onChange(function(){
+				activatePickr("outerGlow");
+			});
+			gui.color4.domElement.parentElement.parentElement.id = "outerGlowColorButton";
+
+			gui.outerGlowCoefficient = gui.fGlow.add(gui.parameters, "outerGlowCoefficient").min(0).max(2).step(0.1)
+			.name("Coefficient")
+			.onChange(function(newValue){
+				glowObject.outsideMesh.material.uniforms.coeficient.value = state.outerGlow.coefficient = newValue;
+			});
+
+			gui.outerGlowPower = gui.fGlow.add(gui.parameters, "outerGlowPower").min(0).max(5).step(0.1).name("Power")
+			.onChange(function(newValue){
+				glowObject.outsideMesh.material.uniforms.power.value = state.outerGlow.power = newValue;
+			});
+
+			gui.emissive = gui.fGlow.add(gui.parameters, "emissive").name("Emissive Colour")
+			.onChange(function(){
+				activatePickr("emissive");
+			});
+			gui.emissive.domElement.parentElement.parentElement.id = "emissiveColorButton";
+
+			gui.emissiveIntensity = gui.fGlow.add(gui.parameters, "emissiveIntensity").min(0).max(2).step(0.01)
+			.name("Emissive Intensity")
+			.onChange(function(newValue){
+				state.emissiveIntensity = newValue;
+				applyToAllMaterials("emissiveIntensity", newValue);
+			});
+
+			gui.glowOnly = gui.fGlow.add(gui.parameters, "glowOnly").name("Glow Only")
+			.onChange(function(newValue){
+				if(!state.glow){
+					document.getElementById("glowSelect").click();
+				};
+
+				state.visible = !newValue;
+				applyToAllMaterials("visible", state.visible);
+			});
+			gui.glowOnly.domElement.id = "glowOnly";
+
+			//LIGHTS FOLDER
+			gui.fLight = gui.gui.addFolder("Lights");
+
+			gui.resetLights = gui.fLight.add(gui.parameters, "resetLights").name("Reset Lights")
+			.onChange(function(){
+				for(const [light, value] of Object.entries(lights)){
+					setColor(light, initialLights[light].color);
+				};
+
+				gui.light1Intensity.setValue(gui.light1Intensity.initialValue);
+				gui.light2Intensity.setValue(gui.light2Intensity.initialValue);
+				gui.light3Intensity.setValue(gui.light3Intensity.initialValue);
+				gui.ambientIntensity.setValue(gui.ambientIntensity.initialValue);
+				gui.torchIntensity.setValue(gui.torchIntensity.initialValue);
+			});
+
+			//LIGHT1 SUBFOLDER
+			gui.fLight1 = gui.fLight.addFolder("Light 1");
+
+			gui.light1Color = gui.fLight1.add(gui.parameters, "light1Color").name("Color")
+			.onChange(function(){
+				activatePickr("light1");
+			});
+			gui.light1Color.domElement.parentElement.parentElement.id = "light1ColorButton";
+
+			gui.light1Intensity = gui.fLight1.add(gui.parameters, "light1Intensity").min(0).max(200).step(5).name("Intensity")
+			.onChange(function(newValue){
+				lights.light1.intensity = newValue;
+			});
+
+			//LIGHT2 SUBFOLDER
+			gui.fLight2 = gui.fLight.addFolder("Light 2");
+
+			gui.light2Color = gui.fLight2.add(gui.parameters, "light2Color").name("Color")
+			.onChange(function(){
+				activatePickr("light2");
+			});
+			gui.light2Color.domElement.parentElement.parentElement.id = "light2ColorButton";
+
+			gui.light2Intensity = gui.fLight2.add(gui.parameters, "light2Intensity").min(0).max(200).step(5).name("Intensity")
+			.onChange(function(newValue){
+				lights.light2.intensity = newValue;
+			});
+
+			//LIGHT3 SUBFOLDER
+			gui.fLight3 = gui.fLight.addFolder("Light 3");
+
+			gui.light3Color = gui.fLight3.add(gui.parameters, "light3Color").name("Color")
+			.onChange(function(){
+				activatePickr("light3");
+			});
+			gui.light3Color.domElement.parentElement.parentElement.id = "light3ColorButton";
+
+			gui.light3Intensity = gui.fLight3.add(gui.parameters, "light3Intensity").min(0).max(200).step(5).name("Intensity")
+			.onChange(function(newValue){
+				lights.light3.intensity = newValue;
+			});
+
+			//AMBIENT LIGHT SUBFOLDER
+			gui.fAmbient = gui.fLight.addFolder("Ambient");
+
+			gui.ambientColor = gui.fAmbient.add(gui.parameters, "ambientColor").name("Color")
+			.onChange(function(){
+				activatePickr("ambient");
+			});
+			gui.ambientColor.domElement.parentElement.parentElement.id = "ambientColorButton";
+
+			gui.ambientIntensity = gui.fAmbient.add(gui.parameters, "ambientIntensity").min(0).max(20).step(0.2).name("Intensity")
+			.onChange(function(newValue){
+				lights.ambient.intensity = newValue;
+			});
+
+			//TORCH LIGHT SUBFOLDER
+			gui.fTorch = gui.fLight.addFolder("Torch");
+
+			gui.useTorch = gui.fTorch.add(gui.parameters, "useTorch").name("Enable Torch")
+			.onChange(function(newValue){
+				state.torchOn = newValue;
+				if(newValue){
+					scene.add(lights.torch);
+					scene.remove(lights.light1, lights.light2, lights.light3);
+				}
+				else{
+					scene.remove(lights.torch);
+					scene.add(lights.light1, lights.light2, lights.light3);
+				};
+			});
+
+			gui.torchColor = gui.fTorch.add(gui.parameters, "torchColor").name("Color")
+			.onChange(function(){
+				activatePickr("torch");
+			});
+			gui.torchColor.domElement.parentElement.parentElement.id = "torchColorButton";
+
+			gui.torchIntensity = gui.fTorch.add(gui.parameters, "torchIntensity").min(0).max(20).step(0.2).name("Intensity")
+			.onChange(function(newValue){
+				lights.torch.intensity = newValue;
+			});
+
+			gui.fixTorch = gui.fTorch.add(gui.parameters, "fixTorch").name("Fix Torch Position")
+			.onChange(function(newValue){
+				state.fixTorchPosition = newValue;
+			});
+
+			//DEMO
+			gui.fDemo = gui.gui.addFolder("Slideshow");
+
+			gui.demo = gui.fDemo.add(gui.parameters, "demo").name("On")
+			.onChange(function(newValue){
+				state.demo.on = newValue;
+				frameCount = 0;
+				document.getElementById("demo").blur();
+
+				if((state.demo.on && state.demo.rotate !== state.rotate) || (!state.demo.on && state.rotate)){
+					document.getElementById("autoRotate").click();
+				};
+
+				if(state.demo.on && state.demo.preset === "Dice"){
+					gui.prismSides.setValue(5);
+				};
+			});
+			gui.demo.domElement.childNodes[0].id = "demo";
+
+			gui.demoOptions = gui.fDemo.add(gui.parameters, "demoOptions").name("Options")
+			.onChange(function(){
+				Swal.fire({
+					position: "top",
+					title: "Slideshow Options",
+					input: "text",
+					html: state.demo.htmlText,
+					showCancelButton: true,
+					allowEscapeKey: false,
+					allowOutsideClick: false,
+					customClass: {
+						container: "mySwal",
+						popup: "mySwal-popup",
+						confirmButton: "mySwal-confirm",
+						cancelButton: "mySwal-cancel",
+						input: "mySwal-hidden",
+					},
+					onOpen: function(){
+						indeterminateCheckbox.addEventListeners();
+
+						for(const [key, value] of Object.entries(state.demo.shape)){
+							if(value === true){
+								document.getElementById("demo-shape-" + key).click();
+							};
+						};
+
+						for(const [key, value] of Object.entries(state.demo.map)){
+							if(value === true){
+								document.getElementById("demo-map-" + key).click();
+							};
+						};
+
+						document.getElementById("demo-speed").value = Math.round(10 - state.demo.speed);
+
+						if(state.demo.rotate){
+							document.getElementById("demo-rotate").click();
+						};
+
+						if(state.demo.bump){
+							document.getElementById("demo-bump").click();
+						};
+
+						if(state.demo.randomColor){
+							document.getElementById("demo-randomColor").click();
+						};
+
+						if(state.demo.randomNumberColor){
+							document.getElementById("demo-randomNumberColor").click();
+						};
+
+						if(state.demo.cycleSwap){
+							document.getElementById("demo-cycle-map").click();
+						}
+						else{
+							document.getElementById("demo-cycle-shape").click();
+						};
+					},
+					inputValidator: () => {
+						if(!validSelection()){
+							return "Invalid selection: Please select at least 1 shape and at least 1 texture.";
+						};
+					},
+				})
+				.then((result) => {
+					if(result.dismiss !== Swal.DismissReason.cancel){
+						for(const [key, value] of Object.entries(state.demo.shape)){
+							state.demo.shape[key] = document.getElementById("demo-shape-" + key).checked;
+						};
+
+						for(const [key, value] of Object.entries(state.demo.map)){
+							state.demo.map[key] = document.getElementById("demo-map-" + key).checked;
+						};
+
+						setDemoSpeed(document.getElementById("demo-speed").value);
+
+						if(document.getElementById("demo-rotate").checked){
+							state.demo.rotate = true;
+						}
+						else{
+							state.demo.rotate = false;
+						};
+
+						if(document.getElementById("demo-bump").checked){
+							state.demo.bump = true;
+						}
+						else{
+							state.demo.bump = false;
+						};
+
+						if(document.getElementById("demo-randomColor").checked){
+							state.demo.randomColor = true;
+						}
+						else{
+							state.demo.randomColor = false;
+						};
+
+						if(document.getElementById("demo-randomNumberColor").checked){
+							state.demo.randomNumberColor = true;
+						}
+						else{
+							state.demo.randomNumberColor = false;
+						};
+
+						if(document.getElementById("demo-cycle-map").checked){
+							state.demo.cycleSwap = true;
+						}
+						else{
+							state.demo.cycleSwap = false;
+						};
+
+						setDemoLists();
+					};
+				});
+			});
+
+			//BACK TO GEOFFNET
+			gui.jaznet = gui.gui.add(gui.parameters, "jaznet").name(" << Back to Jaznet")
+			.onChange(function(){
+				document.getElementById("jaznet").click();
+			});
+
+			setupGUI();
+		};
+
+		function setupGUI(){
+			let colorList = Object.entries(state.colors);
+			for(const [name, color] of colorList){
+				let current = document.getElementById(name + "ColorButton");
+				current.style["background-color"] = color;
+				current.style["border-right"] = "3px solid black";
+				current.children[0].children[0].classList.add("long-property-name");
+				state.colors["textured"+name] = color;
+			};
+
+			let lightList = Object.entries(lights);
+			for(const [name, light] of lightList){
+				let current = document.getElementById(name + "ColorButton");
+				current.style["background-color"] = '#' + light.color.getHexString();
+				current.style["border-right"] = "3px solid black";
+			};
+
+			//Blur focus on GUI close
+			if(gui.blurOnClose){
+				document.getElementsByClassName('close-button')[0].addEventListener('click', () =>
+					document.activeElement.blur()
+				);
+			};
+
+			//Enable Pickr color reset
+			document.getElementsByClassName('pcr-last-color')[0].addEventListener('click', () =>
+				gui.pickr.setColor(gui.pickr.getSelectedColor().toHEXA().toString())
+			);
+		};
+
+//GUI FUNCTIONS
+		function setEnv(env){
+			state.currentEnvironment = env;
+			env = flatten(env);
+
+			applyToAllMaterials("envMap", environments[env]);
+		};
+
+		function setBackground(env){
+			state.currentBackground = env;
+			env = flatten(env);
+
+			backgroundMaterial.map = textures[env];
+			backgroundMaterial.needsUpdate = true;
+
+			switch(env){
+				case "none":
+					if(state.colors["background"] != state.colors["texturedbackground"]){
+						setColor("background", state.colors["texturedbackground"]);
+					};
+					break;
+				default:
+					setColor("background", "#ffffff", "texture");
+			};
+		};
+
+		function setTexture(newValue){
+			state.currentTexture = newValue;
+			newtexture = flatten(newValue);
+
+			metalMaterial.map = textures[newtexture];
+			metalMaterial.needsUpdate = true;
+
+			for(let i = 0; i < 6; i++){
+				cubeMaterial[i].map = cubeMaps[newtexture][i];
+				cubeMaterial[i].needsUpdate = true;
+			};
+
+			if(bumpList.includes(newValue)){
+				gui.setBump.setValue(newValue);
+			}
+			else if(state.demo.bump && state.demo.on){
+				//set bump to Earth
+				//gui.setBump.setValue("Earth");
+			}
+			else{
+				gui.bumpScale.setValue(0);
+			};
+
+			switch(newValue){
+				case "None":
+					if(state.colors["material"].toLowerCase() != state.colors["texturedmaterial"].toLowerCase()){
+						setColor("material", state.colors["texturedmaterial"]);
+					};
+					break;
+				default:
+					setColor("material", "#ffffff", "texture");
+			};
+		};
+
+		function setBump(newValue){
+			state.currentBump = newValue;
+			newbump = flatten(newValue);
+
+			metalMaterial.bumpMap = bumps[newbump];
+
+			for(let i = 0; i < 6; i++){
+				cubeMaterial[i].bumpMap = cubeBumps[newbump][i];
+			};
+
+			applyToAllMaterials("bumpScale", bumpScales[newbump] * state.bumpScale);
+		};
+
+		function setColor(element, newValue, option){
+			switch(element){
+				case "material":
+					let rgb = hexToRGB(newValue);
+
+					metalMaterial.color.set(newValue);
+
+					for(const m of cubeMaterial){
+						m.color.set(newValue);
+					};
+
+					document.getElementById("Rbox").value = rgb.r;
+					document.getElementById("Rslider").style.width = (100 * rgb.r / 255).toString() + "%";
+					document.getElementById("Gbox").value = rgb.g;
+					document.getElementById("Gslider").style.width = (100 * rgb.g / 255).toString() + "%";
+					document.getElementById("Bbox").value = rgb.b;
+					document.getElementById("Bslider").style.width = (100 * rgb.b / 255).toString() + "%";
+					break;
+				case "number":
+					/*for(const m of numbers.material){
+						m.color.set(newValue);
+					};*/
+					for(const [name, elt] of Object.entries(numberMaterials)){
+						if(!name.includes("exture")){
+							for(const m of elt){
+								m.color.set(newValue);
+							};
+						};
+					};
+					break;
+				case "background":
+					backgroundMaterial.color.set(newValue);
+					break;
+				case "innerGlow":
+					glowObject.insideMesh.material.uniforms.glowColor.value.set(newValue);
+					break;
+				case "outerGlow":
+					glowObject.outsideMesh.material.uniforms.glowColor.value.set(newValue);
+					break;
+				case "emissive":
+					applyToAllMaterials("emissive", new THREE.Color(newValue));
+					break;
+				default:
+					lights[element].color.set(newValue);
+					break;
+			};
+
+			state.colors[element] = document.getElementById(element+"ColorButton").style["background-color"] = newValue;
+
+			if(option != "texture"){
+				state.colors["textured"+element] = newValue;
+			};
+		};
+
+		function hexToRGB(hexColor){
+			let splitHex = {r: "0x" + hexColor.substring(1,3), g: "0x" + hexColor.substring(3,5), b: "0x" + hexColor.substring(5,7)};
+			return {r: parseInt(splitHex.r), g: parseInt(splitHex.g), b: parseInt(splitHex.b)}
+		};
+
+		function twoDigitHex(number){
+			if(number > 15){
+				return number.toString(16);
+			}
+			else{
+				return '0' + number.toString(16);
+			};
+		};
+
+		function setShading(newValue){
+			gui.flatShading.setValue(newValue);
+		};
+
+		function applyToAllMaterials(property, value){
+			metalMaterial[property] = value;
+			metalMaterial.needsUpdate = true;
+			for(const m of cubeMaterial){
+				m[property] = value;
+				m.needsUpdate = true;
+			};
+		};
+
+		function hide(element){
+			document.getElementById(element).style.display = "none";
+		};
+
+		function show(element){
+			document.getElementById(element).style.display = "block";
+		};
+
+//ROTATE THE HIGHEST FACE TO LOOK AT CAMERA
+		function faceForward(){
+			let dice = {
+				d4: {frontFace: 0},
+				d6: {frontFace: 8},
+				d8: {frontFace: 7},
+				d10: {frontFace: 8},
+				d12: {frontFace: 33},
+				d20: {frontFace: 5},
+				d30: {frontFace: 64},
+				d100: {frontFace: 8},
+			};
+
+			//pre adjustments
+			let xAxis = new THREE.Vector3(1, 0 , 0);
+
+			switch(state.objectType){
+				case "d4":
+					xAxis.set(1, 0, Math.sqrt(3)).normalize();
+					break;
+				case "d8":
+					xAxis.set(1, 0, -1).normalize();
+					break;
+			};
+
+			//look at camera
+			parent.lookAt(camera.position);
+			camera.up.set(0,1,0);
+
+			//just in case
+			object1.geometry.computeFaceNormals();
+
+			let frontVertex = object1.geometry.faces[dice[state.objectType].frontFace].normal;
+
+			parent.rotateOnAxis(new THREE.Vector3(0, 1, 0), -1*Math.atan2(frontVertex.x, frontVertex.z));
+			parent.rotateOnAxis(xAxis, Math.atan2(frontVertex.y, frontVertex.z));
+
+			//post adjustments
+			switch(state.objectType){
+				case "d10":
+					parent.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI);
+					parent.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+					break;
+				case "d30":
+					let tip = object1.geometry.vertices[object1.geometry.faces[dice[state.objectType].frontFace].a];
+					parent.rotateOnAxis(frontVertex, -1*Math.atan2(tip.y, tip.x));
+					break;
+				case "d100":
+					parent.rotateOnAxis(new THREE.Vector3(0, 0, 1), 11*Math.PI / 12);
+					parent.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 3);
+					parent.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 6);
+					break;
+			};
+		};
+
+//ADJUST FOR BETTER SNAPSHOT
+		function snapshotView(){
+			faceForward();
+
+			switch(state.objectType){
+				case "d4":
+					//parent.rotateOnWorldAxis(camera.position.clone().normalize(), Math.PI / 6);
+					break;
+				case "d6":
+					parent.rotateOnAxis(new THREE.Vector3(0, 0, 1), -1*Math.PI / 4);
+					parent.rotateOnAxis(new THREE.Vector3(1, 1, 0).normalize(), -1*Math.PI / 3);
+					//parent.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+					break;
+				case "d8":
+					parent.rotateOnAxis(new THREE.Vector3(1, 0, -1), -1*Math.PI / 10);
+					break;
+				case "d10":
+					parent.rotateOnAxis(new THREE.Vector3(1, 0, 0), -1*Math.PI / 6);
+					break;
+			};
+		};
+
+//DEMO MODE
+		function validSelection(){
+			let someShapes = false;
+			let someMaps = false;
+		
+			for(const key of Object.keys(state.demo.shape)){
+				if(document.getElementById("demo-shape-" + key).checked){
+					someShapes = true;
+					break;
+				};
+			};
+
+			for(const key of Object.keys(state.demo.map)){
+				if(document.getElementById("demo-map-" + key).checked){
+					someMaps = true;
+					break;
+				};
+			};
+
+			if(someShapes && someMaps){
+				return true;
+			}
+			else{
+				return false;
+			};
+		};
+
+		function setDemoLists(){
+			let obj = state.demo;
+
+			obj.shapeList = [];
+			obj.mapList = [];
+
+			for(const [key, value] of Object.entries(obj.shape)){
+				if(value){
+					obj.shapeList.push(key);
+				};
+			};
+
+			for(const [key, value] of Object.entries(obj.map)){
+				if(value){
+					obj.mapList.push(key);
+				};
+			};
+		};
+
+		function setDemoSpeed(value){
+			value = 10 - value;
+
+			if(value === 0){
+				value = 0.05;
+			};
+
+			state.demo.speed = value;
+		};
+
+		function setupDemoOptions(){
+			for(const shape of shapeList){
+				state.demo.shape[shape] = true;
+			};
+
+			for(const map of mapList){
+				state.demo.map[map] = true;
+			};
+
+			setDemoLists();
+
+			let htmlText = "<div class='mySwal-html'><div class='spacer'></div><div class='inner'>"
+				+ "<input type='checkbox' id='demo-shape' master='demo-shape'/>"
+				+ "<label for='demo-shape' style='font-size: 12pt'>Dice</label><br><div style='margin-left: 1ex'>";
+
+			for(const shape of shapeList){
+				htmlText += "<input type='checkbox' id='demo-shape-" + shape + "' group='demo-shape' "
+					+ "<label for='demo-shape-" + shape + "'>" + shape + "</label><br>";
+			};
+
+			htmlText += "</div><span class='brmedium'></span>"
+
+				+ "</div><div class='spacer'></div><div class='inner'>"
+				+ "<input type='checkbox' id='demo-map' master='demo-map'/>"
+				+ "<label for='demo-map' style='font-size: 12pt'>Textures</label><br>"
+				+ "<div style='margin-left: 1ex'>";
+
+			for(const map of mapList){
+				if(planetList.includes(map)){
+					break;
+				};
+
+				htmlText += "<input type='checkbox' id='demo-map-" + map + "' group='demo-map'/>"
+					+ "<label for='demo-map-"	+ map + "'>" + map + "</label><br>";
+			};
+
+			htmlText += "<input type='checkbox' id='demo-planet' master='demo-planet' group='demo-map'/>"
+				+ "<label for='demo-planet'>Space</label><br>"
+				+ "<div style='margin-left: 1ex'>";
+
+			for(const map of planetList){
+				let mapX = map.replace(/\s+/g, "_");
+
+				htmlText += "<input type='checkbox' id='demo-map-" + map + "' group='demo-planet demo-map'/>"
+					+ "<label for='demo-map-"	+ map + "'>" + map + "</label><br>";
+			};
+
+			htmlText += "</div></div></div><div class='spacer'></div>"
+				+ "<div class='inner' style='font-size: 12pt; text-align: center'>"
+				+ "<div><input type='range' id='demo-speed' style='width: 90%' min='0' max='10' value='5'/>"
+				+ "<label for='demo-speed'>Transition Speed</label></div><span class='brmedium'></span>"
+				+ "<input type='checkbox' id='demo-rotate'/>"
+				+ "<label for='demo-rotate'>Auto Rotate</label><span class='brmedium'></span>"
+				+ "<input type='checkbox' id='demo-bump'/>"
+				+ "<label for='demo-bump'>Maintain Bump Scales</label><span class='brmedium'></span>"
+				+ "<input type='checkbox' id='demo-randomColor'/>"
+				+ "<label for='demo-randomColor'>Random Textureless Colour</label><span class='brmedium'></span>"
+				+ "<input type='checkbox' id='demo-randomNumberColor'/>"
+				+ "<label for='demo-randomNumberColor'>Random Number Colour</label><span class='brmedium'></span>"
+				+ "<input type='radio' id='demo-cycle-shape' name='demo-cycle'>"
+				+ "<label for='demo-cycle-shape'>Cycle Shapes then Textures</label><br>"
+				+ "<input type='radio' id='demo-cycle-map' name='demo-cycle'>"
+				+ "<label for='demo-cycle-map'>Cycle Textures then Shapes</label>"
+				+ "</div></div>";
+
+			state.demo.htmlText = htmlText;
+		};
+
+		function demoMode(){
+			frameCount++;
+
+			let parameters = {
+				shape: {
+					list: state.demo.shapeList,
+
+					getIndex: function(){
+						return state.demo.shapeList.indexOf(state.objectType);
+					},
+
+					set: function(shape){
+						gui.objectSelect.setValue(shape);
+					}
+				},
+
+				map: {
+					list: state.demo.mapList,
+
+					getIndex: function(){
+						return state.demo.mapList.indexOf(state.currentTexture);
+					},
+
+					set: function(map){
+						gui.setTex.setValue(map);
+					}
+				}
+			};
+
+			let cycle1 = parameters.shape;
+			let cycle2 = parameters.map;
+
+			if(state.demo.cycleSwap){
+				cycle1 = parameters.map;
+				cycle2 = parameters.shape;
+			};
+
+			if(cycle1.getIndex() === -1){
+				cycle1.set(cycle1.list[0]);
+			};
+
+			if(cycle2.getIndex() === -1){
+				cycle2.set(cycle2.list[0]);
+			};
+
+			if(frameCount > 60 * state.demo.speed){
+				let index1 = cycle1.getIndex() + 1;
+
+				if(index1 === cycle1.list.length){
+					index1 = 0;
+
+					let index2 = cycle2.getIndex() + 1;
+
+					if(index2 === cycle2.list.length){
+						index2 = 0;
+					};
+
+					cycle2.set(cycle2.list[index2]);
+				};
+
+				cycle1.set(cycle1.list[index1]);
+				frameCount = 0;
+
+				if(state.currentTexture === "None" && state.demo.randomColor){
+					document.getElementById("randomColorButton").click();
+				};
+
+				if(state.demo.randomNumberColor){
+					document.getElementById("randomNumberColorButton").click();
+				};
+			};
+		};
+
+//LOAD/SAVE FUNCTIONS
+		function readJSONFile(evt){
+			//Retrieve the first (and only!) File from the FileList object
+			let file = evt.target.files[0]; 
+
+			if(file){
+				let reader = new FileReader();
+				reader.onload = function(e){
+					loadState(e);
+				};
+				reader.readAsText(file);
+				document.getElementById('fileInput').value = "";//reset so onchange will be triggered on file reload
+			}
+			else{
+				alert("Failed to load file!");
+			};
+		};
+
+		function loadState(file){
+			cancelAnimationFrame(animateId);
+			controls.reset();
+
+			let loadedState = JSON.parse(file.target.result);
+
+			gui.objectSelect.setValue(loadedState.objectType);
+
+			gui.rotate.setValue(loadedState.rotate);
+			gui.rotateX.setValue(loadedState.rotateSpeed.x*loadedState.rotateSpeed.f);
+			gui.rotateY.setValue(loadedState.rotateSpeed.y*loadedState.rotateSpeed.f);
+			gui.rotateZ.setValue(loadedState.rotateSpeed.z*loadedState.rotateSpeed.f);
+
+			gui.metalness.setValue(loadedState.metalness);
+			gui.roughness.setValue(loadedState.roughness);
+			gui.transparency.setValue(loadedState.transparency);
+			gui.flatShading.setValue(loadedState.flatShading);
+			gui.reflectivity.setValue(loadedState.reflectivity);
+			gui.clearcoat.setValue(loadedState.clearcoat);
+			gui.clearcoatRoughness.setValue(loadedState.clearcoatRoughness);
+			switch(loadedState.side){
+				case THREE.FrontSide:
+					gui.side.setValue("Front");
+					break;
+				case THREE.BackSide:
+					gui.side.setValue("Back");
+					break;
+				case THREE.DoubleSide:
+					gui.side.setValue("Both");
+					break;
+			};
+
+			gui.setTex.setValue(loadedState.currentTexture);
+			gui.fractalTexture.setValue(loadedState.fractalTexture);
+			gui.setBump.setValue(loadedState.currentBump);
+			gui.bumpScale.setValue(loadedState.bumpScale);
+			gui.background.setValue(loadedState.currentBackground);
+			gui.environment.setValue(loadedState.currentEnvironment);
+			gui.envMapIntensity.setValue(loadedState.envMapIntensity);
+
+			gui.glowOnly.setValue(!loadedState.visible);
+			gui.glowSelect.setValue(loadedState.glow);
+			gui.innerGlowCoefficient.setValue(loadedState.innerGlow.coefficient);
+			gui.innerGlowPower.setValue(loadedState.innerGlow.power);
+			gui.outerGlowCoefficient.setValue(loadedState.outerGlow.coefficient);
+			gui.outerGlowPower.setValue(loadedState.outerGlow.power);
+			gui.emissiveIntensity.setValue(loadedState.emissiveIntensity);
+
+			gui.light1Intensity.setValue(loadedState.lights.light1.intensity);
+			gui.light2Intensity.setValue(loadedState.lights.light2.intensity);
+			gui.light3Intensity.setValue(loadedState.lights.light3.intensity);
+			gui.ambientIntensity.setValue(loadedState.lights.ambient.intensity);
+			gui.torchIntensity.setValue(loadedState.lights.torch.intensity);
+			gui.useTorch.setValue(loadedState.torchOn);
+			gui.fixTorch.setValue(loadedState.fixTorchPosition);
+			lights.torch.position.copy(loadedState.lights.torch.position);
+
+			for(const [name, color] of Object.entries(loadedState.colors)){
+				if(name.substr(0, 8) == "textured"){
+					state.colors[name] = color;
+				}
+				else{
+					setColor(name, color);
+				};
+			};
+
+			for(const [name, light] of Object.entries(loadedState.lights)){
+				setColor(name, light.color);
+			};
+
+			let loader = new THREE.ObjectLoader();
+			camera.copy(loader.parse(JSON.parse(loadedState.camera.json)));
+			parent.rotation.set(loadedState.currentRotation.x, loadedState.currentRotation.y, loadedState.currentRotation.z);
+
+			resizeScreen();
+
+			animate();
+		};
+
+		function saveState(){
+			for(const [name, light] of Object.entries(lights)){
+				state.lights[name] = {color: '#'+light.color.getHexString(), intensity: light.intensity};
+			};
+			state.lights.torch.position = lights.torch.position;
+
+			state.camera.json = JSON.stringify(camera.toJSON());
+			state.currentRotation = {x: parent.rotation.x, y: parent.rotation.y, z: parent.rotation.z};
+
+			download(JSON.stringify(state), "scene.dce", 'text/plain', "saveLink");
+		};
+
+		function screenshot(){
+			let elt = document.getElementById("saveLink");
+			elt.href = renderer.domElement.toDataURL("image/png");
+			elt.download = 'screenshot.png';
+			elt.click();
+			//let win = window.open();
+			//document.write('<iframe src="' + renderer.domElement.toDataURL("image/png") + '" frameborder="0" style="margin: 0; padding: 0; border: 0; background-color: white; overflow: hidden; width:100%; height:100%; display:block; line-height: 0; position: absolute; left: 0; top: 0" allowfullscreen></iframe>');
+		};
+
+		function exportObject(){
+			let exporter = new THREE.GLTFExporter();
+
+			let bufferedObject = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(object1.geometry), object1.material);
+
+			if(state.flatShading){
+				bufferedObject.geometry.deleteAttribute("normal");
+			};
+
+			exporter.parse(bufferedObject, function(gltf){
+				download(gltf, 'object.glb', 'text/plain', "saveLink");
+			}, {binary: true, onlyVisible: true, forceIndices: true});
+		};
+
+//SETUP THE CANVAS
+		function setCanvas(){
+			webGLDiv = document.getElementById("webGLDiv");
+			divHeight = webGLDiv.clientHeight;
+			divWidth = webGLDiv.clientWidth;
+
+			camera = new THREE.PerspectiveCamera(30, divWidth/ divHeight, 0.1, 1000);
+
+			renderer.setSize(divWidth, divHeight);
+			webGLDiv.appendChild(renderer.domElement);
+			renderer.physicallyCorrectLights = true;
+			renderer.autoClear = false;
+		};
+
+//DRAW THE SCENE ON THE CANVAS
+		function go(){
+			if(state.shadows){
+				renderer.shadowMap.enabled = true;
+			};
+
+			makeBackground();
+			makeScene();
+			lighting();
+
+			setupDemoOptions();
+			makeGUI();
+
+			loadMaps();
+
+			setTexture(state.currentTexture);
+			setBump(state.currentBump);
+			setEnv(state.currentEnvironment);
+			setBackground(state.currentBackground);
+
+			mouseControl();
+			document.addEventListener("keydown", onDocumentKeyDown, {passive: true});
+			webGLDiv.addEventListener('click', () => document.activeElement.blur(), {passive: true});
+			fullscreenSetup();
+			animate();
+		};
+
+//ON LOAD - MAKE IT SO!!!
+		document.addEventListener("DOMContentLoaded", function(event){
+			loadingDiv = document.getElementById("loading");
+			document.getElementById('fileInput').addEventListener('change', readJSONFile, {passive: true});
+
+			setCanvas();
+			go();
+		}, {passive: true});
+
+//FULLSCREEN
+		function fullscreenSetup(){
+			let fullScreenChangeHandler = function(){
+				if(document.webkitIsFullScreen || document.mozFullScreen || document.msFullscreenElement){
+					state.fullscreen = true;
+					gui.gui.hide();
+				}
+				else{
+					state.fullscreen = false;
+					gui.gui.show();
+				};
+			};
+
+			let goFullscreen = function(){
+				function launchIntoFullscreen(element){
+					if(element.requestFullscreen){
+						element.requestFullscreen();
+					}
+					else if(element.mozRequestFullScreen){
+						element.mozRequestFullScreen();
+					}
+					else if(element.webkitRequestFullscreen){
+						element.webkitRequestFullscreen();
+					}
+					else if(element.msRequestFullscreen){
+						element.msRequestFullscreen();
+					}
+				};
+
+				function exitFullscreen(){
+					if(document.exitFullscreen){
+						document.exitFullscreen();
+					}
+					else if(document.mozCancelFullScreen){
+						document.mozCancelFullScreen();
+					}
+					else if(document.webkitExitFullscreen){
+						document.webkitExitFullscreen();
+					}
+				};
+
+				if(!state.fullscreen){
+					launchIntoFullscreen(document.documentElement);
+				}
+				else{
+					exitFullscreen();
+				};
+			};
+
+			if(document.addEventListener){
+				document.addEventListener('webkitfullscreenchange', fullScreenChangeHandler, false);
+				document.addEventListener('mozfullscreenchange', fullScreenChangeHandler, false);
+				document.addEventListener('fullscreenchange', fullScreenChangeHandler, false);
+				document.addEventListener('MSFullscreenChange', fullScreenChangeHandler, false);
+			};
+
+			webGLDiv.addEventListener("dblclick", goFullscreen, {passive: true});
+		};
+
+//ON WINDOW RESIZE
+		function resizeScreen(event){
+			divHeight = webGLDiv.clientHeight;
+			divWidth = webGLDiv.clientWidth;
+			camera.aspect = divWidth/ divHeight;
+			camera.updateProjectionMatrix();
+			renderer.setSize(divWidth, divHeight);
+		};
+
+		window.addEventListener("resize", function(event){resizeScreen(event)}, {passive: true});
+
+//DOWNLOAD
+		function download(text, name, type, eltId){
+			let elt = document.getElementById(eltId);
+			let file = new Blob([text], {type: type});
+			elt.href = URL.createObjectURL(file);
+			elt.download = name;
+			elt.click();
+		};
+	</script>
+</head>
+
+<body>
+	<div id="webGLDiv"></div>
+
+	<div id="pickr"></div>
+
+	<div id="loading">
+	</div>
+
+	<a id="saveLink" style="display:none"></a>
+	<input type="file" id="fileInput" accept=".dce" style="display:none"/>
+
+	<div id="jaznetLink" style="position: absolute; bottom: 10px; right: 10px; display: none">
+		<a id="jaznet" href="../index.html">&lt;&lt; Back to Jaznet</a>
+	</div>
+</body>
+</html>
