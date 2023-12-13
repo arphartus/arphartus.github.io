@@ -1,0 +1,4683 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Lights and Objects</title>
+	<style>
+		html, body{
+			margin: 0;
+			padding: 0;
+			border: 0;
+			background-color: black;
+			overflow: hidden;
+			height: 100%;
+		}
+		canvas{width: 100%; height: 100%}
+		#webGLDiv{
+			width: 100%;
+			height: 100%;
+			display: block;
+			border: 0px solid black;
+			position: absolute;
+			top:0;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			margin: 0;
+			background-color: black;
+		}
+		#loading{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			display: none;
+			font-size: 20pt;
+			color: white;
+			width: 100%;
+			text-align: center
+		}
+		.br{
+			display: block;
+			margin-bottom: 0em;
+		}
+		.brsmall{
+			display: block;
+			margin-bottom: 0.5em;
+		}
+		.brmedium{
+			display: block;
+			margin-bottom: 0.75em;
+		}
+		.brlarge{
+			display: block;
+			margin-bottom: 1em;
+		}
+		input[type="checkbox"]{
+			position: relative;
+			top: 1.5px;
+		}
+		::-webkit-scrollbar{
+  		width: 5px;
+		}
+		::-webkit-scrollbar:hover{
+  		width: 15px;
+		}
+		::-webkit-scrollbar-track{
+			box-shadow: inset 0 0 5px grey;
+			border-radius: 15px;
+		}
+		::-webkit-scrollbar-thumb{
+			background: #470077;
+			border-radius: 15px;
+		}
+		::-webkit-scrollbar-thumb:hover{
+			background: #b30000;
+		}
+		.mySwal .mySwal-popup{
+			width: 90vw;
+			max-height: 95vh;
+		}
+		.mySwal-confirm{
+			width: 100px !important;
+			font-size: 0.8333333rem !important;
+		}
+		.mySwal-cancel{
+			width: 100px !important;
+			font-size: 0.8333333rem !important;
+			background-color: #b30000 !important;
+		}
+		.mySwal-actions{
+			margin-top: 10px !important;
+		}
+		.mySwal-title{
+			margin: auto !important;
+		}
+		.mySwal-hidden{
+			display: none !important;
+		}
+		.mySwal-html{
+			font-family: Arial;
+			font-size: 10pt;
+			line-height: 1.5;
+			display: flex;
+			text-align: left;
+			padding: none;
+		}
+		.inner{
+			width: 30%;
+			height: 70vh;
+			overflow-y: auto;
+			margin: none;
+		}
+		.spacer{
+			min-width: 2.5%;
+		}
+	</style>
+
+	<!--<link rel="stylesheet" type="text/css" href="../CSS/DarkTheme.css">-->
+	<link rel="shortcut icon" href="../favicon.ico"><!--Generates website's favicon-->
+	<link rel="icon" type="image/gif" href="../animated_favicon1.gif"><!--Generates website's animated favicon-->
+
+	<script src="../JS/threeBundle.js"></script>
+	<script src="../JS/ParametricGeometries.js"></script>
+	<script src="../JS/TeapotBufferGeometry.js"></script>
+	<script src="../JS/GLTFExporter.js"></script>
+
+	<script src="../JS/TrackballControls.js"></script>
+	<script src="../JS/DragControls.js"></script>
+	<script src="../JS/polyhedra.js"></script>
+	<script src="../JS/OctahedronDualData.js"></script>
+
+	<script src="../dat.gui/build/dat.gui.js"></script>
+	<script type="text/javascript" src="../JS/stats.min.js"></script>
+
+	<script src='../JS/threex.dilategeometry.js'></script>
+	<script src='../JS/threex.atmospherematerial.js'></script>
+	<script src="../JS/threex.geometricglowmesh.js"></script>
+	<script src="../JS/threex.basiclighting.js"></script>
+
+	<script src="../JS/indeterminateCheckbox.js"></script>
+
+	<!--COLOR PICKER-->
+	<link rel="stylesheet" href="../CSS/pickr.theme.monolith.min.css">
+	<link rel="stylesheet" href="../CSS/Pickr1.css">
+	<script type="text/javascript" src="../JS/pickr.js"></script>
+	<script type="text/javascript" src="../JS/pickrAugments.js"></script>
+
+	<!--SWEET ALERT-->
+	<link rel="stylesheet" href="../CSS/swal-dark.css">
+	<script src="../JS/modernizr-custom.js"></script>
+	<script src="../JS/sweetalert2.min.js"></script>
+
+	<script>
+//FUNDAMENTALS
+		let scene = new THREE.Scene();
+		let backgroundScene = new THREE.Scene();
+		let renderer = new THREE.WebGLRenderer({preserveDrawingBuffer: true, antialias: false});
+		let needsRedraw = false;
+
+//GLOBAL VARIABLES
+		let animateId;
+		let webGLDiv;
+		let loadingDiv;
+		let divHeight;
+		let divWidth;
+		let camera;
+		let backgroundCamera;
+		let initialLights = {};
+		let controls;
+		let gui;
+		let sierpinskiTetra;
+		let menger;
+		let heart;
+		let teapot;
+		let glowObject;
+		let objects = {};
+		let glowObjects = {};
+		let textures = {};
+		let bumps = {};
+		let environments = {};
+		let cubeMaps = {};
+		let cubeBumps = {};
+		let fonts = {};
+		let frameCount = 0;
+
+//INITIAL SETUP
+		let state = {
+			objectType: "Teapot",//"Sierpinski Tetrahedron",//"Menger Sponge",
+
+			textOptions: {
+				line1: "Hello!",
+				line2: "",
+				line3: "",
+				font: "Helvetiker",
+				size: 32,
+				height: 4,
+				curveSegments: 6,
+				bevelEnabled: true,
+				bevelThickness: 2,
+				bevelSize: 1,
+				bevelOffset: 0,
+				bevelSegments: 5
+			},
+
+			polyhedronOptions: {
+				stellation: 0,
+				prismSides: 5,
+				prismStretch: 1.7,
+				prismHeight: 1,
+				display: "Polyhedron",
+				show: {faces: true, edges: false, vertices: false}
+			},
+
+			colors: {
+				material: "#482683",
+				background: "#202124",
+				innerGlow: "#ff69b4",
+				outerGlow: "#ff69b4",
+				emissive: "#ff69b4",
+				point: "#180d2c",
+				edge: "#180d2c",
+				dual: "#b00000",
+				dualPoint: "#600000",
+				dualEdge: "#600000"
+			},
+
+			rotate: false,
+			rotateSpeed: {x: 0.006, y: 0.004, z: 0.002, f: 25, m: 5},
+
+			metalness: 0.9,
+			roughness: 0.35,
+			transparency: 0,
+			side: THREE.DoubleSide,
+			flatShading: false,
+			reflectivity: 0.5,
+			clearcoat: 0,
+			clearcoatRoughness: 0,
+			emissiveIntensity: 0,
+
+			currentTexture: "None",
+			currentBump: "Earth",
+			currentEnvironment: "Generic Reflection",
+			currentBackground: "None",
+			fractalTexture: false,
+			envMapIntensity: 1.2,
+			bumpScale: 0,
+
+			innerGlow: {coefficient: 1.1, power: 1.4},
+			outerGlow: {coefficient: 0.1, power: 1.2},
+			glow: false,
+			visible: true,
+
+			lights: {},
+			fixTorchPosition: false,
+			torchOn: false,
+
+			camera: {},
+			maxDistance: 45,
+			shadows: false,
+
+			demo: {
+				on: false,
+				speed: 3,
+				rotate: true,
+				bump: false,
+				randomColor: false,
+				cycleSwap: false,
+				shape: [],
+				map: []
+			}
+		};
+
+		state.colors.multi3 = state.colors.material;
+		state.colors.multi4 = state.colors.material;
+		state.colors.multi5 = state.colors.material;
+		state.colors.multi6 = state.colors.material;
+		state.colors.multi8 = state.colors.material;
+		state.colors.multi10 = state.colors.material;
+		state.colors.base = state.colors.material;
+		state.colors.sides = state.colors.material;
+		state.colors.text0 = state.colors.material;
+		state.colors.text1 = state.colors.material;
+		state.colors.text2 = state.colors.material;
+		state.colors.text3 = state.colors.material;
+		state.colors.text4 = state.colors.material;
+		state.colors.text5 = state.colors.material;
+
+		let lights = {
+			light1: new THREE.PointLight("#ffffff", 40, 0, 2),
+			light2: new THREE.PointLight("#ffffff", 20, 0, 2),
+			light3: new THREE.PointLight("#ffffff", 10, 0, 2),
+			ambient: new THREE.AmbientLight("#ffffff", 5),
+			torch: new THREE.PointLight("#ffffff", 5, 0, 0)
+		};
+
+		let planetList = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Moon", "Callisto", "Io", "Triton", "Stars"]
+		let mapList = ["None", "Rainbow", "Rainbow Stripes", "Pokeball", "Sudoku Cube"].concat(planetList);
+		let bumpList = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Moon", "Callisto", "Io", "Triton", "Stars", "Frosted Glass"];
+		let bumpScales = {sun: 0.02, mercury: 0.04, venus: 0.02, earth: 1, mars: 0.2, jupiter: 0.02, saturn: 0.02, uranus: 0.1, neptune: 0.05, pluto: 0.05, moon: 0.1, stars: 0.05, frostedglass: 0.04, callisto: 0.08, io: 0.2, triton: 0.2};
+		let fontList = ["Helvetiker", "Gentilis", "Lucida Calligraphy", "Iglesia"];
+		let polyhedronDisplayList = ["Polyhedron", "Dual Polyhedron", "Both"];
+
+		let environmentList = [];
+		for(const map of mapList){
+			environmentList.push(map);
+		};
+		environmentList.splice(1, 0, "Generic Reflection");
+
+		let stats = {
+			object: new Stats(),
+			on: false,
+			enable: function(){
+				stats.object.setMode(0);//0: fps, 1: ms, 2: mb
+
+				stats.object.domElement.style.position = 'absolute';
+				stats.object.domElement.style.left = '10px';
+				stats.object.domElement.style.top = '0px';
+
+				document.body.appendChild(stats.object.domElement);
+			},
+			disable: function(){
+				document.body.removeChild(stats.object.domElement);
+			}
+		};
+
+//SHAPES
+		let shapeList = ["Teapot", "Heart", "Klein Bottle", "Sphere", "Torus", "Trefoil", "Sierpinski Tetrahedron", "Menger Sponge", "Text"];
+
+		let polyhedronData = {
+			"Tetrahedron": {name: "Tetrahedron", dualName: "Tetrahedron", scale: 1.25, alignment: [{axis: "y", angle: Math.PI / 6}]},
+			"Cube": {name: "Cube", dualName: "Octahedron", buildOptions: ["swap with dual"]},
+			"Octahedron": {name: "Octahedron", dualName: "Cube", buildOptions: ["octahedron"]},
+			"Dodecahedron": {name: "Dodecahedron", dualName: "Icosahedron", buildOptions: ["swap with dual"]},
+			"Icosahedron": {name: "Icosahedron", dualName: "Dodecahedron"},
+			"Truncated Tetrahedron": {name: "TruncatedTetrahedron", dualName: "Triakis Tetrahedron", scale: 1.25},
+			"Truncated Cube": {name: "TruncatedCube", dualName: "Triakis Octahedron", scale: 1.125},
+			"Truncated Octahedron": {name: "TruncatedOctahedron", dualName: "Triakis Hexahedron"},
+			"Truncated Dodecahedron": {name: "TruncatedDodecahedron", dualName: "Triakis Icosahedron"},
+			"Truncated Icosahedron": {name: "TruncatedIcosahedron", dualName: "Triakis Dodecahedron"},
+			"Cuboctahedron": {name: "Cuboctahedron", dualName: "Rhombic Dodecahedron"},
+			"Truncated Cuboctahedron": {name: "TruncatedCuboctahedron", dualName: "Disdyakis Dodecahedron"},
+			"Rhombicuboctahedron": {name: "Rhombicuboctahedron", dualName: "Deltoidal Icositetrahedron"},
+			"Snub Cube": {name: "SnubCuboctahedron", dualName: "Pentagonal Icositetrahedron"},
+			"Icosidodecahedron": {name: "Icosidodecahedron", dualName: "Rhombic Triacontahedron"},
+			"Truncated Icosidodecahedron": {name: "TruncatedIcosidodecahedron", dualName: "Disdyakis Triacontahedron"},
+			"Rhombicosidodecahedron": {name: "Rhombicosidodecahedron", dualName: "Deltoidal Hexecontahedron"},
+			"Snub Dodecahedron": {name: "SnubIcosidodecahedron", dualName: "Pentagonal Hexecontahedron"},
+			"Prism": {sides: {min: 3, max: 20}},
+			"Antiprism": {}
+		};
+
+		let polyhedronList = Object.keys(polyhedronData);
+		shapeList = shapeList.concat(polyhedronList);
+
+//PIVOTS & OBJECTS
+		let parent = new THREE.Object3D();
+		scene.add(parent);
+
+		let object1;
+
+//MATERIALS
+		let material = new THREE.MeshBasicMaterial({color: state.colors["innerGlow"], side: THREE.DoubleSide});
+		let metalMaterial = new THREE.MeshPhysicalMaterial({
+			color: state.colors["material"],
+			metalness: state.metalness,
+			roughness: state.roughness,
+			flatShading: state.flatShading,
+			transparency: state.transparency,
+			wireframe: false,
+			transparent: false,
+			side: state.side,
+			reflectivity: state.reflectivity,
+			envMapIntensity: state.envMapIntensity,
+			clearcoat: state.clearcoat,
+			clearcoatRoughness: state.clearcoatRoughness,
+			emissive: state.colors["emissive"],
+			emissiveIntensity: state.emissiveIntensity
+		});
+
+		let backgroundMaterial = new THREE.MeshBasicMaterial({
+			color: state.colors["background"],
+			side: THREE.BackSide,
+			depthTest: false,
+			depthWrite: false,
+		});
+
+		let cubeMaterial = [];
+		let octahedronDualMaterial = [];
+		let spongeMaterial = [];
+		let polyhedronMaterial = [];
+		let pointMaterial = metalMaterial.clone();
+		let edgeMaterial = metalMaterial.clone();
+		let dualMaterial = metalMaterial.clone();
+		let dualPointMaterial = metalMaterial.clone();
+		let dualEdgeMaterial = metalMaterial.clone();
+		let textMaterial = [];
+
+		for(let i = 0; i < 6; i++){
+			cubeMaterial.push(metalMaterial.clone());
+			octahedronDualMaterial.push(metalMaterial.clone());
+			spongeMaterial.push(metalMaterial.clone());
+			textMaterial.push(metalMaterial.clone());
+		};
+
+		for(let i = 0; i < 8; i++){
+			polyhedronMaterial.push(metalMaterial.clone());
+		};
+
+//LOADING MANAGER
+		let manager = new THREE.LoadingManager();
+
+		manager.onStart = function(url, itemsLoaded, itemsTotal){
+			loadingDiv.style.display = "block";
+			loadingDiv.innerHTML = 'Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.';
+		};
+
+		manager.onLoad = function(){
+			loadingDiv.innerHTML = 'Building Objects';
+			buildObjects();
+		};
+
+		manager.onProgress = function(url, itemsLoaded, itemsTotal){
+			loadingDiv.innerHTML = 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.';
+		};
+
+		manager.onError = function(url){
+			console.log('There was an error loading ' + url);
+		};
+
+//LOAD TEXTURES
+		function flatten(string){
+			return string.replace(/\s+/g, '').toLowerCase();
+		};
+
+		function loadMaps(){
+			//TEXTURE LOADER
+			let textureLoader = new THREE.TextureLoader(manager);
+			textureLoader.setPath('../Images/');
+
+			for(const map of mapList){
+				let mapName = flatten(map);
+
+				switch(map){
+					case "None":
+						cubeMaps.none = [];
+						break;
+					default:
+						let texture = textureLoader.load(map+'/'+mapName+'.png');
+						texture.wrapS = THREE.RepeatWrapping;
+						texture.wrapT = THREE.MirroredRepeatWrapping;
+
+						textures[mapName] = texture;
+
+						cubeMaps[mapName] = [
+							textureLoader.load(map+'/px.png'), textureLoader.load(map+'/nx.png'),
+							textureLoader.load(map+'/py.png'), textureLoader.load(map+'/ny.png'),
+							textureLoader.load(map+'/pz.png'), textureLoader.load(map+'/nz.png')
+						];
+
+						break;
+				};
+			};
+
+			//ENVIRONMENT LOADER
+			let loader = new THREE.CubeTextureLoader();
+			loader.setPath('../Images/');
+
+			for(const map of environmentList){
+				let mapName = flatten(map);
+
+				switch(map){
+					case "None":
+						environments.none = loader.load(['none.png', 'none.png', 'none.png',
+							'none.png', 'none.png', 'none.png'
+						]);
+						break;
+					default:
+						environments[mapName] = loader.load([
+							map+'/px.png', map+'/nx.png',
+							map+'/py.png', map+'/ny.png',
+							map+'/pz.png', map+'/nz.png'
+						]);
+						break;
+				};
+			};
+
+			for(const map of bumpList){
+				let mapName = flatten(map);
+				let bump = textureLoader.load(map+'/Bump/'+mapName+'bump.png');
+				bump.wrapS = THREE.RepeatWrapping;
+				bump.wrapT = THREE.RepeatWrapping;
+
+				bumps[mapName]  = bump;
+
+				cubeBumps[mapName] = [
+					textureLoader.load(map+'/Bump/px.png'), textureLoader.load(map+'/Bump/nx.png'),
+					textureLoader.load(map+'/Bump/py.png'), textureLoader.load(map+'/Bump/ny.png'),
+					textureLoader.load(map+'/Bump/pz.png'), textureLoader.load(map+'/Bump/nz.png')
+				];
+			};
+		};
+
+//LOAD FONTS
+		function loadFonts(manager){
+			let loader = new THREE.FontLoader();
+			loader.setPath("../fonts/");
+//"data.font + '_' + data.weight + ".typeface.json"
+			for(const font of fontList){
+				let fontName = flatten(font);
+				loader.load(fontName + ".typeface.json", function(newFont){
+					fonts[fontName] = newFont;
+				});
+			};
+		};
+
+//SCENE
+		function makeScene(){
+			let geometry = new THREE.Geometry();
+
+			object1 = new THREE.Mesh(geometry, metalMaterial);
+			parent.add(object1);
+			addGlow(object1);
+
+			camera.position.set(0, 0, 6);
+			//scene.add(new THREE.Mesh(new THREE.SphereGeometry(50, 20, 20).rotateY(3*Math.PI / 2), backgroundMaterial));
+			//scene.background = textures["stars"];
+			//scene.background = new THREE.Color("#ffff00")
+		};
+
+		function makeBackground(){
+			let backgroundGeometry = new THREE.SphereGeometry(2.2*state.maxDistance, 20, 20);
+			mirrorUVs(backgroundGeometry);
+			backgroundGeometry.rotateY(3*Math.PI / 2);
+
+			backgroundScene.add(new THREE.Mesh(backgroundGeometry, backgroundMaterial));
+		};
+
+//ANIMATION
+		function animate(){
+			if(stats.on){
+				stats.object.begin();
+			};
+
+			animateId = requestAnimationFrame(animate);
+			controls.update();
+
+			if(state.rotate){
+				parent.rotation.x += state.rotateSpeed.x;
+				parent.rotation.y += state.rotateSpeed.y;
+				parent.rotation.z += state.rotateSpeed.z;
+			};
+
+			if(!state.fixTorchPosition && state.torchOn){
+				lights.torch.position.copy(camera.position);
+			};
+
+			backgroundCamera = camera.clone();
+			backgroundCamera.position.normalize().multiplyScalar(state.maxDistance);//set(0, 0, 0);
+			//backgroundCamera.fov = 15;
+			//backgroundCamera.zoom = 0.9;
+			backgroundCamera.updateProjectionMatrix();
+
+			renderer.clear();
+			renderer.render(backgroundScene, backgroundCamera);
+			renderer.render(scene, camera);
+
+			if(state.demo.on){
+				demoMode();
+			};
+
+			if(needsRedraw){
+				draw(state.objectType);
+				needsRedraw = false;
+			};
+
+			if(stats.on){
+				stats.object.end();
+			};
+		};
+
+//MOUSE & TOUCH
+		function mouseControl(){
+			controls = new THREE.TrackballControls(camera, renderer.domElement);
+			controls.rotateSpeed = 5.0;
+			controls.minDistance = 0.1;
+			controls.maxDistance = state.maxDistance;
+			//controls = new DragControls([parent], camera, renderer.domElement);
+		};
+
+//KEYBOARD
+		function onDocumentKeyDown(event){
+			let activeElementTag = document.activeElement.tagName;
+
+			if(activeElementTag != "INPUT" && activeElementTag != "SELECT"){
+				switch(event.which){
+					case 27:
+					//escape
+						
+						break;
+					case 32:
+					//spacebar
+						document.getElementById("autoRotate").click();
+						break;
+					case 37:
+					//left arrow
+						let prevShape = shapeList.indexOf(state.objectType) - 1;
+						if(prevShape < 0){
+							prevShape = shapeList.length - 1;
+						};
+						gui.objectSelect.setValue(shapeList[prevShape]);
+						break;
+					case 39:
+					//right arrow
+						let nextShape = shapeList.indexOf(state.objectType) + 1;
+						if(nextShape === shapeList.length){
+							nextShape = 0;
+						};
+						gui.objectSelect.setValue(shapeList[nextShape]);
+						break;
+					case 67:
+					//c for console
+						//console.log(controls)
+						//download(JSON.stringify(polyhedronData["Snub Dodecahedron"].objects[1].edges), "geo.txt", 'text/plain', "saveLink");
+						/*console.log(object1.geometry.vertices.length, object1.geometry.faces.length);
+						for(const face of object1.geometry.faces){
+							console.log(face.materialIndex)
+						}*/
+						/*for(const face of object1.geometry.faces){
+							console.log(face.materialIndex)
+						}*/
+						//console.log(POLYHEDRA["4AntiPrism"])
+						//console.log(metalMaterial)
+						break;
+					case 68:
+					//d for demo
+						document.getElementById("demo").click();
+						break;
+					case 69:
+					//e for export
+						//exportObject();
+						break;
+					case 82:
+						//r for random
+							//document.getElementById("randomColorButton").click();
+							break;
+					case 83:
+					//s for stats
+						stats.on = !stats.on;
+						if(stats.on){
+							stats.enable();
+						}
+						else{
+							stats.disable();
+						};
+						break;
+				};
+			};
+		};
+
+//LIGHTS
+		function lighting(){
+			//build lights
+			for(const [name, light] of Object.entries(lights)){
+				initialLights[name] = {color: '#'+light.color.getHexString(), intensity: light.intensity};
+			};
+
+			//Set light position
+			lights.light1.position.setFromSphericalCoords(5, Math.PI / 4, -1*Math.PI / 3);
+			lights.light2.position.setFromSphericalCoords(5, 3*Math.PI / 4, Math.PI / 3);
+			lights.light3.position.setFromSphericalCoords(5, Math.PI / 2, Math.PI);
+
+			//let lighting = new THREEx.ThreePointsLighting()
+
+			//shadows
+			if(state.shadows){
+				lights.light1.castShadow = true;
+				lights.light2.castShadow = true;
+				lights.light3.castShadow = true;
+				lights.torch.castShadow = true;
+			};
+
+			//add to the scene
+			scene.add(lights.ambient);//ambient
+			scene.add(lights.light1);
+			scene.add(lights.light2);
+			scene.add(lights.light3);
+			//scene.add(lighting);
+		};
+
+//VECTOR OPERATIONS
+		function midpoint2(points){
+			let midpoint = new THREE.Vector2(0, 0, 0);
+
+			for(const p of points){
+				midpoint.add(p);
+			};
+
+			midpoint.multiplyScalar(1 / points.length);
+			return midpoint;
+		};
+
+		function midpoint3(points){
+			let midpoint = new THREE.Vector3(0, 0, 0);
+
+			for(const p of points){
+				midpoint.add(p);
+			};
+
+			midpoint.multiplyScalar(1 / points.length);
+			return midpoint;
+		};
+
+		function rotateAtoB(A, B){
+			let a = A.clone().normalize();
+			let b = B.clone().normalize();
+			let aDotb = a.dot(b);
+			let aCrossb = new THREE.Vector3().crossVectors(a, b);
+			let w = aCrossb.clone().normalize();
+			let bRejecta = b.clone().sub(a.clone().multiplyScalar(aDotb)).normalize();
+			let F = new THREE.Matrix3();
+			let G = new THREE.Matrix3();
+			let H = new THREE.Matrix3();
+			let U = new THREE.Matrix3();
+
+			if(aCrossb.equals(new THREE.Vector3(0, 0, 0))){
+				return U;
+			};
+
+			H.set(
+				a.x, bRejecta.x, -1*w.x,
+				a.y, bRejecta.y, -1*w.y,
+				a.z, bRejecta.z, -1*w.z
+			);
+
+			F.getInverse(H); 
+
+			G.set(
+				aDotb, -1*aCrossb.length(), 0,
+				aCrossb.length(), aDotb, 0,
+				0, 0, 1
+			);
+
+			U.getInverse(F).multiply(G).multiply(F);
+			return U;
+		};
+
+//UV GENERATION & MANIPULATION
+		function cloneUVs(UVArray){
+			let clone = [];
+
+			for(const faceUV of UVArray[0]){
+				clone.push([faceUV[0].clone(), faceUV[1].clone(), faceUV[2].clone()]);
+			};
+
+			return [clone];
+		};
+
+		function assignSphericalUVs(geometry, fudge){
+			let uvArray = [];
+			let vertices = geometry.vertices;
+			let tolerence = 0.1;
+			let delta = 0.1
+
+			function calculateSphericalUV(p){
+				return new THREE.Vector2(0.5 + Math.atan2(p.x, p.z) / (2*Math.PI), 0.5 + Math.asin(p.y) / Math.PI);
+			};
+
+			for(const [i,face] of geometry.faces.entries()){
+				let a = vertices[face.a].clone().normalize();
+				let b = vertices[face.b].clone().normalize();
+				let c = vertices[face.c].clone().normalize();
+				let northPole = new THREE.Vector3(0, 1, 0);
+				let southPole = new THREE.Vector3(0, -1, 0);
+				let needsMoving;
+
+				if(a.distanceTo(northPole) < delta || a.distanceTo(southPole) < delta){
+					needsMoving = 'A';
+				}
+				else if(b.distanceTo(northPole) < delta || b.distanceTo(southPole) < delta){
+					needsMoving = 'B';
+				}
+				else if(c.distanceTo(northPole) < delta || c.distanceTo(southPole) < delta){
+					needsMoving = 'C';
+				};
+
+				let m = calculateSphericalUV(midpoint3([a, b, c]));
+				let A = calculateSphericalUV(a);
+				let B = calculateSphericalUV(b);
+				let C = calculateSphericalUV(c);
+
+				let M = midpoint2([A, B, C]);
+
+				if(Math.abs(M.x - m.x) > tolerence){
+					if(A.x <= M.x){
+						A.x++;
+					};
+
+					if(B.x <= M.x){
+						B.x++;
+					};
+
+					if(C.x <= M.x){
+						C.x++;
+					};
+				};
+
+				switch(needsMoving){
+					case 'A':
+						A.x = 0.5*(B.x + C.x);
+						break;
+					case 'B':
+						B.x = 0.5*(A.x + C.x);
+						break;
+					case 'C':
+						C.x = 0.5*(B.x + A.x);
+						break;
+					default:
+						break;
+				};
+
+				uvArray.push([
+					new THREE.Vector2(A.x, A.y),
+					new THREE.Vector2(B.x, B.y),
+					new THREE.Vector2(C.x, C.y)
+				]);
+			};
+
+			geometry.faceVertexUvs[0] = uvArray;
+			geometry.uvsNeedUpdate = true;
+		};
+
+		function insideOutUVs(geometry){
+			//Moves baseline to middle of geometry
+			let uvArray = [];
+
+			for(const face of geometry.faceVertexUvs[0]){
+				let a = face[0];
+				let b = face[1];
+				let c = face[2];
+
+				if(a.y < 0.5 && b.y < 0.5 && c.y < 0.5){
+					uvArray.push([new THREE.Vector2(a.x, a.y + 0.5), new THREE.Vector2(b.x, b.y + 0.5), new THREE.Vector2(c.x, c.y + 0.5)]);
+				}
+				else{
+					uvArray.push([new THREE.Vector2(a.x, a.y - 0.5), new THREE.Vector2(b.x, b.y - 0.5), new THREE.Vector2(c.x, c.y - 0.5)]);
+				}
+			};
+
+			geometry.faceVertexUvs[0] = uvArray;
+			geometry.uvsNeedUpdate = true;
+		};
+
+		function rotateUVs(geometry){
+			//Rotate uvs 90° clockwise
+			let uvArray = [];
+
+			for(const face of geometry.faceVertexUvs[0]){
+				let a = face[0];
+				let b = face[1];
+				let c = face[2];
+
+				uvArray.push([new THREE.Vector2(-a.y, a.x), new THREE.Vector2(-b.y, b.x), new THREE.Vector2(-c.y, c.x)]);
+			};
+
+			geometry.faceVertexUvs[0] = uvArray;
+			geometry.uvsNeedUpdate = true;
+		};
+
+		function mirrorUVs(geometry){
+			//Mirrors uvs left to right
+			let uvArray = [];
+
+			for(const face of geometry.faceVertexUvs[0]){
+				let a = face[0];
+				let b = face[1];
+				let c = face[2];
+
+				uvArray.push([new THREE.Vector2(1 - a.x, a.y), new THREE.Vector2(1 - b.x, b.y), new THREE.Vector2(1 - c.x, c.y)]);
+			};
+
+			geometry.faceVertexUvs[0] = uvArray;
+			geometry.uvsNeedUpdate = true;
+		};
+
+//GEOMETRY MANIPULATION
+		function rotateGeometry(geometry, rotationMatrix){
+			for(const v of geometry.vertices){
+				v.applyMatrix3(rotationMatrix);
+			};
+
+			geometry.computeFaceNormals();
+			geometry.computeVertexNormals();
+		};
+
+		function dilateGeometry(geo, factor){
+			let geometry = geo.clone();
+
+			geometry.computeVertexNormals();
+
+			let normals = new Array(geometry.vertices.length);
+
+			for(const face of geometry.faces){
+				normals[face.a] = face.vertexNormals[0];
+				normals[face.b] = face.vertexNormals[1];
+				normals[face.c] = face.vertexNormals[2];
+			};
+
+			for(const [i, vertex] of Object.entries(geometry.vertices)){
+				vertex.addScaledVector(normals[i], factor);
+			};
+
+			return geometry;
+		};
+
+//OBJECT - SIERPINSKI TETRAHEDRON
+		let SierpinskiTetrahedron = {
+			gasketNumber: 0,
+			points: [[new THREE.Vector3(0, 0, 0)]],
+			geometry: new THREE.Geometry(),
+			fractalObject: new THREE.Object3D(),
+			sphericalObject: new THREE.Object3D(),
+			object: new THREE.Object3D(),
+
+			setUVType: function(){
+				switch(state.fractalTexture){
+					case true:
+						this.object = this.fractalObject;
+						break;
+					default:
+						this.object = this.sphericalObject;
+						break;
+				};
+			},
+
+			gasket: function(){
+				let newPoints = [];
+				let currentGasket = this.points.length;
+				let s = Math.pow(2, -1*currentGasket)*Math.pow(3, -0.5);
+
+				for(const p of this.points[currentGasket - 1]){
+					newPoints.push(new THREE.Vector3(s, s, s).add(p));
+					newPoints.push(new THREE.Vector3(-s, -s, s).add(p));
+					newPoints.push(new THREE.Vector3(s, -s, -s).add(p));
+					newPoints.push(new THREE.Vector3(-s, s, -s).add(p));
+				};
+
+				this.points.push(newPoints);
+			},
+
+			make: function(scale, gasketNumber){
+				if(typeof scale !== "number" || scale <= 0){
+					scale = 1;
+				};
+
+				if(Number.isInteger(gasketNumber) && gasketNumber >= 0){
+					this.gasketNumber = gasketNumber;
+				}
+				else{
+					console.warn("Invalid gasket number");
+				};
+
+				for(let i = 0; i < this.gasketNumber; i++){
+					this.gasket();
+				};
+
+				for(const point of this.points[this.gasketNumber]){
+					let s = Math.pow(2, -1*this.gasketNumber);
+					let newTetrahedron = new THREE.TetrahedronGeometry(s);
+
+					//rotate to same orientation as tetrahedron and assign UVs
+					newTetrahedron.rotateY(3*Math.PI / 4);
+					newTetrahedron.rotateX(Math.acos(Math.pow(3, -0.5)));
+					assignSphericalUVs(newTetrahedron);
+					newTetrahedron.rotateX(-1*Math.acos(Math.pow(3, -0.5)));
+					newTetrahedron.rotateY(-3*Math.PI / 4);
+
+					newTetrahedron.translate(point.x, point.y, point.z);
+					this.geometry.merge(newTetrahedron);
+				};
+
+				this.geometry.computeVertexNormals();
+				this.geometry.scale(scale, scale, scale);
+
+				//rotate to same orientation as tetrahedron
+				this.geometry.rotateY(3*Math.PI / 4);
+				this.geometry.rotateX(Math.acos(Math.pow(3, -0.5)));
+
+				this.fractalObject = new THREE.Mesh(this.geometry.clone(), metalMaterial);
+				assignSphericalUVs(this.geometry);
+				this.sphericalObject = new THREE.Mesh(this.geometry, metalMaterial);
+				this.setUVType();
+			},
+		};
+
+//OBJECT - MENGER SPONGE
+		let Sponge = {
+			sidelength: 1,
+			gasketNumber: 0,
+			material: new THREE.MeshBasicMaterial(),
+			points: [[new THREE.Vector3(0, 0, 0)]],
+			geometry: new THREE.Geometry(),
+			geometries: [new THREE.BoxGeometry(1, 1, 1)],
+			fractalObject: new THREE.Object3D(),
+			sphericalObject: new THREE.Object3D(),
+			object: new THREE.Object3D(),
+			glowObject: new THREE.Object3D(),
+
+			pointList: [
+				[1, 1, 0], [0, 1, 1], [-1, 1, 0], [0, 1, -1], [1, -1, 0], [0, -1, 1], [-1, -1, 0], [0, -1, -1], [1, 1, 1], [1, 0, 1],
+				[1, -1, 1], [-1, -1, 1], [-1, 0, 1], [-1, 1, 1], [1, 1, -1], [1, 0, -1], [1, -1, -1], [-1, -1, -1], [-1, 0, -1], [-1, 1, -1]
+			],
+
+			resetMaterialIndices: function(geometry){
+				for(const face of geometry.faces){
+					face.materialIndex = face.materialIndex % 6;
+				};
+			},
+
+			markObscuredFaces: function(geometry){
+				for(const face of geometry.faces){
+					let mp = midpoint3([geometry.vertices[face.a], geometry.vertices[face.b], geometry.vertices[face.c]]);
+					let mpx = mp.x;
+					let mpy = mp.y;
+					let mpz = mp.z;
+
+					switch(mpx){
+						case 0.5:
+							face.materialIndex = 6;
+							break;
+						case -0.5:
+							face.materialIndex = 7;
+							break;
+					};
+
+					switch(mpy){
+						case 0.5:
+							face.materialIndex = 8;
+							break;
+						case -0.5:
+							face.materialIndex = 9;
+							break;
+					};
+
+					switch(mpz){
+						case 0.5:
+							face.materialIndex = 10;
+							break;
+						case -0.5:
+							face.materialIndex = 11;
+							break;
+					};
+				};
+			},
+
+			gasket: function(){
+				let newGeometry = new THREE.Geometry();
+				let currentGasket = this.geometries.length;
+				let s = Math.pow(3, -1);
+				let newCubes = this.geometries[currentGasket - 1].clone();
+				this.markObscuredFaces(newCubes);
+				newCubes.scale(s, s, s);
+
+				for(const p of this.pointList){
+					let filterArray = [0, 1, 2, 3, 4, 5];
+					switch(p[0]){
+						case 1:
+							filterArray.push(6);
+							break;
+						case -1:
+							filterArray.push(7);
+							break;
+						case 0:
+							filterArray.push(8, 9, 10, 11);
+							break;
+					};
+
+					switch(p[1]){
+						case 1:
+							filterArray.push(8);
+							break;
+						case -1:
+							filterArray.push(9);
+							break;
+						case 0:
+							filterArray.push(6, 7, 10, 11);
+							break;
+					};
+
+					switch(p[2]){
+						case 1:
+							filterArray.push(10);
+							break;
+						case -1:
+							filterArray.push(11);
+							break;
+						case 0:
+							filterArray.push(6, 7, 8, 9);
+							break;
+					};
+
+					function filterFunction(face){
+						return filterArray.includes(face.materialIndex);
+					};
+
+					let newCube = newCubes.clone();
+					newCube.faces = newCube.faces.filter(filterFunction);
+					newCube.translate(s*p[0], s*p[1], s*p[2]);
+					newGeometry.merge(newCube);
+					newGeometry.mergeVertices();
+				};
+
+				this.resetMaterialIndices(newGeometry);
+				this.geometries.push(newGeometry);
+			},
+
+			setUVType: function(){
+				switch(state.fractalTexture){
+					case true:
+						this.object = this.fractalObject;
+						break;
+					default:
+						this.object = this.sphericalObject;
+						break;
+				};
+			},
+
+			calculateUVs: function(){
+				let uvArray = [];
+				let vertices = this.geometry.vertices;
+
+				for(const face of this.geometry.faces){
+					switch(face.materialIndex){
+						case 0:
+							uvArray.push([
+								new THREE.Vector2(-1*vertices[face.a].z + 0.5, vertices[face.a].y + 0.5),
+								new THREE.Vector2(-1*vertices[face.b].z + 0.5, vertices[face.b].y + 0.5),
+								new THREE.Vector2(-1*vertices[face.c].z + 0.5, vertices[face.c].y + 0.5)
+							]);
+							break;
+						case 1:
+							uvArray.push([
+								new THREE.Vector2(vertices[face.a].z + 0.5, vertices[face.a].y + 0.5),
+								new THREE.Vector2(vertices[face.b].z + 0.5, vertices[face.b].y + 0.5),
+								new THREE.Vector2(vertices[face.c].z + 0.5, vertices[face.c].y + 0.5)
+							]);
+							break;
+						case 2:
+							uvArray.push([
+								new THREE.Vector2(vertices[face.a].x + 0.5, -1*vertices[face.a].z + 0.5),
+								new THREE.Vector2(vertices[face.b].x + 0.5, -1*vertices[face.b].z + 0.5),
+								new THREE.Vector2(vertices[face.c].x + 0.5, -1*vertices[face.c].z + 0.5)
+							]);
+							break;
+						case 3:
+							uvArray.push([
+								new THREE.Vector2(vertices[face.a].x + 0.5, vertices[face.a].z + 0.5),
+								new THREE.Vector2(vertices[face.b].x + 0.5, vertices[face.b].z + 0.5),
+								new THREE.Vector2(vertices[face.c].x + 0.5, vertices[face.c].z + 0.5)
+							]);
+							break;
+						case 4:
+							uvArray.push([
+								new THREE.Vector2(vertices[face.a].x + 0.5, vertices[face.a].y + 0.5),
+								new THREE.Vector2(vertices[face.b].x + 0.5, vertices[face.b].y + 0.5),
+								new THREE.Vector2(vertices[face.c].x + 0.5, vertices[face.c].y + 0.5)
+							]);
+							break;
+						case 5:
+							uvArray.push([
+								new THREE.Vector2(-1*vertices[face.a].x + 0.5, vertices[face.a].y + 0.5),
+								new THREE.Vector2(-1*vertices[face.b].x + 0.5, vertices[face.b].y + 0.5),
+								new THREE.Vector2(-1*vertices[face.c].x + 0.5, vertices[face.c].y + 0.5)
+							]);
+							break;
+						default:
+							console.warn("Something went wrong!");
+					};
+				};
+
+				this.geometry.faceVertexUvs = [uvArray];
+			},
+
+			make: function(sidelength, gasketNumber, mat){
+				if(typeof sidelength === "number" && sidelength > 0){
+					this.sidelength = sidelength;
+				}
+				else{
+					console.warn("Invalid side length");
+				};
+
+				if(Number.isInteger(gasketNumber) && gasketNumber >= 0){
+					this.gasketNumber = gasketNumber;
+				}
+				else{
+					console.warn("Invalid gasket number");
+				};
+
+				if(mat !== undefined){
+					this.material = mat;
+				};
+
+				for(let i = 0; i < this.gasketNumber && this.geometries.length < this.gasketNumber + 1; i++){
+					this.gasket();
+				};
+
+				this.geometry = this.geometries[this.gasketNumber];
+
+				this.geometry.sortFacesByMaterialIndex();
+				this.geometry.computeVertexNormals();
+
+				this.fractalObject = new THREE.Mesh(this.geometry.clone().scale(this.sidelength, this.sidelength, this.sidelength), this.material);
+				this.calculateUVs();
+				this.sphericalObject = new THREE.Mesh(this.geometry.clone().scale(this.sidelength, this.sidelength, this.sidelength), this.material);
+				this.setUVType();
+				this.glowObject = glowMesh(this.object, 0.005, 0.05);
+			},
+		};
+
+//OBJECT - HEART
+		let Heart = {
+			scale: 1,
+			geometry: new THREE.Geometry(),
+			object: new THREE.Object3D(),
+
+			heartParameters: function(v, u, optionalTarget){
+				let result = optionalTarget || new THREE.Vector3();
+
+				u*= Math.PI;
+				v*= 2*Math.PI;
+
+				let x, y, z;
+				let epsilon = 0.05;
+				x = Math.sin(v)*Math.sin(u);
+				y = 0.8*(Math.cos(v)+Math.pow(Math.pow(Math.sin(v),2)+epsilon,0.5))*Math.sin(u);
+				z = 0.57*Math.cos(u);
+
+				return result.set(x, y, z);
+			},
+
+			make: function(scale, mat, stacks, slices){
+				if(typeof scale === "number" && scale > 0){
+					this.scale = scale;
+				}
+				else{
+					console.warn("Invalid scale");
+				};
+
+				mat = mat || material;
+
+				this.geometry = new THREE.ParametricGeometry(this.heartParameters,stacks,slices);
+				this.geometry.computeFaceNormals();
+				this.geometry.computeVertexNormals();
+				assignSphericalUVs(this.geometry);
+				this.geometry.normalize();
+				this.geometry.scale(this.scale, this.scale, this.scale);
+	
+				this.object = new THREE.Mesh(this.geometry, mat);
+			},
+		};
+
+//OBJECT - PREMADE TEAPOT
+		let Teapot = {
+			geometry: new THREE.Geometry(),
+			object: new THREE.Object3D(),
+
+			make: function(scale, mat){
+				mat = mat || material;
+				this.geometry = new THREE.Geometry().fromBufferGeometry(new THREE.TeapotBufferGeometry(scale, 20, true, true, true, true, true));//Parameters: size, segments, bottom, lid, body, fitLid, blinn
+				this.geometry.mergeVertices();
+				assignSphericalUVs(this.geometry);
+				this.object = new THREE.Mesh(this.geometry, mat);
+			},
+		};
+
+//OBJECT - PREMADE TREFOIL
+		let Trefoil = {
+			geometry: new THREE.Geometry(),
+			object: new THREE.Object3D(),
+
+			make: function(scale, mat){
+				mat = mat || material;
+				scale = scale || 1;
+				this.geometry = new THREE.TorusKnotGeometry(1*scale, 0.3*scale, 200, 50);
+				assignSphericalUVs(this.geometry);
+				this.object = new THREE.Mesh(this.geometry, mat);
+			},
+		};
+
+//TEXT GEOMETRY
+		let Text = {
+			needsUpdate: true,
+			scale: 3,
+			scaleFactor: 32,
+			geometry: new THREE.Geometry(),
+			object: new THREE.Object3D(),
+			fractalObject: new THREE.Object3D(),
+			sphericalObject: new THREE.Object3D(),
+
+			setUVType: function(){
+				switch(state.fractalTexture){
+					case true:
+						this.object = this.fractalObject;
+						break;
+					default:
+						this.object = this.sphericalObject;
+						break;
+				};
+			},
+
+			make: function(){
+				if(this.needsUpdate){
+					this.buildObject();
+					this.needsUpdate = false;
+				};
+			},
+
+			buildObject: function(){
+				let lineSep = 0.1;
+				switch(state.textOptions.font){
+					case "Iglesia" :
+						lineSep = 0.15;
+						this.scale = 2.85;
+						break;
+					default:
+						lineSep = 0.12;
+						this.scale = 3;
+						break;
+				};
+
+				let geometry =  new THREE.TextGeometry(state.textOptions.line1, {
+					font: fonts[flatten(state.textOptions.font)],
+					size: state.textOptions.size / this.scaleFactor,
+					height: state.textOptions.height / this.scaleFactor,
+					curveSegments: state.textOptions.curveSegments,
+					bevelEnabled: state.textOptions.bevelEnabled,
+					bevelThickness: state.textOptions.bevelThickness / this.scaleFactor,
+					bevelSize: state.textOptions.bevelSize / this.scaleFactor,
+					bevelOffset: state.textOptions.bevelOffset / this.scaleFactor,
+					bevelSegments: state.textOptions.bevelSegments,
+				});
+
+				geometry.center();
+				geometry.computeBoundingBox();
+
+				let geometry2 =  new THREE.TextGeometry(state.textOptions.line2, {
+					font: fonts[flatten(state.textOptions.font)],
+					size: state.textOptions.size / this.scaleFactor,
+					height: state.textOptions.height / this.scaleFactor,
+					curveSegments: state.textOptions.curveSegments,
+					bevelEnabled: state.textOptions.bevelEnabled,
+					bevelThickness: state.textOptions.bevelThickness / this.scaleFactor,
+					bevelSize: state.textOptions.bevelSize / this.scaleFactor,
+					bevelOffset: state.textOptions.bevelOffset / this.scaleFactor,
+					bevelSegments: state.textOptions.bevelSegments,
+				});
+
+				geometry2.center();
+				geometry2.computeBoundingBox();
+
+				let geometry3 =  new THREE.TextGeometry(state.textOptions.line3, {
+					font: fonts[flatten(state.textOptions.font)],
+					size: state.textOptions.size / this.scaleFactor,
+					height: state.textOptions.height / this.scaleFactor,
+					curveSegments: state.textOptions.curveSegments,
+					bevelEnabled: state.textOptions.bevelEnabled,
+					bevelThickness: state.textOptions.bevelThickness / this.scaleFactor,
+					bevelSize: state.textOptions.bevelSize / this.scaleFactor,
+					bevelOffset: state.textOptions.bevelOffset / this.scaleFactor,
+					bevelSegments: state.textOptions.bevelSegments,
+				});
+
+				geometry3.center();
+				geometry3.computeBoundingBox();
+
+				let bby1 = geometry.boundingBox.max.y;
+				let bby2 = geometry2.boundingBox.max.y;
+				let bby3 = geometry3.boundingBox.max.y;
+				let translate2 = 0;
+				let translate3 = 0;
+
+				if(bby1 > 0 && bby2 > 0){
+					translate2 = -1*(bby1 + bby2 + lineSep);
+				};
+
+				if(bby2 > 0 && bby3 > 0){
+					translate3 = -1*(bby2 + bby3 + lineSep);
+				}
+				else if(bby1 > 0 && bby3 > 0){
+					translate3 = -1*(bby1 + bby3 + lineSep);
+				};
+
+				geometry2.translate(0, translate2, 0);
+				geometry.merge(geometry2, new THREE.Matrix4(), 2);
+
+				geometry3.translate(0, translate2 + translate3, 0);
+				geometry.merge(geometry3, new THREE.Matrix4(), 4);
+
+				geometry.normalize();
+				geometry.scale(this.scale, this.scale, this.scale);
+				geometry.computeVertexNormals();
+
+				this.geometry = geometry;
+				this.fractalObject = new THREE.Mesh(this.geometry.clone(), textMaterial);
+				assignSphericalUVs(this.geometry);
+				this.sphericalObject = new THREE.Mesh(this.geometry, textMaterial);
+				this.setUVType();
+			},
+		};
+
+//POINTS GEOMETRY
+		function pointsGeometry(points, radius, widthSegments, heightSegments){
+			let geometry = new THREE.Geometry();
+
+			for(const vert of points){
+				let geo = new THREE.SphereGeometry(radius, widthSegments, heightSegments);
+
+				for(const v of geo.vertices){
+					v.add(vert);
+				};
+
+				geometry.merge(geo, new THREE.Matrix4(), 0);
+			};
+
+			return geometry;
+		};
+
+//EDGE GEOMETRY
+		//edges: array of edges - {a: Vector3, b: Vector3}
+		function edgeGeometry(edges, radius, radialSegments){
+			let geometry = new THREE.Geometry();
+
+			for(const edge of edges){
+				let vec = new THREE.Vector3().subVectors(edge.a, edge.b);
+				let mp = new THREE.Vector3().addVectors(edge.a, edge.b).multiplyScalar(0.5);
+				let rotationMatrix = rotateAtoB(new THREE.Vector3(0, 1, 0), vec);
+
+				let geo = new THREE.CylinderGeometry(radius, radius, edge.a.distanceTo(edge.b), radialSegments);
+
+				for(const v of geo.vertices){
+					v.applyMatrix3(rotationMatrix);
+					v.add(mp);
+				};
+
+				geometry.merge(geo, new THREE.Matrix4(), 0);
+			};
+
+			geometry.computeFaceNormals();
+			geometry.computeVertexNormals();
+
+			return geometry;
+		};
+
+//POLYHEDRA
+		//Greek Naming
+		function greekify(n, pos){
+			let output = "";
+
+			switch(n){
+				case 3:
+					output = "Triangle";
+					break;
+				case 4:
+					output = "Square";
+					break;
+				case 5:
+					output = "Pentagon";
+					break;
+				case 6:
+					output = "Hexagon";
+					break;
+				case 7:
+					output = "Heptagon";
+					break;
+				case 8:
+					output = "Octagon";
+					break;
+				case 9:
+					output = "Nonagon";
+					break;
+				case 10:
+					output = "Decagon";
+					break;
+				case 11:
+					output = "Undecagon";
+					break;
+				case 12:
+					output = "Dodecagon";
+					break;
+				case 13:
+					output = "Triskaidecagon";
+					break;
+				case 14:
+					output = "Tetradecagon";
+					break;
+				case 15:
+					output = "Pentadecagon";
+					break;
+				case 16:
+					output = "Hexadecagon";
+					break;
+				case 17:
+					output = "Heptadecagon";
+					break;
+				case 18:
+					output = "Octadecagon";
+					break;
+				case 19:
+					output = "Enneadecagon";
+					break;
+				case 20:
+					output = "Icosagon";
+					break;
+				default:
+					output = n.toString() + "-agon";
+			};
+
+			switch(pos){
+				case "adjective":
+					switch(n){
+						case 3:
+							output = "Triangular";
+							break;
+						case 4:
+							break;
+						default:
+							output += "al";
+					};
+			};
+
+			return output;
+		};
+
+//DUAL POLYHEDRA
+		function dualPolyhedron(polyhedron, print){
+			let poly = POLYHEDRA[polyhedron];
+			let vertices = [];
+			let dualVertices = [];
+			let dualEdges = [];
+			let dualFaces = [];
+			let dualPoly = {name: poly.name + " Dual", vertex: dualVertices, edge: dualEdges, face: dualFaces};
+			POLYHEDRA[polyhedron + "Dual"] = dualPoly;
+
+			//Determine category
+			switch(poly.category[0]){
+				case "Platonic Solid":
+					dualPoly.category = ["Platonic Solid"];
+					break;
+				case "Archimedean Solid":
+					dualPoly.category = ["Catalan Solid"];
+					break;
+				case "Antiprism":
+					dualPoly.category = ["Trapezohedron"];
+					break;
+				case "Prism":
+					dualPoly.category = ["Bipyramid"];
+					break;
+				case "Catalan Solid":
+					dualPoly.category = ["Archimedean Solid"];
+					break;
+				case "Trapezohedron":
+					dualPoly.category = ["Antiprism"];
+					break;
+				case "Bipyramid":
+					dualPoly.category = ["Prism"];
+					break;
+				default:
+					dualPoly.category = ["Dual Solid"];
+					break;
+			};
+
+			for(const vertex of poly.vertex){
+				vertices.push(new THREE.Vector3().fromArray(vertex));
+			};
+
+			//Build vertex list
+			for(const face of poly.face){
+				faceVertices = [];
+				for(const vertex of face){
+					faceVertices.push(new THREE.Vector3().fromArray(poly.vertex[vertex]));
+				};
+				let v = midpoint3(faceVertices);
+				dualVertices.push(v.divideScalar(v.lengthSq()).toArray());
+			};
+
+			//Build edge list
+			for(const edge of poly.edge){
+				let dualEdge = [];
+				for(const [i, face] of Object.entries(poly.face)){
+					if(face.includes(edge[0]) && face.includes(edge[1])){
+						dualEdge.push(Number(i));
+					};
+				};
+				dualEdges.push(dualEdge);
+			};
+
+			//Build face list
+			for(let i = 0; i < poly.vertex.length; i++){
+				let dualFace = [];
+				let faceVertices = [];
+				let indexedVertices = [];
+
+				for(let j = 0; j < poly.face.length; j++){
+					if(poly.face[j].includes(i)){
+						let dualVertex = new THREE.Vector3().fromArray(dualVertices[j]).clone();
+						faceVertices.push(dualVertex);
+						indexedVertices.push({index: j, vertex: dualVertex});
+					};
+				};
+
+				//Sort face array into anticlockwise order by using theta value in spherical coordinates around the midpoint
+				let mp = midpoint3(faceVertices).normalize();
+				let rotationMatrix = rotateAtoB(mp, new THREE.Vector3(0, 1, 0));
+				let direction = 1;
+
+				if(mp.applyMatrix3(rotationMatrix).y < 0){
+					direction = -1;
+				};
+
+				for(const v of indexedVertices){
+					v.vertex.normalize().applyMatrix3(rotationMatrix);
+					v.theta = Math.atan2(v.vertex.x, v.vertex.z)*direction;
+				};
+
+				indexedVertices.sort((a, b) => a.theta - b.theta);
+
+				for(const v of indexedVertices){
+					dualFace.push(v.index);
+				};
+
+				dualFaces.push(dualFace);
+			};
+
+			//option to export geometry attributes
+			if(print){
+				download(JSON.stringify(dualPoly), "poly.txt", 'text/plain', "saveLink");
+			};
+		};
+
+//PRISMS
+		function prism(n){
+			let vertices= [];
+			let edges= [];
+			let faces= [];
+			let top= [];
+			let base= [];
+
+			POLYHEDRA[n.toString() + "Prism"] = {name: n.toString() + "Prism", vertex: vertices, edge: edges, face: faces, category: "Prism"};
+
+			for(let i= 0; i < n; i++){
+				vertices.push([Math.sin(2*i*Math.PI / n), Math.cos(2*i*Math.PI / n), Math.sin(Math.PI / n)]);
+				vertices.push([Math.sin(2*i*Math.PI / n), Math.cos(2*i*Math.PI / n), -1*Math.sin(Math.PI / n)]);
+
+				edges.push([2*i, 2*i + 1]);
+				edges.push([2*i, (2*i + 2)%(2*n)]);
+				edges.push([2*i + 1, (2*i + 3)%(2*n)]);
+
+				faces.push([2*i, (2*i + 2)%(2*n), (2*i + 3)%(2*n), 2*i + 1]);
+
+				top.push(2*i);
+				base.push(2*i + 1);
+			};
+
+			faces.unshift(base);
+			faces.unshift(top.reverse());
+		};
+
+//ANTI PRISMS
+		function antiprism(n){
+			let vertices= [];
+			let edges= [];
+			let faces= [];
+			let top= [];
+			let base= [];
+
+			POLYHEDRA[n.toString() + "AntiPrism"] = {name: n.toString() + "AntiPrism", vertex: vertices, edge: edges, face: faces, category: "Antiprism"};
+
+			let theta = Math.PI / n;
+			let radius = 1 / Math.cos(theta / 2);
+			let height = Math.sqrt(0.5*Math.cos(theta) - 0.5*Math.cos(2*theta));
+
+			for(let i= 0; i < n; i++){
+				vertices.push([Math.sin(2*i*theta)*radius, Math.cos(2*i*theta)*radius, height*radius]);
+				vertices.push([Math.sin((2*i+1)*theta)*radius, Math.cos((2*i+1)*theta)*radius, -1*height*radius]);
+
+				edges.push([2*i, 2*i + 1]);
+				edges.push([2*i, (2*i + 2)%(2*n)]);
+				edges.push([2*i + 1, (2*i + 2)%(2*n)]);
+				edges.push([2*i + 1, (2*i + 3)%(2*n)]);
+
+				faces.push([2*i, (2*i + 2)%(2*n), 2*i + 1]);
+				faces.push([2*i + 1, (2*i + 2)%(2*n), (2*i + 3)%(2*n)]);
+
+				top.push(2*i);
+				base.push(2*i + 1);
+			};
+
+			faces.unshift(base);
+			faces.unshift(top.reverse());
+		};
+
+//POLYHEDRON GEOMETRY
+		//stellation object {factor: number}
+		function polyhedronGeometry(polyhedron, stellation, options){
+			let geometry = new THREE.Geometry();
+			let poly = POLYHEDRA[polyhedron];
+
+			let generateStellationData = false;
+
+			//check if stellation is required
+			if(typeof stellation === "object" && typeof stellation.factor === "number"){
+				generateStellationData = true;
+				stellation.stellaVertices = [];
+				stellation.stellaEdges = [];
+			}
+			else if(typeof stellation === "number"){
+				stellation = {factor: stellation};
+			}
+			else{
+				stellation = {factor: 0}
+			};
+
+			//keep track of face sizes
+			if(poly.faceTypes === undefined){
+				poly.faceTypes = new Set();
+			};
+
+			for(const vertex of poly.vertex){
+				geometry.vertices.push(new THREE.Vector3().fromArray(vertex));
+			};
+
+			for(const [i, face] of Object.entries(poly.face)){
+				let materialIndex = 0;
+				let faceSize = face.length;
+
+				poly.faceTypes.add(faceSize);
+
+				if(options.includes("prism")){
+				//give prism different material for base and sides
+				//assumes that prism was built with the base and top faces 0 and 1
+					if(i == 0 || i == 1){
+						materialIndex = 6;
+					}
+					else{
+						materialIndex = 7;
+					};
+				}
+				else{
+					//set material index by face type
+					switch(faceSize){
+						case 4:
+							materialIndex = 1;
+							break;
+						case 5:
+							materialIndex = 2;
+							break;
+						case 6:
+							materialIndex = 3;
+							break;
+						case 8:
+							materialIndex = 4;
+							break;
+						case 10:
+							materialIndex = 5;
+							break;
+					};
+				};
+
+				let mp = geometry.vertices.length;
+				let faceVertices = [];
+				let sidelengthSum = 0;
+
+				for(const i of face){
+					faceVertices.push(geometry.vertices[i]);
+				};
+
+				for(let i = 0; i < faceSize; i++){
+					geometry.faces.push(new THREE.Face3(face[i], face[(i+1)%faceSize], mp, undefined, undefined, materialIndex));
+
+					sidelengthSum += geometry.vertices[face[i]].distanceTo(geometry.vertices[face[(i+1)%faceSize]]);
+				};
+
+				//calculate face normal 
+				let vec1 = new THREE.Vector3().subVectors(geometry.vertices[face[1]], geometry.vertices[face[0]]);
+				let vec2 = new THREE.Vector3().subVectors(geometry.vertices[face[2]], geometry.vertices[face[0]]);
+				let normal = new THREE.Vector3().crossVectors(vec1, vec2).normalize();
+
+				//calculate stellation amount
+				let sidelength = sidelengthSum / faceSize;
+				let restrictedFaceSize = Math.min(faceSize, 3);
+				let angle = Math.PI*(restrictedFaceSize - 2) / (2*restrictedFaceSize);
+				let scaleFactor = 3*stellation.factor*sidelength*(Math.sqrt(1 - 1 / Math.pow(2*Math.cos(angle), 2))) / 4;
+
+				//add new vertex to centre of face, stellated as required
+				let newVertex = midpoint3(faceVertices).addScaledVector(normal, scaleFactor);
+
+				geometry.vertices.push(newVertex);
+
+				//add stellated point and edge data
+				if(generateStellationData && stellation.factor !== 0){
+					stellation.stellaVertices.push(mp);
+
+					for(const index of face){
+						stellation.stellaEdges.push({a: index, b: mp});
+					};
+				};
+			};
+
+			geometry.sortFacesByMaterialIndex();
+			geometry.computeFaceNormals();
+			geometry.computeVertexNormals();
+			geometry.computeBoundingSphere();
+
+			return geometry;
+		};
+
+//BUILD POINTS OBJECT
+		function pointsObject(geometry, pointList, material){
+			//radius, widthSegments, heightSegments
+			let verts = [];
+
+			for(const v of pointList){
+				verts.push(geometry.vertices[v].clone());
+			};
+
+			return new THREE.Mesh(pointsGeometry(verts, 0.125), material);
+
+			//return {object: points, fractalUVs: fractalUVs, sphericalUVs: sphericalUVs};
+		};
+
+//BUILD EDGE OBJECT
+		function edgeObject(geometry, edgeList, material){
+			let edges = [];
+
+			for(const edge of edgeList){
+				edges.push({a: geometry.vertices[edge.a].clone(), b: geometry.vertices[edge.b].clone()})
+			};
+
+			return new THREE.Mesh(edgeGeometry(edges, 0.075), material);
+
+			//return {geometry: geometry, fractalUVs: fractalUVs, sphericalUVs: sphericalUVs};
+		};
+
+//BUILD POLYHEDRON GEOMETRY AND DUAL GEOMETRY, AND GENERATE EDGE AND POINT DATA
+		function buildPolyhedron(polyhedron, scale, stellation, alignment, options){
+			if(options === undefined){
+				options = [];
+			}
+			else if(typeof options === "string"){
+				options = [options];
+			};
+
+			//check scale
+			if(scale === undefined){
+				scale = new THREE.Vector3(1, 1, 1);
+			}
+			else if(typeof scale === "number"){
+				scale = new THREE.Vector3(scale, scale, scale);
+			};
+
+			//stellation objects
+			let polyhedronStellation = {factor: stellation};
+			let dualStellation = {factor: stellation};
+
+			let geometry = polyhedronGeometry(polyhedron, polyhedronStellation, options);
+			let dualGeometry = polyhedronGeometry(polyhedron + "Dual", dualStellation, options);
+
+			//determine which point to make the "top"
+			let top = geometry.vertices[0];
+			if(options.includes("swap")){
+				top = dualGeometry.vertices[0]
+			};
+
+			let rotationMatrix = rotateAtoB(top, new THREE.Vector3(0, 1, 0));
+			let scalingFactor = new THREE.Vector3().copy(scale).divideScalar(Math.max(geometry.boundingSphere.radius, dualGeometry.boundingSphere.radius));
+
+			if(alignment !== undefined){
+				for(const rotation of alignment){
+					switch(rotation.axis){
+						case 'x':
+							rotationMatrix.premultiply(new THREE.Matrix3()
+							.setFromMatrix4(new THREE.Matrix4().makeRotationX(rotation.angle)));
+							break;
+						case 'y':
+							rotationMatrix.premultiply(new THREE.Matrix3()
+							.setFromMatrix4(new THREE.Matrix4().makeRotationY(rotation.angle)));
+							break;
+						case 'z':
+							rotationMatrix.premultiply(new THREE.Matrix3()
+							.setFromMatrix4(new THREE.Matrix4().makeRotationZ(rotation.angle)));
+							break;
+					};
+				};
+			};
+
+			let data = {polyhedron: geometry, dual: dualGeometry};
+
+			//rotate, scale, and calculate UVs for geometry and dualGeometry
+			for(const geo of Object.values(data)){
+				rotateGeometry(geo, rotationMatrix);
+				geo.scale(scalingFactor.x, scalingFactor.y, scalingFactor.z);
+				assignSphericalUVs(geo);
+			};
+
+			//assign cube UVs and material indices for "Cube" and "octahedronDual"
+			if(polyhedron === "Octahedron"){
+				for(const [i, face] of Object.entries(dualGeometry.faces)){
+					face.materialIndex = octahedronDualData.materialIndices[i];
+				};
+
+				dualGeometry.faceVertexUvs[0] = octahedronDualData.faceVertexUvs;
+			};
+
+			//add rotation, scale, faceTypes and stellation info to data
+			data.rotation = rotationMatrix;
+			data.scale = scalingFactor;
+			data.faceTypes = POLYHEDRA[polyhedron].faceTypes;
+
+			data.additionalData = {
+				pointLists: {primary: polyhedronStellation.stellaVertices, dual: dualStellation.stellaVertices},
+				edgeLists: {primary: polyhedronStellation.stellaEdges, dual: dualStellation.stellaEdges}
+			};
+
+			//return data object
+			return data;
+		};
+
+//MAKE POLYHEDRON, DUAL, POINTS, AND EDGE OBJECTS
+		function makePolyhedron(data, stellation){
+			let obj = {};
+
+			//shenanigans to get objects to match ther duals
+			let primaryObject = data.name;
+			let primaryMaterial = polyhedronMaterial;
+			let secondaryMaterial = dualMaterial;
+			let primaryPointMaterial = pointMaterial;
+			let secondaryPointMaterial = dualPointMaterial;
+			let primaryEdgeMaterial = edgeMaterial;
+			let secondaryEdgeMaterial = dualEdgeMaterial;
+
+			switch(data.name){
+				case "Cube":
+					secondaryMaterial = cubeMaterial;
+					break;
+				case "Octahedron":
+					secondaryMaterial = octahedronDualMaterial;
+					break;
+				case "Dodecahedron":
+					secondaryMaterial = polyhedronMaterial;
+					break;
+			};
+
+			switch(data.name){
+				case "Cube":
+				case "Dodecahedron":
+					primaryObject = data.dualName;
+					primaryMaterial = dualMaterial;
+					primaryPointMaterial = dualPointMaterial;
+					secondaryPointMaterial = pointMaterial;
+					primaryEdgeMaterial = dualEdgeMaterial;
+					secondaryEdgeMaterial = edgeMaterial;
+					break;
+			};
+
+			//build all required data
+			let poly = buildPolyhedron(primaryObject, data.scale, stellation, data.alignment, data.buildOptions);
+
+			//build objects
+			obj.primary =  new THREE.Mesh(poly.polyhedron, primaryMaterial);
+			obj.dual = new THREE.Mesh(poly.dual, secondaryMaterial);
+			obj.points = pointsObject(poly.polyhedron, data.pointList.concat(poly.additionalData.pointLists.primary), primaryPointMaterial);
+			obj.dualPoints = pointsObject(poly.dual, data.dualPointList.concat(poly.additionalData.pointLists.dual), secondaryPointMaterial);
+			obj.edges = edgeObject(poly.polyhedron, data.edgeList.concat(poly.additionalData.edgeLists.primary), primaryEdgeMaterial);
+			obj.dualEdges = edgeObject(poly.dual, data.dualEdgeList.concat(poly.additionalData.edgeLists.dual), secondaryEdgeMaterial);
+
+			//attach objects to primary
+			obj.primary.add(obj.dual, obj.points, obj.dualPoints, obj.edges, obj.dualEdges);
+
+			//attach data about scale and point and edge lists
+			obj.scale = poly.scale;
+			obj.additionalData = poly.additionalData;
+
+			if(data.rotation === undefined){
+				data.rotation = poly.rotation;
+			};
+
+			if(data.faceTypes === undefined){
+				switch(data.name){
+					case "Cube":
+						data.faceTypes = new Set().add(4);
+						break;
+					case "Dodecahedron":
+						data.faceTypes = new Set().add(5);
+						break;
+					default:
+						data.faceTypes = poly.faceTypes;
+				};
+			};
+
+			data.objects[stellation] = obj;
+		};
+
+//GENERATE POLYHEDRON DATA
+		function generatePolyhedronData(data){
+			const scale = 2;
+
+			//Build dual data
+			let primaryObject = data.name;
+
+			//shenanigans to get objects to match ther duals
+			switch(data.name){
+				case "Cube":
+					primaryObject = data.dualName;
+					break;
+				case "Dodecahedron":
+					primaryObject = data.dualName;
+					break;
+			};
+
+			dualPolyhedron(primaryObject);
+
+			let poly = POLYHEDRA[primaryObject];
+			let dualPoly = POLYHEDRA[primaryObject + "Dual"];
+
+			data.objects = {};
+
+			if(typeof data.scale !== "number" || data.scale <= 0){
+				data.scale = scale;
+			}
+			else{
+				data.scale *= scale;
+			};
+
+			//generate edge and point data
+			data.pointList = [];
+			data.edgeList = [];
+			data.dualPointList = [];
+			data.dualEdgeList = [];
+
+			for(const [i, v] of Object.entries(poly.vertex)){
+				data.pointList.push(Number(i));
+			};
+
+			for(const [i, v] of Object.entries(dualPoly.vertex)){
+				data.dualPointList.push(Number(i));
+			};
+
+			for(const edge of poly.edge){
+				data.edgeList.push({a: edge[0], b: edge[1]});
+			};
+
+			for(const edge of dualPoly.edge){
+				data.dualEdgeList.push({a: edge[0], b: edge[1]});
+			};
+
+			//build unstellated polyhedron
+			makePolyhedron(data, 0);
+		};
+
+//SCALE POLYHEDRON WITHOUT STRETCHING POINTS AND EDGES
+		function scalePolyhedron(data, newScale){
+			let obj = data.objects[state.polyhedronOptions.stellation];
+
+			if(obj.localScale === undefined){
+				obj.localScale = new THREE.Vector3(1, 1, 1);
+			};
+
+			let scale = new THREE.Vector3().copy(newScale).divide(obj.localScale);
+
+			obj.localScale = newScale;
+
+			obj.primary.geometry.scale(scale.x, scale.y, scale.z);
+			obj.dual.geometry.scale(scale.x, scale.y, scale.z);
+
+			obj.points.geometry = pointsObject(obj.primary.geometry, data.pointList.concat(obj.additionalData.pointLists.primary), material).geometry;
+			obj.dualPoints.geometry = pointsObject(obj.dual.geometry, data.dualPointList.concat(obj.additionalData.pointLists.dual), material).geometry;
+			obj.edges.geometry = edgeObject(obj.primary.geometry, data.edgeList.concat(obj.additionalData.edgeLists.primary), material).geometry;
+			obj.dualEdges.geometry = edgeObject(obj.dual.geometry, data.dualEdgeList.concat(obj.additionalData.edgeLists.dual), material).geometry;
+		};
+
+//GLOW MESH
+		function glowMesh(mesh, insideDilation, outsideDilation, option){
+			let glowMesh	= new THREEx.GeometricGlowMesh(mesh, insideDilation, outsideDilation, option);
+
+			//inner glow parameters
+			glowMesh.insideMesh.material.uniforms.glowColor.value.set(state.colors["innerGlow"]);
+			glowMesh.insideMesh.material.uniforms.coeficient.value = state.innerGlow.coefficient;
+			glowMesh.insideMesh.material.uniforms.power.value =  state.innerGlow.power;
+
+			//inner glow parameters
+			glowMesh.outsideMesh.material.uniforms.glowColor.value.set(state.colors["outerGlow"]);
+			glowMesh.outsideMesh.material.uniforms.coeficient.value = state.outerGlow.coefficient;
+			glowMesh.outsideMesh.material.uniforms.power.value = state.outerGlow.power;
+
+			return glowMesh;
+		};
+
+		//KLEIN BOTTLE GLOW OBJECT
+		function glowKlein(){
+			let geometry = new THREE.Geometry();
+			//If this changes, make sure draw("Klein Bottle") is changed accordingly - Should be a make function, but I couldn't be bothered right now
+			let geo = new THREE.ParametricGeometry(THREE.ParametricGeometries.klein, 50, 50).normalize().scale(2.5,2.5,2.5).rotateY(Math.PI / 2).rotateX(Math.PI / 6);
+			let faces = [];
+
+			for(const face of geo.faces){
+				faces.push(face.clone());
+			};
+
+			for(let i = 4400; i < faces.length; i++){
+				for(const normal of faces[i].vertexNormals){
+					normal.negate();
+				};
+			};
+
+			geometry.vertices = geo.vertices;
+			geometry.faces = faces;
+			geometry.elementsNeedUpdate = true;
+
+			return new THREE.Mesh(geometry, material);
+		};
+
+		function addGlow(){
+			switch(state.objectType){
+				case "Klein Bottle":
+					glowObject = glowMesh(glowKlein(), 0.01, 0.1, "klein");
+					gui.side.setValue("Both");
+					break;
+				case "Menger Sponge":
+					glowObject = Sponge.glowObject;
+					break;
+				default:
+					if(polyhedronList.includes(state.objectType)){
+						let geometry = new THREE.Geometry();
+
+						for(const v of object1.geometry.vertices){
+							geometry.vertices.push(v);
+						};
+
+						switch(state.polyhedronOptions.display){
+							case "Polyhedron":
+								for(const f of object1.geometry.faces){
+									if(state.objectType == "Cube" && f.materialIndex < 6){
+										geometry.faces.push(f.clone());
+									}
+									else if(state.objectType == "Octahedron" && f.materialIndex == 6){
+										geometry.faces.push(f.clone());
+									}
+									else if(state.objectType != "Cube" && state.objectType != "Octahedron" && f.materialIndex < 8){
+										geometry.faces.push(f.clone());
+									};
+								};
+								break;
+							case "Dual Polyhedron":
+								for(const f of object1.geometry.faces){
+									if(state.objectType == "Cube" && f.materialIndex == 6){
+										geometry.faces.push(f.clone());
+									}
+									else if(state.objectType == "Octahedron" && f.materialIndex < 6){
+										geometry.faces.push(f.clone());
+									}
+									else if(f.materialIndex == 8){
+										geometry.faces.push(f.clone());
+									};
+								};
+								break;
+							default:
+								for(const f of object1.geometry.faces){
+									geometry.faces.push(f.clone());
+								};
+								break;
+						};
+						glowObject = glowMesh(new THREE.Mesh(geometry, material), 0.01, 0.15, "double");
+					}
+					else{
+						glowObject = glowMesh(object1, 0.01, 0.1);
+					};
+					break;
+			};
+
+			object1.add(glowObject.object3d);
+		};
+
+		function removeGlow(){
+			object1.remove(glowObject.object3d);
+		};
+
+//SHAPE PICKER
+		function draw(shape){
+			removeGlow();
+			renderer.renderLists.dispose();
+			parent.remove(object1);
+			object1.rotation.y = 0;
+			hideAllMultiColors();
+			hide("fractalTexture");
+			hide("fText");
+			hide("prismSides");
+			hide("prismStretch");
+			hide("prismHeight");
+
+			switch(shape){
+				case "Klein Bottle":
+					//If this changes, make sure glowKlein() is changed accordingly - Should be a make function, but I couldn't be bothered right now
+					object1 = new THREE.Mesh(new THREE.ParametricGeometry(THREE.ParametricGeometries.klein, 50, 50).normalize().scale(2.5,2.5,2.5).rotateY(Math.PI / 2).rotateX(Math.PI / 6), metalMaterial);
+					assignSphericalUVs(object1.geometry);
+					gui.side.setValue("Both");
+					setShading(false);
+					break;
+				case "Torus":
+					object1 = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.6, 50, 100), metalMaterial);
+					insideOutUVs(object1.geometry);
+					object1.rotation.x = -3*Math.PI / 8;
+					object1.rotation.z = Math.PI / 2;
+					setShading(false);
+					break;
+				case "Trefoil":
+					object1 = Trefoil.object;
+					setShading(false);
+					break;
+				case "Sphere":
+					object1 = new THREE.Mesh(new THREE.SphereGeometry(2, 50, 50), metalMaterial);
+					object1.rotation.y = -1*Math.PI / 2;
+					setShading(false);
+					break;
+				case "Teapot":
+					object1 = Teapot.object;
+					setShading(false);
+					break;
+				case "Sierpinski Tetrahedron":
+					object1 = SierpinskiTetrahedron.object;
+					show("fractalTexture");
+					setShading(true);
+					break;
+				case "Menger Sponge":
+					object1 = Sponge.object;
+					show("fractalTexture");
+					setShading(true);
+					break;
+				case "Heart":
+					object1 = Heart.object;
+					setShading(false);
+					break;
+				case "Text":
+					Text.make();
+					object1 = Text.object;
+					show("fText");
+					show("fractalTexture");
+					break;
+				case "Antiprism":
+				case "Prism": {
+						let n = state.polyhedronOptions.prismSides;
+						let poly = polyhedronData[shape][n];
+
+						if(poly.objects[state.polyhedronOptions.stellation] === undefined){
+							makePolyhedron(poly, state.polyhedronOptions.stellation)
+						};
+
+						let obj = poly.objects[state.polyhedronOptions.stellation]
+
+						//stretch prism
+						scalePolyhedron(poly, new THREE.Vector3(state.polyhedronOptions.prismStretch,
+							state.polyhedronOptions.prismHeight, state.polyhedronOptions.prismStretch));
+
+						//add objects
+						object1 = obj.primary;
+
+						setShading(true);
+						showPrismColors(poly.dualName);
+					}
+					break;
+				default:
+					if(polyhedronList.includes(shape)){
+						//if polyhedron
+						let poly = polyhedronData[shape];
+
+						if(poly.objects[state.polyhedronOptions.stellation] === undefined){
+							makePolyhedron(poly, state.polyhedronOptions.stellation)
+						};
+
+						object1 = poly.objects[state.polyhedronOptions.stellation].primary;
+
+						setShading(true);
+						//gui.side.setValue("Front");
+						showMultiColors(Array.from(poly.faceTypes), poly.dualName);
+					}
+					else{
+						//dummy object
+						object1 = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), material);
+						object1.geometry.scale(1,4,5);
+					};
+					break;
+			};
+
+			parent.add(object1);
+
+			if(state.shadows){
+				object1.castShadow = true;
+				object1.receiveShadow = true;
+			};
+
+			if(state.glow){
+				addGlow()
+			};
+		};
+
+//GUI
+		gui = {
+			parameters: {
+				materialColor: function(){},
+				materialR: hexToRGB(state.colors["material"]).r,
+				materialG: hexToRGB(state.colors["material"]).g,
+				materialB: hexToRGB(state.colors["material"]).b,
+				randomColor: function(){},
+				transparency: state.transparency,
+				backgroundColor: function(){},
+				innerGlowColor: function(){},
+				outerGlowColor: function(){},
+				showFaces: state.polyhedronOptions.show.faces,
+				showEdges: state.polyhedronOptions.show.edges,
+				showVertices: state.polyhedronOptions.show.vertices,
+				multi3: function(){},
+				multi4: function(){},
+				multi5: function(){},
+				multi6: function(){},
+				multi8: function(){},
+				multi10: function(){},
+				base: function(){},
+				sides: function(){},
+				pointColor: function(){},
+				edgeColor: function(){},
+				dual: function(){},
+				dualPointColor: function(){},
+				dualEdgeColor: function(){},
+				text0: function(){},
+				text1: function(){},
+				text2: function(){},
+				text3: function(){},
+				text4: function(){},
+				text5: function(){},
+				emissive: function(){},
+				light1Intensity: lights.light1.intensity,
+				light1Color: function(){},
+				light2Intensity: lights.light2.intensity,
+				light2Color: function(){},
+				light3Intensity: lights.light3.intensity,
+				light3Color: function(){},
+				ambientIntensity: lights.ambient.intensity,
+				ambientColor: function(){},
+				torchIntensity: lights.torch.intensity,
+				torchColor: function(){},
+				useTorch: state.torchOn,
+				metalness: state.metalness,
+				roughness: state.roughness,
+				reflectivity: state.reflectivity,
+				envMapIntensity: state.envMapIntensity,
+				emissiveIntensity: state.emissiveIntensity,
+				clearcoat: state.clearcoat,
+				clearcoatRoughness: state.clearcoatRoughness,
+				flatShading: state.flatShading,
+				rotate: state.rotate,
+				rotateX: state.rotateSpeed.x*state.rotateSpeed.f,
+				rotateY: state.rotateSpeed.y*state.rotateSpeed.f,
+				rotateZ: state.rotateSpeed.z*state.rotateSpeed.f,
+				glow: state.glow,
+				glowOnly: !state.visible,
+				fixTorch: state.fixTorchPosition,
+				object: state.objectType,
+				side: "Both",
+				texture: state.currentTexture,
+				bump: state.currentBump,
+				bumpScale: state.bumpScale,
+				environment: state.currentEnvironment,
+				background: state.currentBackground,
+				innerGlowCoefficient: state.innerGlow.coefficient,
+				innerGlowPower: state.innerGlow.power,
+				outerGlowCoefficient: state.outerGlow.coefficient,
+				outerGlowPower: state.outerGlow.power,
+				resetPosition: function(){},
+				resetLights: function(){},
+				screenshot: function(){},
+				saveScene: function(){},
+				loadScene: function(){},
+				exportObject: function(){},
+				fractalTexture: state.fractalTexture,
+				textLine1: state.textOptions.line1,
+				textLine2: state.textOptions.line2,
+				textLine3: state.textOptions.line3,
+				textFont: state.textOptions.font,
+				curveSegments: state.textOptions.curveSegments,
+				textHeight: state.textOptions.height,
+				bevelEnabled: state.textOptions.bevelEnabled,
+				bevelThickness: state.textOptions.bevelThickness,
+				bevelSize: state.textOptions.bevelSize,
+				bevelOffset: state.textOptions.bevelOffset,
+				bevelSegments: state.textOptions.bevelSegments,
+				polyhedronDisplay: state.polyhedronOptions.display,
+				stellation: state.polyhedronOptions.stellation,
+				prismSides: state.polyhedronOptions.prismSides,
+				prismStretch: state.polyhedronOptions.prismStretch,
+				prismHeight: state.polyhedronOptions.prismHeight,
+				jaznet: function(){},
+				demo: state.demo.on,
+				demoOptions: function(){},
+			},
+
+			maxSwatches: 28,
+
+			swatches: [
+				'#ff0000',
+				'#ff8000',
+				'#ffff00',
+				'#80ff00',
+				'#00ff00',
+				'#00ff80',
+				'#00ffff',
+				'#0080ff',
+				'#0000ff',
+				'#8000ff',
+				'#ff00ff',
+				'#ff0080',
+				'#ffffff',
+				'#000000',
+				state.colors.material,
+				state.colors.innerGlow,
+				state.colors.background,
+				'#91753c',
+				'#808080',
+				'#885826',
+				'#DE862B',
+			],
+
+			blurOnClose: false,
+		};
+
+		function makeGUI(){
+			//COLOUR PICKER
+			let pickr = new Pickr({
+				el: document.getElementById("pickr"),
+				theme: 'monolith',
+				lockOpacity: true,
+				closeOnScroll: true,
+				comparison: true,
+				closeWithKey: 'Enter',
+
+				swatches: gui.swatches,
+
+				components: {
+					preview: true,
+					opacity: true,
+					hue: true,
+
+					interaction: {
+						hex: true,
+						rgba: true,
+						hsva: false,
+						input: true,
+						clear: false,
+						save: false,
+						cancel: false,
+					},
+				},
+			});
+
+			//Make pickr accessible
+			gui.pickr = pickr;
+
+			//add close button and random button to pickr
+			pickrAugments.addCloseButton(pickr);
+			pickrAugments.addRandomColorButton(pickr);
+
+			//Set max swatches
+			gui.permanentSwatchesIndex = gui.swatches.length;
+
+			function activatePickr(element){
+				let selectColor = function(color, instance){
+					setColor(element, color.toHEXA().toString());
+				};
+
+				let closePickr = function(){
+					let newColor = pickr.getColor().toHEXA().toString().toLowerCase();
+					let found = false;
+
+					for(const color of gui.swatches){
+						if(color.toLowerCase() == newColor){
+							found = true;
+							break;
+						};
+					};
+
+					if(!found){
+						gui.pickr.addSwatch(newColor);
+						gui.swatches.push(newColor);
+					};
+
+					if(gui.swatches.length > gui.maxSwatches){
+						gui.pickr.removeSwatch(gui.permanentSwatchesIndex);
+						gui.swatches.splice(gui.permanentSwatchesIndex, 1);
+					};
+
+					pickr.off('change', selectColor);
+					pickr.off('hide', closePickr);
+					document.removeEventListener("keydown", cancelPickr);
+				};
+
+				let cancelPickr = function(event){
+					if(event.which == 27){
+						pickr.setColor(pickr._lastColor.toHEXA().toString());
+						pickr.hide();
+					};
+				};
+
+				pickr.setColor(document.getElementById(element+"ColorButton").style["background-color"]);
+				pickr.on('change', selectColor);
+				pickr.on('hide', closePickr);
+				document.addEventListener("keydown", cancelPickr, {passive: true});
+				document.getElementsByClassName('pcr-button')[0].click();
+			};
+
+			//GUI OBJECT
+			gui.gui = new dat.GUI({autoPlace: true, width: 300, hideable: true});
+			gui.gui.close();
+
+			gui.objectSelect = gui.gui.add(gui.parameters, 'object', shapeList).name("Object")
+			.onChange(function(newValue){
+				state.objectType = newValue;
+				needsRedraw = true;
+
+				if(newValue == "Text"){
+					setShading(false);
+				}
+				else if(polyhedronList.includes(newValue)){
+					setShading(true);
+				};
+			});
+
+			//TEXT OPTIONS FOLDER
+			gui.fText = gui.gui.addFolder("Text Options");
+			gui.fText.domElement.parentElement.id = "fText";
+			hide("fText");
+
+			gui.fontSelect = gui.fText.add(gui.parameters, 'textFont', fontList).name("Font")
+			.onChange(function(newValue){
+				state.textOptions.font = newValue;
+				Text.needsUpdate = true;
+				needsRedraw = true;
+			});
+
+			//LINE1 FOLDER
+			gui.fLine1 = gui.fText.addFolder("Line 1");
+
+			gui.changeTextLine1 = gui.fLine1.add(gui.parameters, 'textLine1').name("Text")
+			.onChange(function(newValue){
+				if(newValue.length > 10){
+					gui.changeTextLine1.domElement.children[0].value = newValue.substr(0, 10);
+				};
+			})
+			.onFinishChange(function(newValue){
+				state.textOptions.line1 = newValue;
+				Text.needsUpdate = true;
+				needsRedraw = true;
+			});
+
+			gui.text0 = gui.fLine1.add(gui.parameters, "text0").name("Inner Colour")
+			.onChange(function(){
+				activatePickr("text0");
+			});
+			gui.text0.domElement.parentElement.parentElement.id = "text0ColorButton";
+
+			gui.text1 = gui.fLine1.add(gui.parameters, "text1").name("Outer Colour")
+			.onChange(function(){
+				activatePickr("text1");
+			});
+			gui.text1.domElement.parentElement.parentElement.id = "text1ColorButton";
+
+			//LINE2 FOLDER
+			gui.fLine2 = gui.fText.addFolder("Line 2");
+
+			gui.changeTextLine2 = gui.fLine2.add(gui.parameters, 'textLine2').name("Text")
+			.onChange(function(newValue){
+				if(newValue.length > 10){
+					gui.changeTextLine2.domElement.children[0].value = newValue.substr(0, 10);
+				};
+			})
+			.onFinishChange(function(newValue){
+				state.textOptions.line2 = newValue;
+				Text.needsUpdate = true;
+				needsRedraw = true;
+			});
+
+			gui.text2 = gui.fLine2.add(gui.parameters, "text2").name("Inner Colour")
+			.onChange(function(){
+				activatePickr("text2");
+			});
+			gui.text2.domElement.parentElement.parentElement.id = "text2ColorButton";
+
+			gui.text3 = gui.fLine2.add(gui.parameters, "text3").name("Outer Colour")
+			.onChange(function(){
+				activatePickr("text3");
+			});
+			gui.text3.domElement.parentElement.parentElement.id = "text3ColorButton";
+
+			//LINE3 FOLDER
+			gui.fLine3 = gui.fText.addFolder("Line 3");
+
+			gui.changeTextLine3 = gui.fLine3.add(gui.parameters, 'textLine3').name("Text")
+			.onChange(function(newValue){
+				if(newValue.length > 10){
+					gui.changeTextLine3.domElement.children[0].value = newValue.substr(0, 10);
+				};
+			})
+			.onFinishChange(function(newValue){
+				state.textOptions.line3 = newValue;
+				Text.needsUpdate = true;
+				needsRedraw = true;
+			});
+
+			gui.text4 = gui.fLine3.add(gui.parameters, "text4").name("Inner Colour")
+			.onChange(function(){
+				activatePickr("text4");
+			});
+			gui.text4.domElement.parentElement.parentElement.id = "text4ColorButton";
+
+			gui.text5 = gui.fLine3.add(gui.parameters, "text5").name("Outer Colour")
+			.onChange(function(){
+				activatePickr("text5");
+			});
+			gui.text5.domElement.parentElement.parentElement.id = "text5ColorButton";
+
+			//TEXT SHAPE FOLDER
+			gui.fTextShape = gui.fText.addFolder("Shape");
+
+			gui.curveSegments = gui.fTextShape.add(gui.parameters, "curveSegments").min(1).max(12).step(1).name("Curve Segments")
+			.onFinishChange(function(newValue){
+				state.textOptions.curveSegments = newValue;
+				Text.needsUpdate = true;
+				needsRedraw = true;
+			});
+
+			gui.textHeight = gui.fTextShape.add(gui.parameters, "textHeight").min(0).max(10).step(0.5).name("Thickness")
+			.onFinishChange(function(newValue){
+				state.textOptions.height = newValue;
+				Text.needsUpdate = true;
+				needsRedraw = true;
+			});
+
+			gui.bevelEnabled = gui.fTextShape.add(gui.parameters, "bevelEnabled").name("Enable Bevel")
+			.onChange(function(newValue){
+				state.textOptions.bevelEnabled = newValue;
+				Text.needsUpdate = true;
+				needsRedraw = true;
+			});
+
+			gui.bevelThickness = gui.fTextShape.add(gui.parameters, "bevelThickness").min(-5).max(5).step(0.25).name("Bevel Thickness")
+			.onFinishChange(function(newValue){
+				state.textOptions.bevelThickness = newValue;
+				Text.needsUpdate = true;
+				needsRedraw = true;
+			});
+
+			gui.bevelSize = gui.fTextShape.add(gui.parameters, "bevelSize").min(-1).max(3).step(0.25).name("Bevel Size")
+			.onFinishChange(function(newValue){
+				state.textOptions.bevelSize = newValue;
+				Text.needsUpdate = true;
+				needsRedraw = true;
+			});
+
+			gui.bevelOffset = gui.fTextShape.add(gui.parameters, "bevelOffset").min(-1).max(1).step(0.1).name("Bevel Offset")
+			.onFinishChange(function(newValue){
+				state.textOptions.bevelOffset = newValue;
+				Text.needsUpdate = true;
+				needsRedraw = true;
+			});
+
+			gui.bevelSegments = gui.fTextShape.add(gui.parameters, "bevelSegments").min(1).max(10).step(1).name("Bevel Segments")
+			.onFinishChange(function(newValue){
+				state.textOptions.bevelSegments = newValue;
+				Text.needsUpdate = true;
+				needsRedraw = true;
+			});
+
+			//POLYHEDRON OPTIONS FOLDER
+			gui.fPolyhedron = gui.gui.addFolder("Polyhedron Options");
+			gui.fPolyhedron.domElement.parentElement.id = "fPolyhedron";
+			hide("fPolyhedron");
+
+			gui.polyhedronDisplay = gui.fPolyhedron.add(gui.parameters, "polyhedronDisplay", polyhedronDisplayList).name("Display")
+			.onChange(function(newValue){
+				state.polyhedronOptions.display = newValue;
+				setPolyhedronMaterialVisibility();
+			});
+
+			//FACES
+			gui.fPolyhedronFaces = gui.fPolyhedron.addFolder("Faces");
+			gui.fPolyhedronFaces.open();
+
+			gui.showFaces = gui.fPolyhedronFaces.add(gui.parameters, "showFaces").name("Show")
+			.onChange(function(newValue){
+				state.polyhedronOptions.show.faces = newValue;
+				setPolyhedronMaterialVisibility();
+			});
+
+			gui.multi3 = gui.fPolyhedronFaces.add(gui.parameters, "multi3").name("Triangles")
+			.onChange(function(){
+				activatePickr("multi3");
+			});
+			gui.multi3.domElement.parentElement.parentElement.id = "multi3ColorButton";
+
+			gui.multi4 = gui.fPolyhedronFaces.add(gui.parameters, "multi4").name("Squares")
+			.onChange(function(){
+				activatePickr("multi4");
+			});
+			gui.multi4.domElement.parentElement.parentElement.id = "multi4ColorButton";
+
+			gui.multi5 = gui.fPolyhedronFaces.add(gui.parameters, "multi5").name("Pentagons")
+			.onChange(function(){
+				activatePickr("multi5");
+			});
+			gui.multi5.domElement.parentElement.parentElement.id = "multi5ColorButton";
+
+			gui.multi6 = gui.fPolyhedronFaces.add(gui.parameters, "multi6").name("Hexagons")
+			.onChange(function(){
+				activatePickr("multi6");
+			});
+			gui.multi6.domElement.parentElement.parentElement.id = "multi6ColorButton";
+
+			gui.multi8 = gui.fPolyhedronFaces.add(gui.parameters, "multi8").name("Octagons")
+			.onChange(function(){
+				activatePickr("multi8");
+			});
+			gui.multi8.domElement.parentElement.parentElement.id = "multi8ColorButton";
+
+			gui.multi10 = gui.fPolyhedronFaces.add(gui.parameters, "multi10").name("Dodecagons")
+			.onChange(function(){
+				activatePickr("multi10");
+			});
+			gui.multi10.domElement.parentElement.parentElement.id = "multi10ColorButton";
+
+			gui.base = gui.fPolyhedronFaces.add(gui.parameters, "base").name("Base")
+			.onChange(function(){
+				activatePickr("base");
+			});
+			gui.base.domElement.parentElement.parentElement.id = "baseColorButton";
+
+			gui.sides = gui.fPolyhedronFaces.add(gui.parameters, "sides").name("Sides")
+			.onChange(function(){
+				activatePickr("sides");
+			});
+			gui.sides.domElement.parentElement.parentElement.id = "sidesColorButton";
+
+			gui.dual = gui.fPolyhedronFaces.add(gui.parameters, "dual").name("Dual")
+			.onChange(function(){
+				activatePickr("dual");
+			});
+			gui.dual.domElement.parentElement.parentElement.id = "dualColorButton";
+
+			//EDGES
+			gui.fPolyhedronEdges = gui.fPolyhedron.addFolder("Edges");
+			gui.fPolyhedronEdges.open();
+
+			gui.showEdges = gui.fPolyhedronEdges.add(gui.parameters, "showEdges").name("Show")
+			.onChange(function(newValue){
+				state.polyhedronOptions.show.edges = newValue;
+				setPolyhedronMaterialVisibility();
+			});
+
+			gui.edgeColor = gui.fPolyhedronEdges.add(gui.parameters, "edgeColor").name("Edges")
+			.onChange(function(){
+				activatePickr("edge");
+			});
+			gui.edgeColor.domElement.parentElement.parentElement.id = "edgeColorButton";
+
+			gui.dualEdgeColor = gui.fPolyhedronEdges.add(gui.parameters, "dualEdgeColor").name("Dual Edges")
+			.onChange(function(){
+				activatePickr("dualEdge");
+			});
+			gui.dualEdgeColor.domElement.parentElement.parentElement.id = "dualEdgeColorButton";
+
+			//Vertices
+			gui.fPolyhedronVertices = gui.fPolyhedron.addFolder("Vertices");
+			gui.fPolyhedronVertices.open();
+
+			gui.showVertices = gui.fPolyhedronVertices.add(gui.parameters, "showVertices").name("Show")
+			.onChange(function(newValue){
+				state.polyhedronOptions.show.vertices = newValue;
+				setPolyhedronMaterialVisibility();
+			});
+
+			gui.pointColor = gui.fPolyhedronVertices.add(gui.parameters, "pointColor").name("Points")
+			.onChange(function(){
+				activatePickr("point");
+			});
+			gui.pointColor.domElement.parentElement.parentElement.id = "pointColorButton";
+
+			gui.dualPointColor = gui.fPolyhedronVertices.add(gui.parameters, "dualPointColor").name("Dual Points")
+			.onChange(function(){
+				activatePickr("dualPoint");
+			});
+			gui.dualPointColor.domElement.parentElement.parentElement.id = "dualPointColorButton";
+
+			//PRISM OPTIONS
+			gui.prismSides = gui.fPolyhedron.add(gui.parameters, "prismSides")
+			.min(polyhedronData["Prism"].sides.min).max(polyhedronData["Prism"].sides.max).step(1)
+			.name("Base: " + greekify(state.polyhedronOptions.prismSides))
+			.onChange(function(newValue){
+				state.polyhedronOptions.prismSides = newValue;
+				gui.prismSides.name("Base: " + greekify(newValue));
+				needsRedraw = true;
+			});
+			gui.prismSides.domElement.parentElement.parentElement.id = "prismSides";
+
+			gui.prismStretch = gui.fPolyhedron.add(gui.parameters, "prismStretch").min(0.5).max(10).step(0.1)
+			.name("Base Width")
+			.onChange(function(newValue){
+				state.polyhedronOptions.prismStretch = newValue;
+				needsRedraw = true;
+			});
+			gui.prismStretch.domElement.parentElement.parentElement.id = "prismStretch";
+
+			gui.prismHeight = gui.fPolyhedron.add(gui.parameters, "prismHeight").min(0.5).max(10).step(0.1)
+			.name("Height")
+			.onChange(function(newValue){
+				state.polyhedronOptions.prismHeight = newValue;
+				needsRedraw = true;
+			});
+			gui.prismHeight.domElement.parentElement.parentElement.id = "prismHeight";
+
+			//STELLATION
+			gui.stellation = gui.fPolyhedron.add(gui.parameters, "stellation").min(-2.5).max(2.5).step(0.25).name("Stellation")
+			.onChange(function(newValue){
+				state.polyhedronOptions.stellation = newValue;
+				needsRedraw = true;
+			});
+
+			//ROTATION FOLDER
+			gui.fRotation = gui.gui.addFolder("Rotation");
+
+			gui.resetPosition = gui.fRotation.add(gui.parameters, "resetPosition").name("Reset Position")
+			.onChange(function(){
+				controls.reset();
+				parent.rotation.set(0, 0, 0);
+			});
+
+			gui.rotate = gui.fRotation.add(gui.parameters, "rotate").name("Auto Rotate")
+			.onChange(function(newValue){
+				state.rotate = newValue;
+				document.getElementById("autoRotate").blur();
+			});
+			gui.rotate.domElement.childNodes[0].id = "autoRotate";
+
+			gui.rotateX = gui.fRotation.add(gui.parameters, "rotateX").min(-1*state.rotateSpeed.m).max(state.rotateSpeed.m)
+			.step(0.05).name("x")
+			.onChange(function(newValue){
+				state.rotateSpeed.x = newValue / state.rotateSpeed.f;
+			});
+
+			gui.rotateY = gui.fRotation.add(gui.parameters, "rotateY").min(-1*state.rotateSpeed.m).max(state.rotateSpeed.m)
+			.step(0.05).name("y")
+			.onChange(function(newValue){
+				state.rotateSpeed.y = newValue / state.rotateSpeed.f;
+			});
+
+			gui.rotateZ = gui.fRotation.add(gui.parameters, "rotateZ").min(-1*state.rotateSpeed.m).max(state.rotateSpeed.m)
+			.step(0.05).name("z")
+			.onChange(function(newValue){
+				state.rotateSpeed.z = newValue / state.rotateSpeed.f;
+			});
+
+			//COLORS FOLDER
+			gui.fColor = gui.gui.addFolder("Colours");
+
+			gui.color1 = gui.fColor.add(gui.parameters, "materialColor").name("Object")
+			.onChange(function(){
+				activatePickr("material");
+			});
+			gui.color1.domElement.parentElement.parentElement.id = "materialColorButton";
+
+			gui.materialR = gui.fColor.add(gui.parameters, "materialR").min(0).max(255).step(1).name("R")
+			.onChange(function(newValue){
+				setColor("material", '#' + twoDigitHex(newValue) + state.colors["material"].substring(3,7));
+			});
+			gui.materialR.domElement.childNodes[0].childNodes[0].id = "Rbox";
+			gui.materialR.domElement.childNodes[1].childNodes[0].id = "Rslider";
+
+			gui.materialG = gui.fColor.add(gui.parameters, "materialG").min(0).max(255).step(1).name("G")
+			.onChange(function(newValue){
+				setColor("material", state.colors["material"].substring(0,3) + twoDigitHex(newValue) + state.colors["material"].substring(5,7));
+			});
+			gui.materialG.domElement.childNodes[0].childNodes[0].id = "Gbox";
+			gui.materialG.domElement.childNodes[1].childNodes[0].id = "Gslider";
+
+			gui.materialB = gui.fColor.add(gui.parameters, "materialB").min(0).max(255).step(1).name("B")
+			.onChange(function(newValue){
+				setColor("material", state.colors["material"].substring(0,5) + twoDigitHex(newValue));
+			});
+			gui.materialB.domElement.childNodes[0].childNodes[0].id = "Bbox";
+			gui.materialB.domElement.childNodes[1].childNodes[0].id = "Bslider";
+
+			gui.randomColor = gui.fColor.add(gui.parameters, "randomColor").name("Random Object Colour")
+			.onChange(function(){
+				let rand = Math.floor(Math.random() * Math.pow(16, 6)).toString(16);
+
+				while(rand.length < 6){
+					rand = '0' + rand;
+				};
+
+				setColor("material", '#' + rand);
+			});
+			gui.randomColor.domElement.parentElement.parentElement.id = "randomColorButton";
+			gui.randomColor.domElement.parentElement.childNodes[0].style.width = "12em";
+			hide("randomColorButton");
+
+			gui.color2 = gui.fColor.add(gui.parameters, "backgroundColor").name("Background")
+			.onChange(function(){
+				activatePickr("background");
+			});
+			gui.color2.domElement.parentElement.parentElement.id = "backgroundColorButton";
+
+			//MATERIALS FOLDER
+			gui.fMaterial = gui.gui.addFolder("Material");
+
+			gui.metalness = gui.fMaterial.add(gui.parameters, "metalness").min(0).max(1).step(0.01).name("Metalness")
+			.onChange(function(newValue){
+				state.metalness = newValue;
+				applyToAllMaterials("metalness", newValue);
+			});
+
+			gui.roughness = gui.fMaterial.add(gui.parameters, "roughness").min(0).max(1).step(0.01).name("Roughness")
+			.onChange(function(newValue){
+				state.roughness = newValue;
+				applyToAllMaterials("roughness", newValue);
+			});
+
+			gui.transparency = gui.fMaterial.add(gui.parameters, "transparency").min(0).max(1).step(0.1).name("Transparency")
+			.onChange(function(newValue){
+				state.transparency = newValue;
+				applyToAllMaterials("transparency", newValue);
+
+				if(newValue == 0){
+					applyToAllMaterials("transparent", false);
+				}
+				else{
+					applyToAllMaterials("transparent", true);
+				};
+			});
+
+			gui.side = gui.fMaterial.add(gui.parameters, 'side', ["Front", "Back", "Both"]).name("Side")
+			.onChange(function(newValue){
+				switch(newValue){
+					case "Front":
+						state.side = THREE.FrontSide;
+						applyToAllMaterials("side", THREE.FrontSide);
+						break;
+					case "Back":
+						state.side = THREE.BackSide;
+						applyToAllMaterials("side", THREE.BackSide);
+						break;
+					case "Both":
+						state.side = THREE.DoubleSide;
+						applyToAllMaterials("side", THREE.DoubleSide);
+						break;
+				};
+			});
+
+			gui.flatShading = gui.fMaterial.add(gui.parameters, "flatShading").name("Flat Shading")
+			.onChange(function(newValue){
+				state.flatShading = newValue;
+				applyToAllMaterials("flatShading", newValue);
+			});
+
+			gui.reflectivity = gui.fMaterial.add(gui.parameters, "reflectivity").min(0).max(1).step(0.01).name("Reflectivity")
+			.onChange(function(newValue){
+				state.reflectivity = newValue;
+				applyToAllMaterials("reflectivity", newValue);
+			});
+
+			gui.clearcoat = gui.fMaterial.add(gui.parameters, "clearcoat").min(0).max(1).step(0.01).name("Clearcoat")
+			.onChange(function(newValue){
+				state.clearcoat = newValue;
+				applyToAllMaterials("clearcoat", newValue);
+			});
+
+			gui.clearcoatRoughness = gui.fMaterial.add(gui.parameters, "clearcoatRoughness").min(0).max(1).step(0.01).name("Clearcoat Roughness")
+			.onChange(function(newValue){
+				state.clearcoatRoughness = newValue;
+				applyToAllMaterials("clearcoatRoughness", newValue);
+			});
+
+			//TEXTURES FOLDER
+			gui.fTextures = gui.gui.addFolder("Textures");
+
+			gui.setTex = gui.fTextures.add(gui.parameters, 'texture', mapList).name("Texture")
+			.onChange(function(newValue){setTexture(newValue)});
+
+			gui.fractalTexture = gui.fTextures.add(gui.parameters, "fractalTexture").name("Fractal Texture")
+			.onChange(function(newValue){
+				state.fractalTexture = newValue;
+				SierpinskiTetrahedron.setUVType();
+				Sponge.setUVType();
+				Text.setUVType();
+				needsRedraw = true;
+			});
+			gui.fractalTexture.domElement.parentElement.parentElement.id = "fractalTexture";
+			hide("fractalTexture");
+
+			gui.setBump = gui.fTextures.add(gui.parameters, 'bump', bumpList).name("Bump Map")
+			.onChange(function(newValue){setBump(newValue)});
+
+			gui.bumpScale = gui.fTextures.add(gui.parameters, "bumpScale").min(0).max(1).step(0.1).name("Bump Scale")
+			.onChange(function(newValue){
+				state.bumpScale = newValue;
+				applyToAllMaterials("bumpScale", newValue*bumpScales[flatten(state.currentBump)]);
+			});
+
+			gui.background = gui.fTextures.add(gui.parameters, 'background', mapList).name("Background")
+			.onChange(function(newValue){setBackground(newValue)});
+
+			gui.environment = gui.fTextures.add(gui.parameters, 'environment', environmentList).name("Reflection")
+			.onChange(function(newValue){setEnv(newValue)});
+
+			gui.envMapIntensity = gui.fTextures.add(gui.parameters, "envMapIntensity").min(0).max(5).step(0.1).name("Reflection Intensity")
+			.onChange(function(newValue){
+				state.envMapIntensity = newValue;
+				applyToAllMaterials("envMapIntensity", newValue);
+			});
+
+			//GLOW FOLDER
+			gui.fGlow = gui.gui.addFolder("Glow Effects");
+
+			gui.glowSelect = gui.fGlow.add(gui.parameters, "glow").name("Glow")
+			.onChange(function(newValue){
+				state.glow = newValue;
+				if(state.glow){
+					addGlow()
+				}
+				else{
+					removeGlow();
+					if(!state.visible){
+						document.getElementById("glowOnly").click();
+					};
+				};
+			});
+			gui.glowSelect.domElement.id = "glowSelect";
+
+			gui.color3 = gui.fGlow.add(gui.parameters, "innerGlowColor").name("Inner Glow")
+			.onChange(function(){
+				activatePickr("innerGlow");
+			});
+			gui.color3.domElement.parentElement.parentElement.id = "innerGlowColorButton";
+
+			gui.innerGlowCoefficient = gui.fGlow.add(gui.parameters, "innerGlowCoefficient").min(0).max(2).step(0.1)
+			.name("Coefficient")
+			.onChange(function(newValue){
+				glowObject.insideMesh.material.uniforms.coeficient.value = state.innerGlow.coefficient = newValue;
+			});
+
+			gui.innerGlowPower = gui.fGlow.add(gui.parameters, "innerGlowPower").min(0).max(5).step(0.1).name("Power")
+			.onChange(function(newValue){
+				glowObject.insideMesh.material.uniforms.power.value = state.innerGlow.power = newValue;
+			});
+
+			gui.color4 = gui.fGlow.add(gui.parameters, "outerGlowColor").name("Outer Glow")
+			.onChange(function(){
+				activatePickr("outerGlow");
+			});
+			gui.color4.domElement.parentElement.parentElement.id = "outerGlowColorButton";
+
+			gui.outerGlowCoefficient = gui.fGlow.add(gui.parameters, "outerGlowCoefficient").min(0).max(2).step(0.1)
+			.name("Coefficient")
+			.onChange(function(newValue){
+				glowObject.outsideMesh.material.uniforms.coeficient.value = state.outerGlow.coefficient = newValue;
+			});
+
+			gui.outerGlowPower = gui.fGlow.add(gui.parameters, "outerGlowPower").min(0).max(5).step(0.1).name("Power")
+			.onChange(function(newValue){
+				glowObject.outsideMesh.material.uniforms.power.value = state.outerGlow.power = newValue;
+			});
+
+			gui.emissive = gui.fGlow.add(gui.parameters, "emissive").name("Emissive Colour")
+			.onChange(function(){
+				activatePickr("emissive");
+			});
+			gui.emissive.domElement.parentElement.parentElement.id = "emissiveColorButton";
+
+			gui.emissiveIntensity = gui.fGlow.add(gui.parameters, "emissiveIntensity").min(0).max(2).step(0.01)
+			.name("Emissive Intensity")
+			.onChange(function(newValue){
+				state.emissiveIntensity = newValue;
+				applyToAllMaterials("emissiveIntensity", newValue);
+			});
+
+			gui.glowOnly = gui.fGlow.add(gui.parameters, "glowOnly").name("Glow Only")
+			.onChange(function(newValue){
+				if(!state.glow){
+					document.getElementById("glowSelect").click();
+				};
+
+				state.visible = !newValue;
+				applyToAllMaterials("visible", state.visible);
+				if(state.visible){
+					setPolyhedronMaterialVisibility();
+				};
+			});
+			gui.glowOnly.domElement.id = "glowOnly";
+
+			//LIGHTS FOLDER
+			gui.fLight = gui.gui.addFolder("Lights");
+
+			gui.resetLights = gui.fLight.add(gui.parameters, "resetLights").name("Reset Lights")
+			.onChange(function(){
+				for(const [light, value] of Object.entries(lights)){
+					setColor(light, initialLights[light].color);
+				};
+
+				gui.light1Intensity.setValue(gui.light1Intensity.initialValue);
+				gui.light2Intensity.setValue(gui.light2Intensity.initialValue);
+				gui.light3Intensity.setValue(gui.light3Intensity.initialValue);
+				gui.ambientIntensity.setValue(gui.ambientIntensity.initialValue);
+				gui.torchIntensity.setValue(gui.torchIntensity.initialValue);
+			});
+
+			//LIGHT1 SUBFOLDER
+			gui.fLight1 = gui.fLight.addFolder("Light 1");
+
+			gui.light1Color = gui.fLight1.add(gui.parameters, "light1Color").name("Color")
+			.onChange(function(){
+				activatePickr("light1");
+			});
+			gui.light1Color.domElement.parentElement.parentElement.id = "light1ColorButton";
+
+			gui.light1Intensity = gui.fLight1.add(gui.parameters, "light1Intensity").min(0).max(200).step(5).name("Intensity")
+			.onChange(function(newValue){
+				lights.light1.intensity = newValue;
+			});
+
+			//LIGHT2 SUBFOLDER
+			gui.fLight2 = gui.fLight.addFolder("Light 2");
+
+			gui.light2Color = gui.fLight2.add(gui.parameters, "light2Color").name("Color")
+			.onChange(function(){
+				activatePickr("light2");
+			});
+			gui.light2Color.domElement.parentElement.parentElement.id = "light2ColorButton";
+
+			gui.light2Intensity = gui.fLight2.add(gui.parameters, "light2Intensity").min(0).max(200).step(5).name("Intensity")
+			.onChange(function(newValue){
+				lights.light2.intensity = newValue;
+			});
+
+			//LIGHT3 SUBFOLDER
+			gui.fLight3 = gui.fLight.addFolder("Light 3");
+
+			gui.light3Color = gui.fLight3.add(gui.parameters, "light3Color").name("Color")
+			.onChange(function(){
+				activatePickr("light3");
+			});
+			gui.light3Color.domElement.parentElement.parentElement.id = "light3ColorButton";
+
+			gui.light3Intensity = gui.fLight3.add(gui.parameters, "light3Intensity").min(0).max(200).step(5).name("Intensity")
+			.onChange(function(newValue){
+				lights.light3.intensity = newValue;
+			});
+
+			//AMBIENT LIGHT SUBFOLDER
+			gui.fAmbient = gui.fLight.addFolder("Ambient");
+
+			gui.ambientColor = gui.fAmbient.add(gui.parameters, "ambientColor").name("Color")
+			.onChange(function(){
+				activatePickr("ambient");
+			});
+			gui.ambientColor.domElement.parentElement.parentElement.id = "ambientColorButton";
+
+			gui.ambientIntensity = gui.fAmbient.add(gui.parameters, "ambientIntensity").min(0).max(20).step(0.2).name("Intensity")
+			.onChange(function(newValue){
+				lights.ambient.intensity = newValue;
+			});
+
+			//TORCH LIGHT SUBFOLDER
+			gui.fTorch = gui.fLight.addFolder("Torch");
+
+			gui.useTorch = gui.fTorch.add(gui.parameters, "useTorch").name("Enable Torch")
+			.onChange(function(newValue){
+				state.torchOn = newValue;
+				if(newValue){
+					scene.add(lights.torch);
+					scene.remove(lights.light1, lights.light2, lights.light3);
+				}
+				else{
+					scene.remove(lights.torch);
+					scene.add(lights.light1, lights.light2, lights.light3);
+				};
+			});
+
+			gui.torchColor = gui.fTorch.add(gui.parameters, "torchColor").name("Color")
+			.onChange(function(){
+				activatePickr("torch");
+			});
+			gui.torchColor.domElement.parentElement.parentElement.id = "torchColorButton";
+
+			gui.torchIntensity = gui.fTorch.add(gui.parameters, "torchIntensity").min(0).max(20).step(0.2).name("Intensity")
+			.onChange(function(newValue){
+				lights.torch.intensity = newValue;
+			});
+
+			gui.fixTorch = gui.fTorch.add(gui.parameters, "fixTorch").name("Fix Torch Position")
+			.onChange(function(newValue){
+				state.fixTorchPosition = newValue;
+			});
+
+			//DEMO
+			gui.fDemo = gui.gui.addFolder("Slideshow");
+
+			gui.demo = gui.fDemo.add(gui.parameters, "demo").name("On")
+			.onChange(function(newValue){
+				state.demo.on = newValue;
+				frameCount = 0;
+				document.getElementById("demo").blur();
+
+				if((state.demo.on && state.demo.rotate !== state.rotate) || (!state.demo.on && state.rotate)){
+					document.getElementById("autoRotate").click();
+				};
+
+				if(state.demo.on && state.demo.preset === "Dice"){
+					gui.prismSides.setValue(gui.prismSides.initialValue);
+					gui.prismHeight.setValue(gui.prismHeight.initialValue);
+					gui.prismStretch.setValue(gui.prismStretch.initialValue);
+					gui.stellation.setValue(0);
+				};
+			});
+			gui.demo.domElement.childNodes[0].id = "demo";
+
+			gui.demoOptions = gui.fDemo.add(gui.parameters, "demoOptions").name("Options")
+			.onChange(function(){
+				Swal.fire({
+					position: "top",
+					title: "Slideshow Options",
+					input: "text",
+					html: state.demo.htmlText,
+					showCancelButton: true,
+					allowEscapeKey: false,
+					allowOutsideClick: false,
+					customClass: {
+						container: "mySwal",
+						popup: "mySwal-popup",
+						confirmButton: "mySwal-confirm",
+						cancelButton: "mySwal-cancel",
+						input: "mySwal-hidden",
+					},
+					onOpen: function(){
+						indeterminateCheckbox.addEventListeners();
+						addDemoListeners();
+
+						for(const [key, value] of Object.entries(state.demo.shape)){
+							if(value === true){
+								document.getElementById("demo-shape-" + key).click();
+							};
+						};
+
+						for(const [key, value] of Object.entries(state.demo.map)){
+							if(value === true){
+								document.getElementById("demo-map-" + key).click();
+							};
+						};
+
+						document.getElementById("demo-speed").value = Math.round(10 - state.demo.speed);
+
+						if(state.demo.rotate){
+							document.getElementById("demo-rotate").click();
+						};
+
+						if(state.demo.bump){
+							document.getElementById("demo-bump").click();
+						};
+
+						if(state.demo.randomColor){
+							document.getElementById("demo-randomColor").click();
+						};
+
+						if(state.demo.cycleSwap){
+							document.getElementById("demo-cycle-map").click();
+						}
+						else{
+							document.getElementById("demo-cycle-shape").click();
+						};
+
+						if(state.demo.preset === "Dice"){
+							document.getElementById("demo-preset-dice").click();
+						};
+					},
+					inputValidator: () => {
+						if(!validSelection()){
+							return "Invalid selection: Please select at least 1 shape and at least 1 texture.";
+						};
+					},
+				})
+				.then((result) => {
+					if(result.dismiss !== Swal.DismissReason.cancel){
+						for(const [key, value] of Object.entries(state.demo.shape)){
+							state.demo.shape[key] = document.getElementById("demo-shape-" + key).checked;
+						};
+
+						for(const [key, value] of Object.entries(state.demo.map)){
+							state.demo.map[key] = document.getElementById("demo-map-" + key).checked;
+						};
+
+						setDemoSpeed(document.getElementById("demo-speed").value);
+
+						if(document.getElementById("demo-rotate").checked){
+							state.demo.rotate = true;
+						}
+						else{
+							state.demo.rotate = false;
+						};
+
+						if(document.getElementById("demo-bump").checked){
+							state.demo.bump = true;
+						}
+						else{
+							state.demo.bump = false;
+						};
+
+						if(document.getElementById("demo-randomColor").checked){
+							state.demo.randomColor = true;
+						}
+						else{
+							state.demo.randomColor = false;
+						};
+
+						if(document.getElementById("demo-cycle-map").checked){
+							state.demo.cycleSwap = true;
+						}
+						else{
+							state.demo.cycleSwap = false;
+						};
+
+						setDemoLists();
+
+						if(document.getElementById("demo-preset-dice").checked){
+							state.demo.preset = "Dice";
+							state.demo.shapeList.splice(3, 0, state.demo.shapeList.pop());
+						}
+						else{
+							state.demo.preset = "Custom";
+						};
+					};
+				});
+			});
+
+			//LOAD/SAVE FOLDER
+			gui.fSave = gui.gui.addFolder("Load/Save");
+
+			gui.loadScene = gui.fSave.add(gui.parameters, "loadScene").name("Load Scene")
+			.onChange(function(){
+				document.getElementById('fileInput').click();
+			});
+
+			gui.saveScene = gui.fSave.add(gui.parameters, "saveScene").name("Save Scene")
+			.onChange(function(){
+				saveState();
+			});
+
+			gui.exportObject = gui.fSave.add(gui.parameters, "exportObject").name("Export as GLTF Binary")
+			.onChange(function(){
+				exportObject();
+			});
+
+			gui.screenshot = gui.fSave.add(gui.parameters, "screenshot").name("Take Screenshot")
+			.onChange(function(){
+				screenshot();
+			});
+
+			//BACK TO GEOFFNET
+			gui.jaznet = gui.gui.add(gui.parameters, "jaznet").name(" << Back to Jaznet")
+			.onChange(function(){
+				document.getElementById("jaznet").click();
+			});
+
+			setupGUI();
+		};
+
+		function setupGUI(){
+			let colorList = Object.entries(state.colors);
+			for(const [name, color] of colorList){
+				let current = document.getElementById(name + "ColorButton");
+				current.style["background-color"] = color;
+				current.style["border-right"] = "3px solid black";
+				current.children[0].children[0].classList.add("long-property-name");
+				state.colors["textured"+name] = color;
+				setColor(name, color);
+			};
+
+			let lightList = Object.entries(lights);
+			for(const [name, light] of lightList){
+				let current = document.getElementById(name + "ColorButton");
+				current.style["background-color"] = '#' + light.color.getHexString();
+				current.style["border-right"] = "3px solid black";
+			};
+
+			//Blur focus on GUI close
+			if(gui.blurOnClose){
+				document.getElementsByClassName('close-button')[0].addEventListener('click', () =>
+					document.activeElement.blur()
+				);
+			};
+
+			//Enable Pickr color reset
+			document.getElementsByClassName('pcr-last-color')[0].addEventListener('click', () =>
+				gui.pickr.setColor(gui.pickr.getSelectedColor().toHEXA().toString())
+			);
+		};
+
+//GUI FUNCTIONS
+		function setEnv(env){
+			state.currentEnvironment = env;
+			env = flatten(env);
+
+			applyToAllMaterials("envMap", environments[env]);
+		};
+
+		function setBackground(env){
+			state.currentBackground = env;
+			env = flatten(env);
+
+			backgroundMaterial.map = textures[env];
+			backgroundMaterial.needsUpdate = true;
+
+			switch(env){
+				case "none":
+					if(state.colors["background"] != state.colors["texturedbackground"]){
+						setColor("background", state.colors["texturedbackground"]);
+					};
+					break;
+				default:
+					setColor("background", "#ffffff", "texture");
+			};
+		};
+
+		function setTexture(newValue){
+			state.currentTexture = newValue;
+			newtexture = flatten(newValue);
+
+			metalMaterial.map = textures[newtexture];
+			metalMaterial.needsUpdate = true;
+
+			dualMaterial.map = textures[newtexture];
+			dualMaterial.needsUpdate = true;
+
+			for(let i = 0; i < 6; i++){
+				cubeMaterial[i].map = cubeMaps[newtexture][i];
+				cubeMaterial[i].needsUpdate = true;
+				octahedronDualMaterial[i].map = cubeMaps[newtexture][i];
+				octahedronDualMaterial[i].needsUpdate = true;
+				spongeMaterial[i].map = cubeMaps[newtexture][i];
+				spongeMaterial[i].needsUpdate = true;
+			};
+
+			for(const m of polyhedronMaterial){
+				m.map = textures[newtexture];
+				m.needsUpdate = true;
+			};
+
+			for(const m of textMaterial){
+				m.map = textures[newtexture];
+				m.needsUpdate = true;
+			};
+
+			if(bumpList.includes(newValue)){
+				gui.setBump.setValue(newValue);
+			}
+			else if(state.demo.bump && state.demo.on){
+				//set bump to Earth
+				gui.setBump.setValue("Earth");
+			}
+			else{
+				gui.bumpScale.setValue(0);
+			};
+
+			switch(newValue){
+				case "None":
+					if(state.colors["material"].toLowerCase() != state.colors["texturedmaterial"].toLowerCase()){
+						setColor("material", state.colors["texturedmaterial"], "multi");
+						setColor("multi3", state.colors["texturedmulti3"]);
+						setColor("multi4", state.colors["texturedmulti4"]);
+						setColor("multi5", state.colors["texturedmulti5"]);
+						setColor("multi6", state.colors["texturedmulti6"]);
+						setColor("multi8", state.colors["texturedmulti8"]);
+						setColor("multi10", state.colors["texturedmulti10"]);
+						setColor("base", state.colors["texturedbase"]);
+						setColor("sides", state.colors["texturedsides"]);
+						setColor("dual", state.colors["textureddual"]);
+						/*setColor("point", state.colors["texturedpoint"]);
+						setColor("dualPoint", state.colors["textureddualPoint"]);
+						setColor("edge", state.colors["texturededge"]);
+						setColor("dualEdge", state.colors["textureddualEdge"]);*/
+						setColor("text0", state.colors["texturedtext0"]);
+						setColor("text1", state.colors["texturedtext1"]);
+						setColor("text2", state.colors["texturedtext2"]);
+						setColor("text3", state.colors["texturedtext3"]);
+						setColor("text4", state.colors["texturedtext4"]);
+						setColor("text5", state.colors["texturedtext5"]);
+					};
+					break;
+				default:
+					setColor("material", "#ffffff", "texture");
+			};
+		};
+
+		function setBump(newValue){
+			state.currentBump = newValue;
+			newbump = flatten(newValue);
+
+			metalMaterial.bumpMap = bumps[newbump];
+			dualMaterial.bumpMap = bumps[newbump];
+
+			for(let i = 0; i < 6; i++){
+				cubeMaterial[i].bumpMap = cubeBumps[newbump][i];
+				octahedronDualMaterial[i].bumpMap = cubeBumps[newbump][i];
+				spongeMaterial[i].bumpMap = cubeBumps[newbump][i];
+			};
+
+			for(const m of polyhedronMaterial){
+				m.bumpMap = bumps[newbump];
+			};
+
+			for(const m of textMaterial){
+				m.bumpMap = bumps[newbump];
+			};
+
+			applyToAllMaterials("bumpScale", bumpScales[newbump] * state.bumpScale);
+		};
+
+		function setColor(element, newValue, option){
+			switch(element){
+				case "material":
+					let rgb = hexToRGB(newValue);
+
+					metalMaterial.color.set(newValue);
+
+					for(const m of spongeMaterial){
+						m.color.set(newValue);
+					};
+
+					if(option != "multi"){
+						setColor("multi3", newValue, option);
+						setColor("multi4", newValue, option);
+						setColor("multi5", newValue, option);
+						setColor("multi6", newValue, option);
+						setColor("multi8", newValue, option);
+						setColor("multi10", newValue, option);
+						setColor("base", newValue, option);
+						setColor("sides", newValue, option);
+						setColor("dual", newValue, option);
+						setColor("text0", newValue, option);
+						setColor("text1", newValue, option);
+						setColor("text2", newValue, option);
+						setColor("text3", newValue, option);
+						setColor("text4", newValue, option);
+						setColor("text5", newValue, option);
+					};
+
+					document.getElementById("Rbox").value = rgb.r;
+					document.getElementById("Rslider").style.width = (100 * rgb.r / 255).toString() + "%";
+					document.getElementById("Gbox").value = rgb.g;
+					document.getElementById("Gslider").style.width = (100 * rgb.g / 255).toString() + "%";
+					document.getElementById("Bbox").value = rgb.b;
+					document.getElementById("Bslider").style.width = (100 * rgb.b / 255).toString() + "%";
+					break;
+				case "background":
+					backgroundMaterial.color.set(newValue);
+					break;
+				case "innerGlow":
+					glowObject.insideMesh.material.uniforms.glowColor.value.set(newValue);
+					break;
+				case "outerGlow":
+					glowObject.outsideMesh.material.uniforms.glowColor.value.set(newValue);
+					break;
+				case "multi3":
+					polyhedronMaterial[0].color.set(newValue);
+					break;
+				case "multi4":
+					polyhedronMaterial[1].color.set(newValue);
+					for(const m of cubeMaterial){
+						m.color.set(newValue);
+					};
+					break;
+				case "multi5":
+					polyhedronMaterial[2].color.set(newValue);
+					break;
+				case "multi6":
+					polyhedronMaterial[3].color.set(newValue);
+					break;
+				case "multi8":
+					polyhedronMaterial[4].color.set(newValue);
+					break;
+				case "multi10":
+					polyhedronMaterial[5].color.set(newValue);
+					break;
+				case "base":
+					polyhedronMaterial[6].color.set(newValue);
+					break;
+				case "sides":
+					polyhedronMaterial[7].color.set(newValue);
+					break;
+				case "dual":
+					dualMaterial.color.set(newValue);
+					for(const m of octahedronDualMaterial){
+						m.color.set(newValue);
+					};
+					break;
+				case "point":
+					pointMaterial.color.set(newValue);
+					break;
+				case "dualPoint":
+					dualPointMaterial.color.set(newValue);
+					break;
+				case "edge":
+					edgeMaterial.color.set(newValue);
+					break;
+				case "dualEdge":
+					dualEdgeMaterial.color.set(newValue);
+					break;
+				case "text0":
+					textMaterial[0].color.set(newValue);
+					break;
+				case "text1":
+					textMaterial[1].color.set(newValue);
+					break;
+				case "text2":
+					textMaterial[2].color.set(newValue);
+					break;
+				case "text3":
+					textMaterial[3].color.set(newValue);
+					break;
+				case "text4":
+					textMaterial[4].color.set(newValue);
+					break;
+				case "text5":
+					textMaterial[5].color.set(newValue);
+					break;
+				case "emissive":
+					applyToAllMaterials("emissive", new THREE.Color(newValue));
+					break;
+				default:
+					lights[element].color.set(newValue);
+					break;
+			};
+
+			state.colors[element] = document.getElementById(element+"ColorButton").style["background-color"] = newValue;
+
+			if(option != "texture"){
+				state.colors["textured"+element] = newValue;
+			};
+		};
+
+		function hexToRGB(hexColor){
+			let splitHex = {r: "0x" + hexColor.substring(1,3), g: "0x" + hexColor.substring(3,5), b: "0x" + hexColor.substring(5,7)};
+			return {r: parseInt(splitHex.r), g: parseInt(splitHex.g), b: parseInt(splitHex.b)}
+		};
+
+		function twoDigitHex(number){
+			if(number > 15){
+				return number.toString(16);
+			}
+			else{
+				return '0' + number.toString(16);
+			};
+		};
+
+		function setShading(newValue){
+			gui.flatShading.setValue(newValue);
+		};
+
+		function applyToAllMaterials(property, value){
+			metalMaterial[property] = value;
+			metalMaterial.needsUpdate = true;
+
+			dualMaterial[property] = value;
+			dualMaterial.needsUpdate = true;
+
+			for(const m of cubeMaterial){
+				m[property] = value;
+				m.needsUpdate = true;
+			};
+
+			for(const m of octahedronDualMaterial){
+				m[property] = value;
+				m.needsUpdate = true;
+			};
+
+			for(const m of spongeMaterial){
+				m[property] = value;
+				m.needsUpdate = true;
+			};
+
+			for(const m of polyhedronMaterial){
+				m[property] = value;
+				m.needsUpdate = true;
+			};
+
+			for(const m of textMaterial){
+				m[property] = value;
+				m.needsUpdate = true;
+			};
+
+			switch(property){
+				case "flatShading":
+					break;
+				default:
+					pointMaterial[property] = value;
+					edgeMaterial[property] = value;
+					dualPointMaterial[property] = value;
+					dualEdgeMaterial[property] = value;
+			};
+		};
+
+		function hide(element){
+			document.getElementById(element).style.display = "none";
+		};
+
+		function show(element){
+			document.getElementById(element).style.display = "block";
+		};
+
+		function hideAllMultiColors(){
+			hide("multi3ColorButton");
+			hide("multi4ColorButton");
+			hide("multi5ColorButton");
+			hide("multi6ColorButton");
+			hide("multi8ColorButton");
+			hide("multi10ColorButton");
+			hide("baseColorButton");
+			hide("sidesColorButton");
+			hide("dualColorButton");
+			hide("pointColorButton");
+			hide("dualPointColorButton");
+			hide("edgeColorButton");
+			hide("dualEdgeColorButton");
+			hide("fPolyhedron");
+		};
+
+		function showExtraColors(){
+			switch(state.polyhedronOptions.display){
+				case "Polyhedron":
+					show("pointColorButton");
+					show("edgeColorButton");
+					break;
+				case "Dual Polyhedron":
+					show("dualPointColorButton");
+					show("dualEdgeColorButton");
+					break;
+				case "Both":
+					show("pointColorButton");
+					show("edgeColorButton");
+					show("dualPointColorButton");
+					show("dualEdgeColorButton");
+					break;
+			};
+		};
+
+		function showMultiColors(polyList, dualName){
+			hideAllMultiColors();
+			showExtraColors();
+
+			switch(state.polyhedronOptions.display){
+				case "Polyhedron":
+					for(const n of polyList){
+						show("multi"+n.toString()+"ColorButton");
+						gui["multi"+n.toString()].name(greekify(n) + 's');
+						//gui["multi"+n.toString()].name(state.objectType + ": " + greekify(n) + 's');
+					};
+					show("pointColorButton");
+					show("edgeColorButton");
+					break;
+				case "Dual Polyhedron":
+					show("dualColorButton");
+					show("dualPointColorButton");
+					show("dualEdgeColorButton");
+					break;
+				case "Both":
+					for(const n of polyList){
+						show("multi"+n.toString()+"ColorButton");
+						gui["multi"+n.toString()].name(greekify(n) + 's');
+						//gui["multi"+n.toString()].name(state.objectType + ": " + greekify(n) + 's');
+					};
+					show("dualColorButton");
+					show("pointColorButton");
+					show("edgeColorButton");
+					show("dualPointColorButton");
+					show("dualEdgeColorButton");
+					break;
+			};
+
+			gui.dual.name(dualName);
+			gui.pointColor.name(state.objectType);
+			gui.edgeColor.name(state.objectType);
+			gui.dualPointColor.name(dualName);
+			gui.dualEdgeColor.name(dualName);
+			show("fPolyhedron");
+		};
+
+		function showPrismColors(dualName){
+			hideAllMultiColors();
+			showExtraColors();
+
+			switch(state.polyhedronOptions.display){
+				case "Polyhedron":
+					show("baseColorButton");
+					show("sidesColorButton");
+					break;
+				case "Dual Polyhedron":
+					show("dualColorButton");
+					break;
+				case "Both":
+					show("baseColorButton");
+					show("sidesColorButton");
+					show("dualColorButton");
+					break;
+			};
+
+			gui.dual.name(dualName);
+			gui.pointColor.name(greekify(state.polyhedronOptions.prismSides, "adjective") + ' ' + state.objectType);
+			gui.edgeColor.name(greekify(state.polyhedronOptions.prismSides, "adjective") + ' ' + state.objectType);
+			gui.dualPointColor.name(dualName);
+			gui.dualEdgeColor.name(dualName);
+			show("prismSides");
+			show("prismStretch");
+			show("prismHeight");
+			show("fPolyhedron");
+		};
+
+		function setPolyhedronMaterialVisibility(){
+			switch(state.polyhedronOptions.display){
+				case "Polyhedron":
+					for(const m of polyhedronMaterial){
+						m.visible = true;
+					};
+
+					for(const m of cubeMaterial){
+						m.visible = true;
+					};
+
+					for(const m of octahedronDualMaterial){
+						m.visible = false;
+					};
+
+					pointMaterial.visible = true;
+					edgeMaterial.visible = true;
+
+					dualMaterial.visible = false;
+					dualPointMaterial.visible = false;
+					dualEdgeMaterial.visible = false;
+					break;
+				case "Dual Polyhedron":
+					dualMaterial.visible = true;
+					dualPointMaterial.visible = true;
+					dualEdgeMaterial.visible = true;
+
+					for(const m of octahedronDualMaterial){
+						m.visible = true;
+					};
+
+					for(const m of polyhedronMaterial){
+						m.visible = false;
+					};
+
+					for(const m of cubeMaterial){
+						m.visible = false;
+					};
+
+					pointMaterial.visible = false;
+					edgeMaterial.visible = false;
+					break;
+				case "Both":
+					for(const m of polyhedronMaterial){
+						m.visible = true;
+					};
+
+					for(const m of cubeMaterial){
+						m.visible = true;
+					};
+
+					for(const m of octahedronDualMaterial){
+						m.visible = true;
+					};
+
+					pointMaterial.visible = true;
+					edgeMaterial.visible = true;
+
+					dualMaterial.visible = true;
+					dualPointMaterial.visible = true;
+					dualEdgeMaterial.visible = true;
+					break;
+			};
+
+			if(!state.polyhedronOptions.show.faces){
+				for(const m of polyhedronMaterial){
+					m.visible = false;
+				};
+
+				for(const m of cubeMaterial){
+					m.visible = false;
+				};
+
+				for(const m of octahedronDualMaterial){
+					m.visible = false;
+				};
+
+				dualMaterial.visible = false;
+			};
+
+			if(!state.polyhedronOptions.show.edges){
+				edgeMaterial.visible = false;
+				dualEdgeMaterial.visible = false;
+			};
+
+			if(!state.polyhedronOptions.show.vertices){
+				pointMaterial.visible = false;
+				dualPointMaterial.visible = false;
+			};
+
+			needsRedraw = true;
+		};
+
+//DEMO MODE
+		function validSelection(){
+			let someShapes = false;
+			let someMaps = false;
+		
+			for(const key of Object.keys(state.demo.shape)){
+				if(document.getElementById("demo-shape-" + key).checked){
+					someShapes = true;
+					break;
+				};
+			};
+
+			for(const key of Object.keys(state.demo.map)){
+				if(document.getElementById("demo-map-" + key).checked){
+					someMaps = true;
+					break;
+				};
+			};
+
+			if(someShapes && someMaps){
+				return true;
+			}
+			else{
+				return false;
+			};
+		};
+
+		function setDemoLists(){
+			let obj = state.demo;
+
+			obj.shapeList = [];
+			obj.mapList = [];
+
+			for(const [key, value] of Object.entries(obj.shape)){
+				if(value){
+					obj.shapeList.push(key);
+				};
+			};
+
+			for(const [key, value] of Object.entries(obj.map)){
+				if(value){
+					obj.mapList.push(key);
+				};
+			};
+		};
+
+		function addDemoListeners(){
+			for(const elt of document.querySelectorAll("input[type='checkbox']")){
+				if(elt.id !== undefined && (elt.id.substr(0,10) === "demo-shape" || elt.id === "demo-polyhedron") && elt.id !== "demo-shape-Icosidodecahedron-dual"){
+					elt.addEventListener("change", function(){
+						document.getElementById("demo-preset-dice").checked = false;
+					});
+				};
+			};
+		};
+
+		function demoPresetDice(){
+			let elt = document.getElementById("demo-preset-dice")
+		
+			if(elt.checked === true){
+				let shapeMaster = document.getElementById("demo-shape");
+
+				shapeMaster.click();
+
+				if(shapeMaster.checked === true){
+					shapeMaster.click();
+				};
+
+				document.getElementById("demo-shape-Tetrahedron-poly").click();
+				document.getElementById("demo-shape-Cube-poly").click();
+				document.getElementById("demo-shape-Octahedron-poly").click();
+				document.getElementById("demo-shape-Dodecahedron-poly").click();
+				document.getElementById("demo-shape-Icosahedron-poly").click();
+				document.getElementById("demo-shape-Icosidodecahedron-dual").click();
+				document.getElementById("demo-shape-Antiprism-dual").click();
+
+				elt.checked = true;
+			};
+		};
+
+		function setDemoSpeed(value){
+			value = 10 - value;
+
+			if(value === 0){
+				value = 0.05;
+			};
+
+			state.demo.speed = value;
+		};
+
+		function setupDemoOptions(){
+			for(const shape of shapeList){
+				if(!polyhedronList.includes(shape)){
+					state.demo.shape[shape] = true;
+				}
+				else{
+					state.demo.shape[shape + "-poly"] = true;
+					state.demo.shape[shape + "-dual"] = true;
+					state.demo.shape[shape + "-both"] = true;
+				};
+			};
+
+			for(const map of mapList){
+				state.demo.map[map] = true;
+			};
+
+			setDemoLists();
+
+			let htmlText = "<div class='mySwal-html'><div class='spacer'></div><div class='inner'>"
+				+ "<input type='checkbox' id='demo-shape' master='demo-shape'/>"
+				+ "<label for='demo-shape' style='font-size: 12pt'>Shape</label><br><div style='margin-left: 1ex'>";
+
+			for(const shape of shapeList){
+				if(polyhedronList.includes(shape)){
+					break;
+				};
+
+				htmlText += "<input type='checkbox' id='demo-shape-" + shape + "' group='demo-shape' "
+					+ "<label for='demo-shape-" + shape + "'>" + shape + "</label><br>";
+			};
+
+			htmlText += "<input type='checkbox' id='demo-polyhedron' master='demo-polyhedron' group='demo-shape'/>"
+				+ "<label for='demo-polyhedron'>Polyhedra</label>"
+				+ "<br><div style='margin-left: 1ex'>";
+
+			for(const shape of polyhedronList){
+				let shapeX = shape.replace(/\s+/g, "_");
+
+				htmlText += "<input type='checkbox' id='demo-shape-" + shapeX
+					+ "' master='demo-shape-" + shapeX + "' group='demo-polyhedron demo-shape'/>"
+					+ "<label for='demo-shape-" + shapeX + "'>" + shape + "</label><br>"
+					+ "<div style='margin-left: 1ex'><input type='checkbox' id='demo-shape-" + shape + "-poly' "
+					+ "group='demo-shape-" + shapeX + " demo-polyhedron demo-shape'/>"
+					+ "<label for='demo-shape-" + shape + "-poly'>Polyhedron</label><br>"
+					+ "<input type='checkbox' id='demo-shape-" + shape + "-dual' "
+					+ "group='demo-shape-" + shapeX + " demo-polyhedron demo-shape'/>"
+					+ "<label for='demo-shape-" + shape + "-poly'>Polyhedron Dual</label><br>"
+					+ "<input type='checkbox' id='demo-shape-" + shape + "-both' "
+					+ "group='demo-shape-" + shapeX + " demo-polyhedron demo-shape'/>"
+					+ "<label for='demo-shape-" + shape + "-poly'>Both</label><br></div>"
+			};
+
+			htmlText += "</div></div><span class='brmedium'></span><input type='checkbox' id='demo-preset-dice' "
+				+ "onchange='demoPresetDice()'/><label for='demo-dice' style='font-size: 12pt'>Dice</label>"
+
+				+ "</div><div class='spacer'></div><div class='inner'>"
+				+ "<input type='checkbox' id='demo-map' master='demo-map'/>"
+				+ "<label for='demo-map' style='font-size: 12pt'>Textures</label><br>"
+				+ "<div style='margin-left: 1ex'>";
+
+			for(const map of mapList){
+				if(planetList.includes(map)){
+					break;
+				};
+
+				htmlText += "<input type='checkbox' id='demo-map-" + map + "' group='demo-map'/>"
+					+ "<label for='demo-map-"	+ map + "'>" + map + "</label><br>";
+			};
+
+			htmlText += "<input type='checkbox' id='demo-planet' master='demo-planet' group='demo-map'/>"
+				+ "<label for='demo-planet'>Space</label><br>"
+				+ "<div style='margin-left: 1ex'>";
+
+			for(const map of planetList){
+				let mapX = map.replace(/\s+/g, "_");
+
+				htmlText += "<input type='checkbox' id='demo-map-" + map + "' group='demo-planet demo-map'/>"
+					+ "<label for='demo-map-"	+ map + "'>" + map + "</label><br>";
+			};
+
+			htmlText += "</div></div></div><div class='spacer'></div>"
+				+ "<div class='inner' style='font-size: 12pt; text-align: center'>"
+				+ "<div><input type='range' id='demo-speed' style='width: 90%' min='0' max='10' value='5'/>"
+				+ "<label for='demo-speed'>Transition Speed</label></div><span class='brmedium'></span>"
+				+ "<input type='checkbox' id='demo-rotate'/>"
+				+ "<label for='demo-rotate'>Auto Rotate</label><span class='brmedium'></span>"
+				+ "<input type='checkbox' id='demo-bump'/>"
+				+ "<label for='demo-bump'>Maintain Bump Scales</label><span class='brmedium'></span>"
+				+ "<input type='checkbox' id='demo-randomColor'/>"
+				+ "<label for='demo-randomColor'>Random Textureless Colour</label><span class='brmedium'></span>"
+				+ "<input type='radio' id='demo-cycle-shape' name='demo-cycle'>"
+				+ "<label for='demo-cycle-shape'>Cycle Shapes then Textures</label><br>"
+				+ "<input type='radio' id='demo-cycle-map' name='demo-cycle'>"
+				+ "<label for='demo-cycle-map'>Cycle Textures then Shapes</label>"
+				+ "</div></div>";
+
+			state.demo.htmlText = htmlText;
+		};
+
+		function demoMode(){
+			frameCount++;
+
+			let parameters = {
+				shape: {
+					list: state.demo.shapeList,
+					getIndex: function(){
+						let obj = state.objectType;
+
+						if(!polyhedronList.includes(obj)){
+							return state.demo.shapeList.indexOf(obj);
+						}
+						else{
+							switch(state.polyhedronOptions.display){
+								case "Polyhedron":
+									return state.demo.shapeList.indexOf(obj + "-poly");
+									break;
+								case "Dual Polyhedron":
+									return state.demo.shapeList.indexOf(obj + "-dual");
+									break;
+								case "Both":
+									return state.demo.shapeList.indexOf(obj + "-both");
+									break;
+							};
+						};
+					},
+					set: function(shape){
+						let shapeX = shape.split('-');
+
+						gui.objectSelect.setValue(shapeX[0]);
+
+						if(shapeX.length > 0){
+							switch(shapeX[1]){
+								case "poly":
+									gui.polyhedronDisplay.setValue("Polyhedron");
+									break;
+								case "dual":
+									gui.polyhedronDisplay.setValue("Dual Polyhedron");
+									break;
+								case "both":
+									gui.polyhedronDisplay.setValue("Both");
+									break;
+							};
+						};
+					}
+				},
+
+				map: {
+					list: state.demo.mapList,
+					getIndex: function(){
+						return state.demo.mapList.indexOf(state.currentTexture);
+					},
+					set: function(map){
+						gui.setTex.setValue(map);
+					}
+				}
+			};
+
+			let cycle1 = parameters.shape;
+			let cycle2 = parameters.map;
+
+			if(state.demo.cycleSwap){
+				cycle1 = parameters.map;
+				cycle2 = parameters.shape;
+			};
+
+			if(cycle1.getIndex() === -1){
+				cycle1.set(cycle1.list[0]);
+			};
+
+			if(cycle2.getIndex() === -1){
+				cycle2.set(cycle2.list[0]);
+			};
+
+			if(frameCount > 60 * state.demo.speed){
+				let index1 = cycle1.getIndex() + 1;
+
+				if(index1 === cycle1.list.length){
+					index1 = 0;
+
+					let index2 = cycle2.getIndex() + 1;
+
+					if(index2 === cycle2.list.length){
+						index2 = 0;
+					};
+
+					cycle2.set(cycle2.list[index2]);
+				};
+
+				cycle1.set(cycle1.list[index1]);
+				frameCount = 0;
+
+				if(state.currentTexture === "None" && state.demo.randomColor){
+					document.getElementById("randomColorButton").click();
+				};
+			};
+		};
+
+//LOAD/SAVE FUNCTIONS
+		function readJSONFile(evt){
+			//Retrieve the first (and only!) File from the FileList object
+			let file = evt.target.files[0]; 
+
+			if(file){
+				let reader = new FileReader();
+				reader.onload = function(e){
+					loadState(e);
+				};
+				reader.readAsText(file);
+				document.getElementById('fileInput').value = "";//reset so onchange will be triggered on file reload
+			}
+			else{
+				alert("Failed to load file!");
+			};
+		};
+
+		function loadState(file){
+			cancelAnimationFrame(animateId);
+			controls.reset();
+
+			let loadedState = JSON.parse(file.target.result);
+
+			gui.objectSelect.setValue(loadedState.objectType);
+
+			gui.fontSelect.setValue(loadedState.textOptions.font);
+			gui.changeTextLine1.setValue(loadedState.textOptions.line1);
+			gui.changeTextLine2.setValue(loadedState.textOptions.line2);
+			gui.changeTextLine3.setValue(loadedState.textOptions.line3);
+			gui.curveSegments.setValue(loadedState.textOptions.curveSegments);
+			gui.textHeight.setValue(loadedState.textOptions.height);
+			gui.bevelEnabled.setValue(loadedState.textOptions.bevelEnabled);
+			gui.bevelThickness.setValue(loadedState.textOptions.bevelThickness);
+			gui.bevelSize.setValue(loadedState.textOptions.bevelSize);
+			gui.bevelOffset.setValue(loadedState.textOptions.bevelOffset);
+			gui.bevelSegments.setValue(loadedState.textOptions.bevelSegments);
+			state.textOptions.line1 = loadedState.textOptions.line1;
+			state.textOptions.line2 = loadedState.textOptions.line2;
+			state.textOptions.line3 = loadedState.textOptions.line3;
+			Text.needsUpdate = true;
+			Text.make();
+
+			gui.polyhedronDisplay.setValue(loadedState.polyhedronOptions.display);
+			gui.stellation.setValue(loadedState.polyhedronOptions.stellation);
+			gui.prismSides.setValue(loadedState.polyhedronOptions.prismSides);
+			gui.prismStretch.setValue(loadedState.polyhedronOptions.prismStretch);
+			gui.prismHeight.setValue(loadedState.polyhedronOptions.prismHeight);
+
+			gui.rotate.setValue(loadedState.rotate);
+			gui.rotateX.setValue(loadedState.rotateSpeed.x*loadedState.rotateSpeed.f);
+			gui.rotateY.setValue(loadedState.rotateSpeed.y*loadedState.rotateSpeed.f);
+			gui.rotateZ.setValue(loadedState.rotateSpeed.z*loadedState.rotateSpeed.f);
+
+			gui.metalness.setValue(loadedState.metalness);
+			gui.roughness.setValue(loadedState.roughness);
+			gui.transparency.setValue(loadedState.transparency);
+			gui.flatShading.setValue(loadedState.flatShading);
+			gui.reflectivity.setValue(loadedState.reflectivity);
+			gui.clearcoat.setValue(loadedState.clearcoat);
+			gui.clearcoatRoughness.setValue(loadedState.clearcoatRoughness);
+			switch(loadedState.side){
+				case THREE.FrontSide:
+					gui.side.setValue("Front");
+					break;
+				case THREE.BackSide:
+					gui.side.setValue("Back");
+					break;
+				case THREE.DoubleSide:
+					gui.side.setValue("Both");
+					break;
+			};
+
+			gui.setTex.setValue(loadedState.currentTexture);
+			gui.fractalTexture.setValue(loadedState.fractalTexture);
+			gui.setBump.setValue(loadedState.currentBump);
+			gui.bumpScale.setValue(loadedState.bumpScale);
+			gui.background.setValue(loadedState.currentBackground);
+			gui.environment.setValue(loadedState.currentEnvironment);
+
+			gui.glowOnly.setValue(!loadedState.visible);
+			gui.glowSelect.setValue(loadedState.glow);
+			gui.innerGlowCoefficient.setValue(loadedState.innerGlow.coefficient);
+			gui.innerGlowPower.setValue(loadedState.innerGlow.power);
+			gui.outerGlowCoefficient.setValue(loadedState.outerGlow.coefficient);
+			gui.outerGlowPower.setValue(loadedState.outerGlow.power);
+			gui.emissiveIntensity.setValue(loadedState.emissiveIntensity);
+
+			gui.light1Intensity.setValue(loadedState.lights.light1.intensity);
+			gui.light2Intensity.setValue(loadedState.lights.light2.intensity);
+			gui.light3Intensity.setValue(loadedState.lights.light3.intensity);
+			gui.ambientIntensity.setValue(loadedState.lights.ambient.intensity);
+			gui.torchIntensity.setValue(loadedState.lights.torch.intensity);
+			gui.useTorch.setValue(loadedState.torchOn);
+			gui.fixTorch.setValue(loadedState.fixTorchPosition);
+			lights.torch.position.copy(loadedState.lights.torch.position);
+
+			for(const [name, color] of Object.entries(loadedState.colors)){
+				if(name.substr(0, 8) == "textured"){
+					state.colors[name] = color;
+				}
+				else{
+					setColor(name, color);
+				};
+			};
+
+			for(const [name, light] of Object.entries(loadedState.lights)){
+				setColor(name, light.color);
+			};
+
+			//NEW
+			if(loadedState.emissiveIntensity !== undefined){
+				gui.emissiveIntensity.setValue(loadedState.emissiveIntensity);
+			}
+			else{
+				gui.emissiveIntensity.setValue(0);
+			};
+
+			//CAMERA AND ROTATION
+			let loader = new THREE.ObjectLoader();
+			camera.copy(loader.parse(JSON.parse(loadedState.camera.json)));
+			parent.rotation.set(loadedState.currentRotation.x, loadedState.currentRotation.y, loadedState.currentRotation.z);
+
+			resizeScreen();
+
+			animate();
+		};
+
+		function saveState(){
+			for(const [name, light] of Object.entries(lights)){
+				state.lights[name] = {color: '#'+light.color.getHexString(), intensity: light.intensity};
+			};
+			state.lights.torch.position = lights.torch.position;
+
+			state.camera.json = JSON.stringify(camera.toJSON());
+			state.currentRotation = {x: parent.rotation.x, y: parent.rotation.y, z: parent.rotation.z};
+
+			download(JSON.stringify(state), "scene.scn", 'text/plain', "saveLink");
+		};
+
+		function screenshot(){
+			let elt = document.getElementById("saveLink");
+			elt.href = renderer.domElement.toDataURL("image/png");
+			elt.download = 'screenshot.png';
+			elt.click();
+			//let win = window.open();
+			//document.write('<iframe src="' + renderer.domElement.toDataURL("image/png") + '" frameborder="0" style="margin: 0; padding: 0; border: 0; background-color: white; overflow: hidden; width:100%; height:100%; display:block; line-height: 0; position: absolute; left: 0; top: 0" allowfullscreen></iframe>');
+		};
+
+		function exportObject(){
+			let exporter = new THREE.GLTFExporter();
+
+			let bufferedObject = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(object1.geometry), object1.material);
+
+			//exporter displays invisible faces so they need to be removed from the geometry
+			if(polyhedronList.includes(state.objectType) && state.polyhedronOptions.display != "Both"){
+				let geometry = new THREE.Geometry();
+				let uvArray = [];
+
+				for(const v of object1.geometry.vertices){
+					geometry.vertices.push(v);
+				};
+
+				switch(state.polyhedronOptions.display){
+					case "Polyhedron":
+						for(const [i, f] of Object.entries(object1.geometry.faces)){
+							if(state.objectType == "Cube" && f.materialIndex < 6){
+								geometry.faces.push(f.clone());
+								uvArray.push(object1.geometry.faceVertexUvs[0][i]);
+							}
+							else if(state.objectType == "Octahedron" && f.materialIndex == 6){
+								geometry.faces.push(f.clone());
+								uvArray.push(object1.geometry.faceVertexUvs[0][i]);
+							}
+							else if(state.objectType != "Cube" && state.objectType != "Octahedron" && f.materialIndex < 8){
+								geometry.faces.push(f.clone());
+								uvArray.push(object1.geometry.faceVertexUvs[0][i]);
+							};
+						};
+						break;
+					case "Dual Polyhedron":
+						for(const [i, f] of Object.entries(object1.geometry.faces)){
+							if(state.objectType == "Cube" && f.materialIndex == 6){
+								geometry.faces.push(f.clone());
+								uvArray.push(object1.geometry.faceVertexUvs[0][i]);
+							}
+							else if(state.objectType == "Octahedron" && f.materialIndex < 6){
+								geometry.faces.push(f.clone());
+								uvArray.push(object1.geometry.faceVertexUvs[0][i]);
+							}
+							else if(f.materialIndex == 8){
+								geometry.faces.push(f.clone());
+								uvArray.push(object1.geometry.faceVertexUvs[0][i]);
+							};
+						};
+						break;
+				};
+
+				geometry.faceVertexUvs[0] = uvArray;
+				geometry.uvsNeedUpdate = true;
+
+				bufferedObject = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(geometry), object1.material);
+			};
+
+			if(state.flatShading){
+				bufferedObject.geometry.deleteAttribute("normal");
+			};
+
+			exporter.parse(bufferedObject, function(gltf){
+				download(gltf, 'object.glb', 'text/plain', "saveLink");
+			}, {binary: true, onlyVisible: true, forceIndices: true});
+		};
+
+//BUILD COMPLICATED OBJECTS
+		function buildObjects(){
+			function delay(time){
+				return new Promise(function(resolve){
+					setTimeout(resolve, time);
+				});
+			};
+
+			function buildAllPolyhedra(){
+				
+			};
+
+			loadingDiv.innerHTML = "Building Object: Menger Sponge";
+			delay(0)
+				.then(function (){
+					Sponge.make(2, 3, spongeMaterial);
+					loadingDiv.innerHTML = "Building Object: Sierpinski Tetrahedron";
+					return delay(0);
+				})
+				.then(function (){
+					SierpinskiTetrahedron.make(2, 5);
+					loadingDiv.innerHTML = "Building Object: Heart";
+					return delay(0);
+				})
+				.then(function (){
+					Heart.make(2.5, metalMaterial, 180, 50);
+					loadingDiv.innerHTML = "Building Object: Teapot";
+					return delay(0);
+				})
+				.then(function (){
+					Teapot.make(1.1, metalMaterial);
+					loadingDiv.innerHTML = "Building Object: Trefoil";
+					return delay(0);
+				})
+				.then(function (){
+					Trefoil.make(1, metalMaterial);
+					loadingDiv.innerHTML = "Building Object: Text";
+					return delay(0);
+				})
+				.then(function (){
+					Text.make();
+					loadingDiv.innerHTML = "Generating Polyhedron Data";
+					return delay(0);
+				})
+				.then(function (){
+					for(const polyhedron of polyhedronList){
+						switch(polyhedron){
+							case "Prism": {
+									let data = polyhedronData["Prism"];
+									for(let n = data.sides.min; n <= data.sides.max; n++){
+										data[n] = {
+											name: n.toString() + "Prism",
+											dualName: greekify(n, "adjective") + " Bipyramid",
+											buildOptions: ["swap", "prism"],
+											scale: 0.8
+										};
+										prism(n);
+										generatePolyhedronData(data[n]);
+									};
+								}
+								break;
+							case "Antiprism": {
+									let data = polyhedronData["Antiprism"];
+									for(let n = polyhedronData["Prism"].sides.min; n <= polyhedronData["Prism"].sides.max; n++){
+										data[n] = {
+											name: n.toString() + "AntiPrism",
+											dualName: greekify(n, "adjective") + " Trapezohedron",
+											buildOptions: ["swap", "prism"],
+											scale: 0.9
+										};
+										antiprism(n);
+										generatePolyhedronData(data[n]);
+									};
+								}
+								break;
+							default:
+								generatePolyhedronData(polyhedronData[polyhedron]);
+						};
+					};
+					return delay(0);
+				})
+				.then(function (){
+					loadingDiv.innerHTML = 'Building complete!';
+					loadingDiv.style.display = "none";
+					needsRedraw = true;
+				});
+		};
+
+//SETUP THE CANVAS
+		function setCanvas(){
+			webGLDiv = document.getElementById("webGLDiv");
+			divHeight = webGLDiv.clientHeight;
+			divWidth = webGLDiv.clientWidth;
+
+			camera = new THREE.PerspectiveCamera(45, divWidth/ divHeight, 0.1, 1000);
+
+			renderer.setSize(divWidth, divHeight);
+			webGLDiv.appendChild(renderer.domElement);
+			renderer.physicallyCorrectLights = true;
+			renderer.autoClear = false;
+		};
+
+//DRAW THE SCENE ON THE CANVAS
+		function go(){
+			if(state.shadows){
+				renderer.shadowMap.enabled = true;
+			};
+
+			makeBackground();
+			makeScene();
+			lighting();
+
+			setupDemoOptions();
+			makeGUI();
+
+			loadFonts();
+			loadMaps();
+			//buildObjects();
+
+			setTexture(state.currentTexture);
+			setBump(state.currentBump);
+			setEnv(state.currentEnvironment);
+			setBackground(state.currentBackground);
+			setPolyhedronMaterialVisibility();
+
+			mouseControl();
+			document.addEventListener("keydown", onDocumentKeyDown, {passive: true});
+			webGLDiv.addEventListener('click', () => document.activeElement.blur(), {passive: true});
+			fullscreenSetup();
+			autoHideCursor();
+			animate();
+		};
+
+//ON LOAD - MAKE IT SO!!!
+		document.addEventListener("DOMContentLoaded", function(event){
+			loadingDiv = document.getElementById("loading");
+			document.getElementById('fileInput').addEventListener('change', readJSONFile, {passive: true});
+
+			setCanvas();
+			go();
+		}, {passive: true});
+
+//FULLSCREEN
+		function fullscreenSetup(){
+			let fullScreenChangeHandler = function(){
+				if(document.webkitIsFullScreen || document.mozFullScreen || document.msFullscreenElement){
+					state.fullscreen = true;
+					gui.gui.hide();
+				}
+				else{
+					state.fullscreen = false;
+					gui.gui.show();
+				};
+			};
+
+			let goFullscreen = function(){
+				function launchIntoFullscreen(element){
+					if(element.requestFullscreen){
+						element.requestFullscreen();
+					}
+					else if(element.mozRequestFullScreen){
+						element.mozRequestFullScreen();
+					}
+					else if(element.webkitRequestFullscreen){
+						element.webkitRequestFullscreen();
+					}
+					else if(element.msRequestFullscreen){
+						element.msRequestFullscreen();
+					}
+				};
+
+				function exitFullscreen(){
+					if(document.exitFullscreen){
+						document.exitFullscreen();
+					}
+					else if(document.mozCancelFullScreen){
+						document.mozCancelFullScreen();
+					}
+					else if(document.webkitExitFullscreen){
+						document.webkitExitFullscreen();
+					}
+				};
+
+				if(!state.fullscreen){
+					launchIntoFullscreen(document.documentElement);
+				}
+				else{
+					exitFullscreen();
+				};
+			};
+
+			if(document.addEventListener){
+				document.addEventListener('webkitfullscreenchange', fullScreenChangeHandler, false);
+				document.addEventListener('mozfullscreenchange', fullScreenChangeHandler, false);
+				document.addEventListener('fullscreenchange', fullScreenChangeHandler, false);
+				document.addEventListener('MSFullscreenChange', fullScreenChangeHandler, false);
+			};
+
+			webGLDiv.addEventListener("dblclick", goFullscreen, {passive: true});
+		};
+
+//HIDE CURSOR
+		let autoHideCursor = function(){
+			let mouseTimer = null;
+			let cursorVisible = true;
+
+			function disappearCursor(){
+				mouseTimer = null;
+				document.body.style.cursor = "none";
+				cursorVisible = false;
+			};
+
+			document.onmousemove = function(){
+				if(mouseTimer){
+					window.clearTimeout(mouseTimer);
+				};
+
+				if(!cursorVisible){
+					document.body.style.cursor = "default";
+					cursorVisible = true;
+				}
+
+				mouseTimer = window.setTimeout(disappearCursor, 5000);
+			};
+		};
+
+//ON WINDOW RESIZE
+		function resizeScreen(event){
+			divHeight = webGLDiv.clientHeight;
+			divWidth = webGLDiv.clientWidth;
+			camera.aspect = divWidth/ divHeight;
+			camera.updateProjectionMatrix();
+			renderer.setSize(divWidth, divHeight);
+		};
+
+		window.addEventListener("resize", function(event){resizeScreen(event)}, {passive: true});
+
+//DOWNLOAD
+		function download(text, name, type, eltId){
+			let elt = document.getElementById(eltId);
+			let file = new Blob([text], {type: type});
+			elt.href = URL.createObjectURL(file);
+			elt.download = name;
+			elt.click();
+		};
+	</script>
+</head>
+
+<body>
+	<div id="webGLDiv"></div>
+
+	<div id="pickr"></div>
+
+	<div id="loading">
+	</div>
+
+	<a id="saveLink" style="display:none"></a>
+	<input type="file" id="fileInput" accept=".scn" style="display:none"/>
+
+	<div id="jaznetLink" style="position: absolute; bottom: 10px; right: 10px; display: none">
+		<a id="jaznet" href="../index.html">&lt;&lt; Back to Jaznet</a>
+	</div>
+</body>
+</html>

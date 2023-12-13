@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Star Wars Dice Roller</title>
+	<style>
+		html, body{
+			font-family: Arial;
+			font-size: 16pt;
+		}
+		.centreDiv{
+			text-align: center;
+			margin-top: 15px;
+			line-height: 150%;
+			font-size: 16pt;
+		}
+		.pip{
+			font-family: SW;
+			letter-spacing: 2px;
+			font-size: 16pt;
+		}
+		.success{
+			color: #00d000;
+		}
+		.failure{
+			color: #ff0000;
+		}
+		.dark{
+			color: #a00000;
+		}
+		.output{
+			line-height: 175%;
+			margin: 5px auto;
+			width: 33%;
+			min-width: 30%;
+			word-wrap: break-word;
+		}
+		.spacer{
+			min-width: 16%;
+		}
+		#diceBox{
+			display:flex;
+			text-align: center;
+			margin-top: 10px;
+		}
+		#oddsBox{
+			display: flex;
+			text-align: center;
+			margin-top: -10px;
+			max-height: 9em;
+			overflow-y: auto;
+			overflow-x: hidden;
+			scrollbar-gutter: stable both-edges;
+		}
+		#randomBox, #displayBox{
+			max-width: 75%;
+			margin-left: auto;
+			margin-right: auto;
+			word-wrap: break-word;
+			text-align: center;
+		}
+		#compoundOddsBox{
+			line-height: 175%;
+			margin: 20px auto;
+			width: 100%;
+			display: flex;
+			text-align: center;
+			word-wrap: break-word;
+			overflow-y: auto;
+			overflow-x: hidden;
+			scrollbar-gutter: stable both-edges;
+		}
+		#roll{
+		position: absolute;
+			right: 30px;
+		}
+		#reroll{
+			position: absolute;
+			left: 30px;
+		}
+		input{
+			font-size: 14pt;
+		}
+		#outputType{
+			line-height: 200%;
+			margin-top: 15px;
+			font-size: 16pt;
+			border: none;
+		}
+		#outputType:focus{
+			outline: none;
+		}
+		.cross{
+			position: relative;
+			display: inline-block;
+		}
+		.cross::after{
+			content: '';
+			width: 100%;
+			position: absolute;
+			right: 0;
+			top: 50%;
+			border-bottom: 3px solid black;
+			-webkit-transform: skewY(-45deg);
+			transform: skewY(-45deg);
+		}
+		.cross-red::after{
+			border-bottom: 3px solid red;
+		}
+		.cross-green::after{
+			border-bottom: 3px solid green;
+		}
+		.pm{
+			margin: auto;
+			padding: 8px 5px 0px 5px;
+			text-align: bottom;
+			border: none;
+			display: inline;
+		}
+		.pmButton{
+			margin: 0px;
+			padding: 0px;
+			height: 24px; 
+			width: 24px;
+			background-color: #000000;
+			box-shadow: 0px 0px 0.25px #888888;
+		}
+		.pmButton:active{
+			box-shadow: 1.5px 1.5px 0.5px #888888;
+		}
+		.pmNumber{
+			margin: 0px;
+			padding: 0px;
+			position: relative;
+			bottom: 0.175em;
+			width: 1.5em;
+			text-align: center;
+			display: inline-block
+		}
+		.pmNumber{
+			margin: 0px;
+			padding: 0px;
+			position: relative;
+			bottom: 0.35em;
+			width: 1.5em;
+			text-align: center;
+			display: inline-block;
+			color: inherit;
+			background-color: inherit;
+			border: none;
+		}
+		.pmNumber::-webkit-outer-spin-button, .pmNumber::-webkit-inner-spin-button{
+			-webkit-appearance: none;
+			margin: 0;
+		}
+		.dice{
+			margin: 0px 0px 5px 0px;
+			padding: 0px;
+			height: 75px;
+			width: 75px;
+		}
+		.unselectable {
+			-moz-user-select: -moz-none;
+			-khtml-user-select: none;
+			-webkit-user-select: none;
+			-o-user-select: none;
+			user-select: none;
+		}
+		::-webkit-scrollbar{
+  		width: 10px;
+		}
+		::-webkit-scrollbar:hover{
+  		width: 10px;
+		}
+		*:hover::-webkit-scrollbar{
+			width: 10px;
+		}
+		::-webkit-scrollbar-track{
+			box-shadow: inset 0 0 5px grey;
+			border-radius: 10px;
+		}
+		::-webkit-scrollbar-thumb{
+			background: #470077;
+			border-radius: 10px;
+		}
+		::-webkit-scrollbar-thumb:hover{
+			background: #b30000;
+		}
+		@font-face{
+			font-family: SW;
+			src: url("../Fonts/SW.otf") format("opentype");
+		}
+	</style>
+
+	<link rel="stylesheet" type="text/css" href="../CSS/DarkTheme.css">
+	<link rel="shortcut icon" href="../favicon.ico"><!--Generates website's favicon-->
+
+	<script type="text/javascript" src="./SWFaces.js"></script>
+
+	<script>
+		//global variables
+		const rounding = 0;
+		const emptyRoll = [{roll: "", weight: 1}];
+
+		let diceBox = {};
+		let lastRoll = {};
+		let diceRolls = emptyRoll;
+		let forceRolls = emptyRoll;
+
+		let lastAdded = "num-boost";
+
+		let spendForce = false;
+
+		let errorChecking = false;
+
+		//dicebag
+		let dice = {
+			boost: {
+				size: 6,
+				rolls: [
+					{roll: "", weight: 2},
+					{roll: "s", weight: 1},
+					{roll: "as", weight: 1},
+					{roll: "a", weight: 1},
+					{roll: "aa", weight: 1}
+				]
+			},
+
+			setback: {
+				size: 6,
+				rolls: [
+					{roll: "", weight: 2},
+					{roll: "f", weight: 2},
+					{roll: "t", weight: 2}
+				]
+			},
+
+			ability: {
+				size: 8,
+				rolls: [
+					{roll: "", weight: 1},
+					{roll: "s", weight: 2},
+					{roll: "ss", weight: 1},
+					{roll: "as", weight: 1},
+					{roll: "a", weight: 2},
+					{roll: "aa", weight: 1}
+				]
+			},
+
+			difficulty: {
+				size: 8,
+				rolls: [
+					{roll: "", weight: 1},
+					{roll: "f", weight: 1},
+					{roll: "ff", weight: 1},
+					{roll: "t", weight: 3},
+					{roll: "tt", weight: 1},
+					{roll: "ft", weight: 1}
+				]
+			},
+
+			proficiency: {
+				size: 12,
+				rolls: [
+					{roll: "", weight: 1},
+					{roll: "s", weight: 2},
+					{roll: "as", weight: 3},
+					{roll: "a", weight: 1},
+					{roll: "aa", weight: 2},
+					{roll: "ss", weight: 2},
+					{roll: "S", weight: 1}
+				]
+			},
+
+			challenge: {
+				size: 12,
+				rolls: [
+					{roll: "", weight: 1},
+					{roll: "f", weight: 2},
+					{roll: "ff", weight: 2},
+					{roll: "t", weight: 2},
+					{roll: "tt", weight: 2},
+					{roll: "ft", weight: 2},
+					{roll: "F", weight: 1}
+				]
+			},
+
+			force: {
+				size: 12,
+				rolls: [
+					{roll: "d", weight: 6},
+					{roll: "dd", weight: 1},
+					{roll: "l", weight: 2},
+					{roll: "ll", weight: 3}
+				]
+			},
+		};
+
+		const diceOrder = ["proficiency", "ability", "boost", "challenge", "difficulty", "setback", "force"];
+		//= Object.keys(dice);
+
+		//converts my pip set to font set with given strikethrough color
+		function pipFont(pip, color){
+			switch(pip){
+				case 'S':
+					return 'x';
+					break;
+				case 'F':
+					return 'y';
+					break;
+				case 'd':
+					return "<span class='dark'>z</span>";
+					break;
+				case 'l':
+					return 'z';
+					break;
+				case 'X':
+					return "<span class='cross cross-" + color + "'>x</span>";
+					break;
+				case 'Y':
+					return "<span class='cross cross-" + color + "'>y</span>";
+					break;
+				default:
+					return pip;
+			};
+		};
+
+		//restrict a string to given character set
+		function restrict(string, charSet){
+			let reg = new RegExp("(["+charSet+"])|[\\S\\s]", "g");
+			return string.replace(reg, "$1");
+		};
+
+		//takes a dice roll string and counts the number of pips with given value
+		function numResult(roll, value){
+			return restrict(roll, value).length;
+		};
+
+		//cancel success/failure and advantage/threat for faster calculations
+		function augmentRoll(roll, removeDark, ignoreTriumphs){
+			let augmentedRoll;
+			let augments = {};
+
+			//turn triumphs into successes and despairs into failures
+			if(ignoreTriumphs){
+				roll = roll.toLowerCase();
+			};
+
+			//remove dark side if necessary
+			if(removeDark){
+				augmentedRoll = roll.replace(/d/g, "").split("").sort();
+			}
+			else{
+				augmentedRoll = roll.split("").sort();
+			};
+
+			for(const c of "atsf"){
+				augments[c] = {first: augmentedRoll.indexOf(c), last: augmentedRoll.lastIndexOf(c)};
+
+				if(augments[c].first === -1){
+					augments[c].n = 0;
+				}
+				else{
+					augments[c].n = augments[c].last - augments[c].first + 1;
+				};
+			};
+
+			for(let i = 0; i < Math.min(augments["a"].n, augments["t"].n); i++){
+				augmentedRoll[augments["a"].first + i] = "";
+				augmentedRoll[augments["t"].first + i] = "";
+			};
+
+			for(let i = 0; i < Math.min(augments["s"].n, augments["f"].n); i++){
+				augmentedRoll[augments["s"].first + i] = "";
+				augmentedRoll[augments["f"].first + i] = "";
+			};
+
+			return augmentedRoll.join("");
+		};
+
+		function rollDice(dType, previousResults, augment){
+			let diceType = dice[dType];
+			let results = previousResults || emptyRoll;
+			let numDice = diceBox[dType];
+
+			//roll dice and generate every weighted permutation
+			for(let i = 0; i < numDice; i++){
+				let tempArray = [];
+				for(const result of results){
+					for(const roll of diceType.rolls){
+						let rollResult = roll.roll;
+
+						tempArray.push({roll: result.roll + rollResult, weight: result.weight * roll.weight / diceType.size});
+					};
+				};
+				results = tempArray;
+
+				//sort augmented results or raw results if necessary
+				for(const result of results){
+					if(augment){
+						result.roll = augmentRoll(result.roll, true, true);
+					}
+					else{
+						result.roll = result.roll.split("").sort().join("");
+					};
+				};
+
+				results.sort(function(a,b){
+					return a.roll.localeCompare(b.roll);
+				});
+
+				//remove any double ups
+				tempArray = [];
+				for(let i = 0; i < results.length; i++){
+					for(let j = results.length - 1; j >= i; j--){
+						if(results[j].roll === results[i].roll){
+							let totalWeight = 0
+							for(let k = i; k <= j; k++){
+								totalWeight += results[k].weight;
+							};
+							tempArray.push({roll: results[i].roll, weight: totalWeight});
+							i = j;
+							break;
+						};
+					};
+				};
+				results = tempArray;
+			};
+
+			return results;
+		};
+
+		//calculates raw probabilities of at least n pips of given value
+		function probabilities(resultArray, value){
+			let atLeast = {};
+
+			for(const result of resultArray){
+				for(let i = 0; i <= numResult(result.roll, value); i++){
+					let key = i.toString();
+
+					if(atLeast[key] === undefined){
+						atLeast[key] = result.weight;
+					}
+					else{
+						atLeast[key] += result.weight;
+					};
+				};
+			};
+
+/*			let totals = {};
+
+			for(const result of resultArray){
+				let key = numResult(result.roll, value).toString();
+
+				if(totals[key] === undefined){
+					totals[key] = result.weight;
+				}
+				else{
+					totals[key] += result.weight;
+				};
+			};*/
+
+			return atLeast;
+		};
+
+		//calculates probabilities of at least i value1 and j value2
+		function compoundProbabilities(resultArray, value1, value2){
+			let atLeast = {};
+
+			for(const result of resultArray){
+				for(let i = 0; i <= numResult(result.roll, value1); i++){
+					for(let j = 0; j <= numResult(result.roll, value2); j++){
+						let key = i.toString() + '|' + j.toString();
+
+						if(atLeast[key] === undefined){
+							atLeast[key] = result.weight;
+						}
+						else{
+							atLeast[key] += result.weight;
+						};
+					};
+				};
+			};
+
+			return atLeast;
+		};
+
+		//calculate probabilities as a percentage string
+		function percentage(value){
+			let decimalPlaces = Math.pow(10, rounding);
+
+			//fix values less than 1% and >99%
+			if(value < 0.01){
+				return "< 1%";
+			}
+			else if(value > 0.99){
+				return "> 99%";
+			}
+			else{
+				return (Math.round(decimalPlaces * 100 * value) / decimalPlaces).toString() + '%';
+			}
+		};
+
+		//generates a span with n pips and given strikethrough color
+		function printPips(pip, n, color){
+			let output = "<span class='pip'>";
+
+			for(let i = 0; i < n; i++){
+				output += pipFont(pip, color);
+			};
+
+			output += "</span>";
+
+			return output;
+		};
+
+		//output probabilites of at least n pips
+		function outputResult(pipType, spend){
+			let pipSymbol = pipType.charAt(0);
+			let rollArray;
+			let outBox;
+
+			switch(spend){
+				case true:
+					rollArray = spendForcePips(pipSymbol);
+					outBox = document.getElementById(pipType + "SpendBox");
+					break;
+				default:
+					switch(pipType){
+						case "light":
+							rollArray = forceRolls;
+							break;
+						default:
+							rollArray = diceRolls;
+					};
+					outBox = document.getElementById(pipType + "Box");
+			};
+
+			//output results
+			let atLeast = probabilities(rollArray, pipSymbol);
+			let output = "";
+
+			for(const [key, value] of Object.entries(atLeast)){
+				let i = Number(key);
+
+				if(i === 0){
+					//do nothing
+				}
+				else if(i < 6){
+					output += printPips(pipSymbol, i) + ": " + percentage(value) + "<br>";
+				}
+				else{
+					output += i.toString() + " &times; " + printPips(pipSymbol, 1) + ": " + percentage(value) + "<br>";
+				};
+
+				//ignore further values less than 1%
+				if(value < 0.01){
+					break;
+				};
+			};
+
+			if(output === ""){
+				output = "No " + printPips(pipSymbol, 1) + " generated!";
+			};
+
+			outBox.innerHTML = output;
+		};
+
+		//output compound probabilities for up to 3 of light, success and advantage pips
+		function outputCompound(){
+			let compoundAtLeast = compoundProbabilities(diceRolls, 's', 'a');
+			let forceAtLeast = probabilities(forceRolls, 'l');
+			let isForce = (diceBox["force"] !== 0);
+
+			//output results
+			let output = "";
+
+			//set breakpoints
+			let minA = 1;
+			let maxS = 4;
+			let maxA = 4;
+			let maxF = 4;
+
+			if(isForce){
+				minA = 0;
+			};
+
+			for(let i = 1; i < maxS; i++){
+				for(let j = minA; j < maxA; j++){
+					let value = compoundAtLeast[i.toString() + '|' + j.toString()];
+
+					if(isForce){
+						for(let k = 0; k < maxF; k++){
+							let totalValue = value*forceAtLeast[k.toString()];
+
+							if(!isNaN(totalValue) && !(i === 1 && k === 0)){
+								output += printPips('s', i) + printPips('a', j) + printPips('l', k) + ": " + percentage(totalValue) + "<br>";
+							};
+
+							//ignore further values less than 1%
+							if(totalValue < 0.01){
+								maxF = k;
+								break;
+							};
+						};
+					}
+					else if(!isNaN(value)){
+						output += printPips('s', i) + printPips('a', j) + ": " + percentage(value) + "<br>";
+
+						//ignore further values less than 1%
+						if(value < 0.01){
+							maxA = j;
+							break;
+						};
+					};
+				};
+			};
+
+			document.getElementById("compoundBox").innerHTML = output;
+			setBoxHeights();
+		};
+
+		//output probabilities of getting triumphs
+		function outputTriumphs(){
+			let n = diceBox["proficiency"];
+			let results = {total: {}, atLeast: {}};
+			let output = "";
+
+			//functions for working out binomial probabilities
+			function factorial(n){
+				if(n <= 0){
+					return 1;
+				}
+				else{
+					return n*factorial(n-1);
+				}
+			};
+
+			function binomialCoefficient(n, k){
+				if(n < k){
+					return 0;
+				}
+				else{
+					return factorial(n) / factorial(k) / factorial(n-k);
+				}
+			};
+
+			for(let i = 1; i <= n; i++){
+				results.total[i.toString()] = binomialCoefficient(n, i) * Math.pow(11, n - i) / Math.pow(12, n);
+			};
+
+			for(let i = 1; i <= n; i++){
+				let key = i.toString();
+				results.atLeast[key] = 0;
+
+				for(let j = i; j <= n; j++){
+					results.atLeast[key] += binomialCoefficient(n, j) * Math.pow(11, n - j) / Math.pow(12, n);
+				};
+
+				let value = results.atLeast[i.toString()];
+
+				output += printPips('S', i) + ": " + percentage(value) + "<br>"
+
+				//ignore further values less than 1%
+				if(value < 0.01){
+					break;
+				};
+			};
+
+			document.getElementById("triumphBox").innerHTML = output;
+		};
+
+		//construct all possible rolls with given dice set
+		function rollAll(){
+			diceRolls = emptyRoll;
+
+			for(const key of Object.keys(dice)){
+				switch(key){
+					case "force":
+						forceRolls = rollDice(key, emptyRoll, true);
+						break;
+					default:
+						diceRolls = rollDice(key, diceRolls, true);
+				};
+			};
+
+			outputResult("success", false);
+			outputResult("advantage", false);
+			outputResult("light", false);
+			outputResult("success", true);
+			outputResult("advantage", true);
+			outputTriumphs();
+			outputCompound();
+		};
+
+		//generate a random roll from a given dice
+		function randomRoll(dType){
+			let diceType = dice[dType];
+			let rng = Math.ceil(Math.random() * diceType.size);
+			let weightSum = 0;
+
+			for(const roll of Object.values(diceType.rolls)){
+				weightSum += roll.weight;
+
+				if(rng <= weightSum){
+					return roll.roll;
+				};
+			};
+		};
+
+		//returns a string with number of each pip or wash/blank if none
+		function outputPips(results, pips, colorPip, wash){
+			let output = "";
+			let strikethroughColor = "red";
+
+			if(colorPip !== undefined){
+				output += "<span class=";
+
+				if(colorPip > 0){
+					output += "'success'>"
+				}
+				else{
+					strikethroughColor = "green";
+					output += "'failure'>"
+				};
+			};
+
+			for(const pip of pips){
+				if(results[pip] > 0){
+					output += printPips(pip, results[pip], strikethroughColor);
+					wash = false;
+				};
+			};
+
+			if(wash){
+				output += "No " + printPips(pips.charAt(0).toLowerCase(), 1) + " generated!";
+			};
+
+			if(colorPip !== undefined){
+				output += "</span>";
+			};
+
+			return output;
+		};
+
+		//output the result of a single roll string
+		function outputRoll(roll, strikethrough){
+			let randomBox = document.getElementById("randomBox");
+			let results = {};
+			let output = "";
+
+			if(errorChecking){
+				console.log(roll);
+			};
+
+			if(strikethrough){
+				//count number of triumphs and despairs
+				for(const pip of "SF"){
+					results[pip] = numResult(roll, pip);
+				};
+
+				roll = augmentRoll(roll.replace(/[SF]/g, ""), false, false);
+
+				//count number of each remaining pip
+				for(const pip of "atsfld"){
+					results[pip] = numResult(roll, pip);
+				};
+
+				let totalSuccesses = results['s'] + results['S'] - results['f'] - results['F'];
+
+				if(totalSuccesses >= results['S']){
+					results['s'] = totalSuccesses - results['S'];
+					results['f'] = 0;
+					//strikethrough any cancelled despairs
+					results['Y'] = results['F'];
+					results['F'] = 0;
+				}
+				else if(totalSuccesses < results['S'] && totalSuccesses >= 0){
+					//strikethrough any cancelled triumphs
+					results['X'] = results['S'] - totalSuccesses;
+					results['S'] = totalSuccesses;
+					results['s'] = 0;
+					results['f'] = 0;
+					//strikethrough any cancelled despairs
+					results['Y'] = results['F'];
+					results['F'] = 0;
+				}
+				else if(-1*totalSuccesses >= results['F']){
+					results['f'] = -1*totalSuccesses - results['F'];
+					results['s'] = 0;
+					//strikethrough any cancelled triumphs
+					results['X'] = results['S'];
+					results['S'] = 0;
+				}
+				else if(-1*totalSuccesses < results['F']){
+					//strikethrough any cancelled despairs
+					results['Y'] = results['F'] + totalSuccesses;
+					results['F'] = -1*totalSuccesses;
+					results['s'] = 0;
+					results['f'] = 0;
+					//strikethrough any cancelled triumphs
+					results['X'] = results['S'];
+					results['S'] = 0;
+				};
+
+				output = outputPips(results, "SXsFYf", totalSuccesses, false) + outputPips(results, "at", results['a'], false) + outputPips(results, "ld", undefined, false);
+			}
+			else{
+				//count number of triumphs and despairs
+				for(const pip of "SF"){
+					results[pip] = numResult(roll, pip);
+				};
+
+				//convert triumps to successes and despairs to failures
+				roll = augmentRoll(roll.toLowerCase(), false, false);
+
+				//count number of each pip
+				for(const pip of "atsfld"){
+					results[pip] = numResult(roll, pip);
+				};
+
+				if(errorChecking){
+					console.log(results);
+					console.log(lastRoll);
+				};
+
+				let spacer = "<span style='padding-left: 1em'></span>";
+
+				if(results['S'] !== 0 || results['F'] !== 0){
+					output += outputPips(results, "S", 1, false) + outputPips(results, "F", -1, false);
+				};
+
+				if(results['s'] !== 0 || results['f'] !== 0){
+					if(output !== ""){
+						output += spacer;
+					};
+					output += outputPips(results, "sf", results['s'], false);
+				};
+
+				if(results['a'] !== 0 || results['t'] !== 0){
+					if(output !== ""){
+						output += spacer;
+					};
+					output += outputPips(results, "at", results['a'], false);
+				};
+
+				if(results['l'] !== 0 || results['d'] !== 0){
+					if(output !== ""){
+						output += spacer;
+					};
+					output += outputPips(results, "ld", undefined, false);
+				};
+			};
+
+			//check if wash
+			let wash = true;
+			for(const value of Object.values(results)){
+				if(value !== 0){
+					wash = false
+					break;
+				};
+			};
+
+			//output
+			if(wash){
+				randomBox.innerHTML = "<span class='failure'>Wash!</span>"
+			}
+			else{
+				randomBox.innerHTML = output;
+			};
+		};
+
+		function showDice(roll){
+			let output = "";
+
+			for(const key of diceOrder){
+				let die = faces[key];
+				let value = roll[key];
+
+				for(const result of value){
+					output += "<svg " + die.svg + "/>" + die.faces[result] + "</svg>";
+				};
+			};
+
+			document.getElementById("displayBox").innerHTML = output;
+
+			//tidy up a bit
+			positionReroll();
+			setBoxHeights();
+		};
+
+		function setupReroll(){
+			for(const key of Object.keys(dice)){
+				lastRoll[key] = [];
+			};
+		};
+
+		function randomise(){
+			let rollString = "";
+
+			setupReroll();
+
+			//roll each die and record the result
+			for(const [key, value] of Object.entries(diceBox)){
+				for(let i = 0; i < value; i++){
+					let result = randomRoll(key);
+					rollString += result;
+					lastRoll[key].push(result);
+				};
+			};
+
+			//output the result
+			outputRoll(rollString, false);
+			showDice(lastRoll);
+		};
+
+		function reroll(){
+			let rollString = "";
+
+			for(const [key, value] of Object.entries(diceBox)){
+				//if dice have been removed, then remove them
+				while(lastRoll[key].length > value){
+					lastRoll[key].pop();
+				};
+
+				//if dice have been added, then roll them
+				while(lastRoll[key].length < value){
+					lastRoll[key].push(randomRoll(key));
+				};
+			};
+
+			//build the result into a string
+			for(const [key, value] of Object.entries(lastRoll)){
+				for(const result of value){
+					rollString += result;
+				};
+			};
+
+			//output the result
+			outputRoll(rollString, false);
+			showDice(lastRoll);
+		};
+
+		function go(){
+			randomise();
+			rollAll();
+		};
+
+		//spend force pips odds
+		function spendForcePips(pip){
+			let spentRoll = [];
+
+			for(const roll of diceRolls){
+				for(const forceRoll of forceRolls){
+					let newRoll = augmentRoll(roll.roll + forceRoll.roll.replace(/l/g, pip), true, true);
+
+					spentRoll.push({roll: newRoll, weight: roll.weight * forceRoll.weight});
+				};
+			};
+
+			return spentRoll;
+		};
+
+		//checkbox
+		function checkSpendForce(pip, checked){
+			let lightBox = document.getElementById("lightBox");
+			let spendLaSCheck = document.getElementById("spendLaS");
+			let spendLaACheck = document.getElementById("spendLaA");
+			let successSpendBox = document.getElementById("successSpendBox");
+			let advantageSpendBox = document.getElementById("advantageSpendBox");
+			let successBox = document.getElementById("successBox");
+			let advantageBox = document.getElementById("advantageBox");
+
+			successBox.style.display = "block";
+			advantageBox.style.display = "block";
+			successSpendBox.style.display = "none";
+			advantageSpendBox.style.display = "none";
+
+			switch(checked){
+				case true:
+					spendForce = pip;
+					lightBox.style["color"] = "grey";
+
+					switch(pip){
+						case "success":
+							spendLaACheck.checked = false;
+							successBox.style.display = "none";
+							successSpendBox.style.display = "block";
+							break;
+						case "advantage":
+							spendLaSCheck.checked = false;
+							advantageBox.style.display = "none";
+							advantageSpendBox.style.display = "block";
+							break;
+					};
+					break;
+				default:
+					spendForce = false;
+					lightBox.style["color"] = "inherit";
+			};
+
+			setBoxHeights();
+		};
+
+		//update number "inputs"
+		function updateNumber(divId, pm){
+			let div = document.getElementById(divId);
+			let diceName = divId.substring(4);
+
+			let value = div.value//Number(div.getAttribute("value"));
+			let minValue = Number(div.getAttribute("min"));
+			let maxValue = Number(div.getAttribute("max"));
+			let oldValue = diceBox[diceName];//value;
+
+			switch(pm){
+				case "minus":
+					if(value > minValue){
+						(value--).toString();
+					};
+					break;
+				case "plus":
+					if(value < maxValue){
+						(value++).toString();
+						lastAdded = divId;
+					};
+					break;
+				case "zero":
+					value = 0;
+			};
+
+			//div.setAttribute("value", value);
+			div.value = Number(value);
+			//div.innerHTML = value;
+			diceBox[diceName] = value;
+
+			//if value changed reroll probabilities
+			if(value !== oldValue){
+				//go();
+				//randomise();
+				rollAll();
+			};
+		};
+
+		//initialise number "inputs" and diceBox values
+		function initialiseNumbers(){
+			for(const key of Object.keys(dice)){
+				let div = document.getElementById("num-" + key);
+
+				diceBox[key] = 0;
+
+				div.setAttribute("value",'0');
+				div.setAttribute("min",'0');
+				div.setAttribute("autocomplete","off");
+
+				switch(key){
+					case "force":
+						div.setAttribute("max",'10');
+						break;
+					default:
+						div.setAttribute("max",'10');
+				};
+			};
+		};
+
+		//set output box div heights
+		function setBoxHeights(){
+			let compoundBox = document.getElementById("compoundOddsBox");
+			let top = compoundBox.getBoundingClientRect().top
+
+			compoundBox.style.height = (window.innerHeight - top - 40).toString() + "px";
+
+			document.getElementById("lasBox").style.left = document.getElementById("dummyBox").getBoundingClientRect().left.toString() + "px";
+		};
+
+		//position reroll button inline with dice
+		function positionReroll(){
+			let rollButton = document.getElementById("roll");
+			let rerollButton = document.getElementById("reroll");
+			let parentHeight = rollButton.parentElement.clientHeight;
+
+			rollButton.style.right = (window.innerWidth - document.getElementById("force").getBoundingClientRect().right - 2).toString() + "px";
+
+			rerollButton.style.left = (document.getElementById("proficiency").getBoundingClientRect().left - 3).toString() + "px";
+
+			rollButton.style.transform = "translateY(-" + 0.5*(parentHeight + rollButton.clientHeight) + "px)";
+			rerollButton.style.transform = "translateY(-" + 0.5*(parentHeight + rerollButton.clientHeight) + "px)";
+		};
+
+		//auto set up dice
+		function makeDice(){
+			let output = "";
+
+			for(const key of diceOrder){
+				let firstLetter = key.charAt(0).toUpperCase();
+
+				output += "<div class='pm'><img src='../Images/SWDice/"
+					+ firstLetter + key.slice(1) + "Dice.png' alt='" + firstLetter + "' class='dice' id='" + key + "'><br>"
+					+ "<input type='image' class='pmButton' src='../Images/minus.png' onClick='updateNumber(&quot;num-"
+					+ key + "&quot;, &quot;minus&quot;)'/>"
+					//+ "<span id='num-" + key + "' class='pmNumber'>0</span>"
+					+ "<input type='number' id='num-" + key + "' class='pmNumber' onChange='updateNumber(&quot;num-"
+					+ key + "&quot;)'>"
+					+ "<input type='image' class='pmButton' src='../Images/plus.png' onClick='updateNumber(&quot;num-"
+					+ key + "&quot;, &quot;plus&quot;)'/></div>"
+			};
+
+			document.getElementById("diceBox").innerHTML = output;
+		};
+
+		//keyboard controls
+		function keyboardControls(event){
+			let keyCode = event.keyCode;
+
+			switch(keyCode){
+				case 189:
+					//minus
+					updateNumber(lastAdded, "minus");
+				case 13:
+					//enter
+					go();
+					break
+				case 46:
+					//delete
+					for(const d of Object.keys(dice)){
+						updateNumber("num-" + d, "zero");
+					};
+					randomise();
+					//go();
+					break;
+				case 90:
+					//z for console (c is taken)
+					console.log(document.getElementById("dummyBox"))
+					break;
+				default:
+					//check if key matches dice name
+					for(const d of Object.keys(dice)){
+						if(keyCode === d.toUpperCase().charCodeAt(0)){
+							updateNumber("num-" + d, "plus");
+						};
+					};
+			};
+		};
+
+		//on resize - doesn't work but I don't really care
+		function resizeWindow(){
+			positionReroll();
+			setBoxHeights();
+		};
+
+		//run on document load
+		document.addEventListener("DOMContentLoaded", function(event){
+			makeDice();
+			positionReroll();
+			setupReroll();
+			document.addEventListener("keydown", keyboardControls, false);
+			window.addEventListener("resize", resizeWindow, false);
+			initialiseNumbers();
+			go();
+		});
+	</script>
+</head>
+
+<body>
+	<div id="diceBox"></div>
+
+	<div class="centreDiv">
+		<div style="display: block; min-height: 33.33px; width: 100%">
+			<div id="displayBox"></div>
+			<div id="randomBox"></div>
+			<button id="reroll" class="myButton" type="button" onClick="reroll()">Modify!</button>
+			<button id="roll" class="myButton" type="button" onClick="randomise()">Roll!</button>
+		</div>
+
+		<div class="centreDiv" style="margin-top: 12px">
+			<span style="text-decoration: underline;">Odds</span>
+			<div id="oddsBox">
+				<div class="output" id="successBox"></div>
+				<div class="output" id="successSpendBox" style="display: none"></div>
+				<div class="output" id="advantageBox"></div>
+				<div class="output" id="advantageSpendBox" style="display: none"></div>
+				<div class="output" id="lightBox"></div>
+			</div>
+
+			<div id="compoundOddsBox">
+				<!--<div class="spacer"></div>-->
+				<div class="output" id="triumphBox"></div>
+				<div class="output" id="compoundBox"></div>	
+				<div class="output" id="dummyBox"></div>
+				<div class="output" id="lasBox" style="position: absolute">
+					<input type="checkbox" id="spendLaS" onclick="checkSpendForce('success', this.checked)"/>
+					<label for="spendLaS">Spend <span class="pip">z</span> as <span class="pip">s</span></label><br>
+					<input type="checkbox" id="spendLaA" onclick="checkSpendForce('advantage', this.checked)"/>
+					<label for="spendLaA">Spend <span class="pip">z</span> as <span class="pip">a</span></label>
+				</div>
+				<!--<div class="spacer"></div>-->
+			</div>
+		</div>
+	</div>
+
+	<div id="jaznet" style="position: fixed; bottom: 10px; right: 10px">
+		<a href="../index.html">&lt;&lt; Back to Jaznet</a>
+	</div>
+</body>
+</html>
