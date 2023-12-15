@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Random Maths</title>
+	<style>
+		.flex-container{
+			display: flex;
+			justify-content: center;
+		}
+		.pickr{
+			visibility: hidden;
+		}
+		.pcr-button{
+			position: absolute !important;
+			right: 25px;
+			bottom: 50px;
+		}
+		.pcr-app{
+			width: 196px !important
+		}
+		.pcr-close-button{
+			position: absolute;
+			right: 2px;
+			top: 2px;
+			font-family: verdana;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 1.2ex !important;
+			padding: 0.1em 0.05em 0.4em;
+			border-radius: 0px;
+			margin: 0 !important;
+			color: #75797e;
+			background-color: #f1f3f4;
+		}
+		body{
+			margin: 0;
+			height: 100%;
+			overflow: hidden
+		}
+	</style>
+
+	<script type="text/javascript" src="../node_modules/polynomial/polynomial.min.js"></script>
+	<link rel="stylesheet" href="../node_modules/@simonwep/pickr/dist/themes/classic.min.css">
+	<link rel="stylesheet" href="../node_modules/@simonwep/pickr/dist/themes/monolith.min.css">
+	<link rel="stylesheet" href="../node_modules/@simonwep/pickr/dist/themes/nano.min.css">
+
+	<script type="text/javascript" src="../JS/pickr.js"></script>
+
+	<script>
+		let pickr;
+
+		function integerRoot(n, lower, upper){
+			lower = lower || 0;
+			upper = upper || n;
+		
+			let m = Math.floor((lower + upper) / 2);
+			let mSquared = m*m;
+
+			//console.log(lower, upper, m)
+
+			if(mSquared <= n && (m+1)*(m+1) > n){
+				return m;
+			}
+			else if(mSquared < n){
+				return integerRoot(n, m+1, upper);
+			}
+			else if(mSquared > n){
+				return integerRoot(n, lower, m-1);
+			};
+		};
+
+		function factorial(n){
+			if(n<=0){
+				return 1;
+			}
+			else{
+				return n*factorial(n-1);
+			}
+		};
+
+		function binomialCoefficient(n,k){
+			if(n<k){
+				return 0;
+			}
+			else{
+				return factorial(n) / factorial(k) / factorial(n-k);
+			}
+		};
+
+		function catalan(n){
+			if(n==0){
+				return 1;
+			}
+			else{
+				var sum = 0;
+				for(var k = 0; k < n; k++){
+					sum+= catalan(k)*catalan(n-k-1);
+				};
+				return sum;
+			}
+		};
+
+		function weirdTree(n){
+			return Math.pow(2, n)*catalan(n-1)
+		};
+
+		function iot(n, c){//increasing ordered trees with n+1 vertices and c colours of leaves
+			var colors = 1
+			if(Number.isInteger(c) && c > 1){
+				colors = c;
+			};
+
+			if(n==0){
+				return 1;
+			}
+			else{
+				var sum = 0;
+				for(var k = 0; k < n; k++){
+					sum += binomialCoefficient(n,k)*iot(k, colors)*iot(n-k-1, colors);
+				};
+				return sum + (colors-1)*n*iot(n-1, colors);
+			}
+		};
+
+		function trees(n, c){//trees with n+1 vertices and c colours of leaves
+			var colors = 1
+			if(Number.isInteger(c) && c>1){
+				colors = c
+			};
+
+			if(n==0){
+				return 1;
+			}
+			else{
+				var sum = 0;
+				for(var k = 0; k < n; k++){
+					sum += trees(k, colors)*trees(n-k-1, colors);
+				};
+				return sum + (colors-1)*trees(n-1, colors);
+			}
+		};
+
+		function motzkin(n){
+			if(n==0){
+				return 1;
+			}
+			else{
+				var sum = 0;
+				for(var k = 0; k < n-1; k++){
+					sum += motzkin(k)*motzkin(n-k-2);
+				};
+				return sum + motzkin(n-1);
+			}
+		};
+
+		function bigSchroder(n){
+			if(n==0){
+				return 1;
+			}
+			else{
+				var sum = 0;
+				for(var k = 0; k < n; k++){
+					sum += bigSchroder(k)*bigSchroder(n-k-1);
+				};
+				return sum + bigSchroder(n-1);
+			}
+		};
+
+		function joyce(n){
+			if(n==0){
+				return 1;
+			}
+			else if (n==1){
+				return 0;
+			}
+			else{
+				var sum = 0;
+				for(var k = 0; k < n-1; k++){
+					sum += binomialCoefficient(n,k+1)*joyce(k)*joyce(n-k-2);
+				};
+				return sum;
+			};
+		};
+
+		function ternary(n){
+			if(n==0){
+				return 1;
+			}
+			else{
+				var sum = 0;
+				for(var k = 0; k < n; k++){
+					for(var m = 0; m < n-k; m++){
+						sum += ternary(k)*ternary(m)*ternary(n-k-m-1);
+					};
+				};
+				return sum;
+			};
+		};
+
+		function fourary(n){
+			if(n==0){
+				return 1;
+			}
+			else{
+				var sum = 0;
+				for(var k = 0; k < n; k++){
+					for(var m = 0; m < n-k; m++){
+						for(var l = 0; l < n-k-m; l++){
+							sum += fourary(k)*fourary(m)*fourary(l)*fourary(n-k-m-l-1);
+						};
+					};
+				};
+				return sum;
+			};
+		};
+
+		function fussCatalan(n,m){
+			return Math.round(binomialCoefficient(m*n,n)/ ((m-1)*n+1));
+		};
+
+		function seq(n){
+			if(n==0){
+				return 1;
+			}
+			//else if (n==1){
+				//return 0;
+			//}
+			else{
+				var sum = 0;
+				for(var k = 1; k <= n; k++){
+					sum += binomialCoefficient(n,k)*seq(k-1)*seq(n-k);
+				};
+				return sum + n*seq(n-1);
+			};
+		};
+
+		function recur(n){
+			if(n==0){
+				return 2;
+			}
+			else if(n==1){
+				return 1;
+			}
+			else{
+				return recur(n-1) + recur(n-2);
+			};
+		};
+
+		function RealFunctionX(defn){
+			this.definition = defn;
+			this.evaluate = function(x){
+				return eval(this.definition)
+			};
+			this.leftRiemannSum = function(minX, maxX, partitions){
+				var sum = 0;
+				var deltaX = (maxX-minX)/ partitions;
+
+				for(var i=0; i<partitions; i++){
+					sum += this.evaluate(minX + i*deltaX);
+				};
+				sum = sum*deltaX;
+
+				return sum;
+			};
+		};
+
+		var gaussian = new RealFunctionX('Math.exp(-1*Math.pow(x,2))');
+
+		function leftRiemannSum(){
+			var sum =0;
+			var partitions = 100000;
+			var minX = 0;
+			var maxX = 1;
+			var deltaX = (maxX-minX)/ partitions;
+			for(var i=0; i<partitions; i++){
+				let xVal = minX + i*deltaX;
+				//sum += Math.exp(-1*Math.pow(minX + i*deltaX, 2));
+				sum += Math.pow(4*Math.pow(xVal, 2) -4*xVal +2, 0.5);
+			};
+			sum = sum*deltaX;
+
+			return sum;
+		};
+
+		function rightRiemannSum(){
+			var sum =0;
+			var partitions = 100000;
+			var minX = 0;
+			var maxX = 1;
+			var deltaX = (maxX-minX)/ partitions;
+			for(var i=0; i<partitions; i++){
+				sum += Math.exp(-1*Math.pow(minX +(i+1)*deltaX, 2));
+			};
+			sum = sum*deltaX;
+
+			return sum;
+		};
+
+		function error(){
+			return Math.abs(leftRiemannSum()-rightRiemannSum());
+		}
+
+		function countEuclid(a, b){
+			var count = 0;
+			function embeddedEuclid(a ,b){
+				count++
+				if(a%b != 0){
+					return embeddedEuclid(b, a%b);
+				}
+				else{
+					return b;
+				};
+			};
+			embeddedEuclid(a, b);
+			return count;
+		};
+
+		function euclid(a, b){
+			if(a%b != 0){
+				return euclid(b, a%b);
+			}
+			else{
+				return b;
+			};
+		};
+
+		function coprime(x, y){
+			for(var i = 2; i <= Math.max(x, y); i++){
+				if((x%i == 0) && (y%i == 0)){
+					return false;
+				};
+			};
+
+			return true;
+		};
+
+		function isInteger(x){
+			if(x-Math.floor(x) == 0){
+				return true;
+			}
+			else{
+				return false;
+			};
+		};
+
+		function isDivisibleBy(){
+			var list = [];
+			for(var i=1;i<=10000;i++){
+				if(i%12==0){
+					list.push(i);
+				}
+				else if(i%20==0){
+					list.push(i);
+				};
+			};
+			console.log(list.length);
+		};
+
+		function isPrime(x){
+			for(var i = 2; i <= Math.pow(x, 0.5); i++){
+				if(isInteger(x/ i)){
+					return false;
+				};
+			};
+
+			return true;
+		};
+
+		function primeFactors(x){
+			factors = [];
+
+			for(var i = 2; i <= x; i++){
+				if(isInteger(x/ i) && isPrime(i)){
+					factors.push(i);
+				};
+			};
+
+			return factors;
+		};
+
+		function checkX(){
+			var results = [];
+			var output = "";
+			var farEnough = (Math.pow(document.getElementById("inputBox").value, 2)-1)/ 2;
+
+			for(var i = 4; i <= farEnough; i+=2){
+				if(isInteger(Math.pow(Math.pow(document.getElementById("inputBox").value, 2) + Math.pow(i, 2), 0.5)) && coprime(i, document.getElementById("inputBox").value)){
+					results.push(i);
+				};
+			};
+
+			if(results.length>0){
+				for(var i = 0; i < results.length; i++){
+					output = output+"  "+results[i];
+				};
+			};
+
+			document.getElementById("outputBox").value = output.trim();
+		};
+
+		function checkZ(){
+			var results = [];
+			var output = "";
+
+			for(var i = 3; i < document.getElementById("inputBox").value; i+=2){
+				if(isInteger(Math.pow(Math.pow(document.getElementById("inputBox").value, 2) - Math.pow(i, 2), 0.5)) && coprime(i, document.getElementById("inputBox").value)){
+					results.push(i);
+				};
+			};
+
+			if(outputBox.length>0){
+				for(var i = 0; i < results.length; i++){
+					output = output+"  "+results[i];
+				};
+			};
+
+			//powers(3);
+			sumOf2Squares();
+			//checkSum();
+			document.getElementById("outputBox").value = output.trim();
+		};
+
+		function powers(x){
+			for(var i = 2; i < 32; i++){
+				if(isPrime(Math.pow(x, i) - x + 1)){
+					console.log(i);
+				};
+			};
+		};
+
+		function isSumOfSquares(x){
+			for(var i = 1; i < Math.pow(x, 0.5); i++){
+				if(isInteger(Math.pow(x - Math.pow(i, 2), 0.5))){
+					return true;
+				};
+			};
+
+			return false;
+		};
+
+		function checkSum(){
+			for(var i = 1; i < 10000; i++){
+				for(var j = 1; j < i; j++){
+					if(isInteger(Math.pow(Math.pow(i, 2) - Math.pow(j, 2), 0.5)) && coprime(i, j) /*&& !(isSumOfSquares(i))*/ && !(isPrime(i))){
+						console.log(i);
+					};
+				};
+			};
+
+			console.log("Done!");
+		};
+
+		function sumOf2Squares(){
+			for(var i = 3; i < 10000; i+=2){
+				var results = [];
+
+				for(var j = 1; j < Math.pow(i, 0.5); j++){
+					if(isInteger(Math.pow(i - Math.pow(j, 2), 0.5)) && coprime(i, j)){
+						results.push(j);
+					};
+				};
+
+				if(results.length >= 2){
+					var output = i.toString()+":";
+					for(var j = 0; j < results.length; j++){
+						output = output+" "+results[j].toString();
+					};
+
+					output = output+":";
+
+					if(isPrime(i)){
+						output = output+" prime";
+					}
+					else{
+						for(var j=0; j < primeFactors(i).length; j++){
+							output = output+" "+primeFactors(i)[j];
+						};
+					};
+
+					console.log(output);
+				};
+			};
+		};
+
+		function divisible(){
+			var count = 0;
+			for(var i=1; i<=10000;i++){
+				if((i%12==0)||(i%20==0)){
+					count++;
+				};
+			};
+			document.getElementById("outputBox").value = count;
+		}
+
+		function gurpsProb(n){
+			return (binomialCoefficient(n,3)-3*binomialCoefficient(n-6,3)+3*binomialCoefficient(n-12,3)-binomialCoefficient(n-18,3))/ 216;
+		};
+
+		function bruteCRT(){
+			let solutions = [];
+			for(let i = 0; i < 1293*3936; i++){
+				if(i%1293 == 126 && i%3936 == 573){
+					solutions.push(i);
+				};
+			};
+			console.log(solutions);
+		};
+
+		function numSolutions(){
+			var count = 0;
+			var total = 10;
+			var out = "";
+			for(var a = 2; a <= total; a+=2){
+				for(var b = 2; b <= total; b+=2){
+					for(var c = 1; c <= total; c+=2){
+						for(var d = 3; d <= total; d++){
+							//for(var e = 0; e <= total; e++){
+								if(a+b+c+d==total){
+									out+="("+a+","+b+","+c+","+d+")"+"<br/>"
+									count++
+								};
+							//};
+						};
+					};
+				};
+			};
+			out=out.substring(0,out.length-5);//remove last <br/>
+
+			return {count: count, output: out};
+		};
+
+		function beaver(){
+			var tape = [0,0,0,0,0,0,0,0,0,0,0,0,0];
+			var state = 0;
+			var index = 6;
+			var steps = 0;
+
+			while(state != 2){
+				if(state == 0 && tape[index] == 0){
+					tape[index] = 1;
+					index--;
+					state = 1;
+				}
+				else if(state == 0 && tape[index] == 1){
+					tape[index] = 0;
+					index++;
+					state = 2;
+				}
+				else if(state == 1 && tape[index] == 0){
+					tape[index] = 1;
+					index++;
+					state = 1;
+				}
+				else if(state == 1 && tape[index] == 1){
+					tape[index] = 1;
+					index++;
+					state = 0;
+				}
+				else{
+					console.warn("error!");
+				};
+				steps++;
+				if(steps > 6){
+					return "Does not Halt!";
+				};
+			};
+			return tape;
+		};
+
+		function extendedGCD(a,b){
+			if(b==0){
+				return [a,1,0];
+			}
+			else{
+				let q = Math.floor(a/ b);
+				let r = a%b;
+				let g = extendedGCD(b,r);
+				return [g[0], g[2], g[1]-q*g[2]];
+			};
+		};
+
+		function removeRepeats(array){
+			for(let i = 0; i < array.length; i++){
+				if(array.indexOf(array[i]) != i){
+					array.splice(i, 1);
+					i--;
+				};
+			};
+			return array;
+		};
+
+		function DisjointSet(set){
+			this.components = [];
+			if(Number.isInteger(set) && set > 0){
+				for(let i = 0; i < set; i++){
+					this.components.push([i]);
+				};
+			}
+			else if(set instanceof Set){
+				for(let element of set){
+					this.components.push([element]);
+				};
+			}
+			else if(set instanceof Array){
+				set = removeRepeats(set);
+				for(let element of set){
+					this.components.push([element]);
+				};
+			}
+			else if(typeof set === "string"){
+				set = removeRepeats(set);
+				for(let element of set){
+					this.components.push([element]);
+				};
+			};
+
+			this.find = function(x){
+				for(let i = 0; i < this.components.length; i++){
+					if(this.components[i].includes(x)){
+						return i;
+					};
+				};
+				return -1;
+			};
+
+			this.merge = function(index1, index2){
+				let cmp = this.components[index1].concat(this.components[index2]);
+				this.components.push(cmp);
+				if(index1 > index2){
+					this.components.splice(index1,1);
+					this.components.splice(index2,1);
+				}
+				else if(index1 < index2){
+					this.components.splice(index2,1);
+					this.components.splice(index1,1);
+				};
+
+				return cmp;
+			};
+/*
+			this.merge2 = function(index1, index2){
+				if(index1 == index2){
+					return this.components[index1];
+				};
+
+				let c1 = this.components[index1];
+				let c2 = this.components[index2];
+				let i1 = c1.length;
+				let i2 = c2.length;
+
+				if(i1 >= i2){
+					for(let i = 0; i < i2; i++){
+						c1.push(c2[i]);
+					}
+					this.components.splice(index2,1);
+
+					return c1
+				}
+				else{
+					for(let i = 0; i < i1; i++){
+						c2.push(c1[i]);
+					}
+					this.components.splice(index1,1);
+
+					return c2
+				};
+			};
+*/
+			this.print = function(){
+				/*let out = "";
+				this.components.forEach(function(element){
+					out+=element+", "
+				});
+				out = out.substring(0, out.length-2);
+				console.log(out);*/
+				console.log(this.components);
+			};
+		};
+
+		function Edge(start, end, weight){
+			this.start = start;
+			this.end = end;
+			this.weight = weight;
+			
+			this.clone = function(){
+				return new Edge(this.start, this.end, this.weight, this.directed)
+			};
+		};
+
+		function Graph(vertices, edges){
+			this.vertices = vertices || 0;
+			this.edges = edges || [];
+
+			this.clone = function(){
+				let edgesClone = [];
+				this.edges.forEach(function(edge){
+					edgesClone.push(edge.clone());
+				});
+				return new Graph(this.vertices, edgesClone);
+			};
+
+			this.removeVertex = function(index){
+				this.vertices--;
+				for(let i = 0; i < this.edges.length; i++){
+					let e = this.edges[i];
+					if(e.start == index || e.end == index){
+						this.edges.splice(i,1);
+						i--
+					}
+					else if(e.start > index && e.end > index){
+						e.start--;
+						e.end--;
+					}
+					else if(e.start > index){
+						e.start--;
+					}
+					else if(e.end > index){
+						e.end--;
+					};
+				};
+			};
+
+			this.removeEdge = function(index){
+				let edge = this.edges[index];
+				this.edges.splice(index,1);
+				return edge;
+			};
+
+			this.removeLoops = function(){
+				for(let i = 0; i < this.edges.length; i++){
+					if(this.edges[i].start == this.edges[i].end){
+						this.removeEdge(i);
+						i--
+					};
+				};
+			};
+
+			this.makeSimple = function(bias){
+				this.removeLoops();
+				for(let i = 0; i < this.edges.length; i++){
+					let start = this.edges[i].start;
+					let end = this.edges[i].end;
+					for(let j = i+1; j < this.edges.length; j++){
+						if((this.edges[j].start == start && this.edges[j].end == end) || (this.edges[j].end == start && this.edges[j].start == end)){
+							this.removeEdge(j);
+							j--;
+						};
+					};
+				};
+			};
+
+			this.isComplete = function(){
+				let G = this.clone();
+				G.makeSimple();
+				if(G.edges.length == (G.vertices*(G.vertices - 1)/ 2)){
+					return true;
+				}
+				else{
+					return false;
+				}
+			};
+
+			this.totalWeight = function(){
+				let sum = 0;
+				this.edges.forEach(function(edge){
+					sum += edge.weight;
+				});
+
+				return sum;
+			};
+		};
+
+		function kruskal(graph){
+			let G = graph.clone();//don't change original graph
+			let E = G.edges.sort(function(a,b){return a.weight - b.weight});//sort edge list of G by weight in ascending order
+			let C = new DisjointSet(G.vertices);//list of connected components, initially just disjoint vertices
+			let T = [];//edge list of MST
+
+			while(E.length > 0){
+				let e = E[0];//take smallest edge
+				T.push(e);
+
+				//merge components of e's endpoints
+				let cmp = C.merge(C.find(e.start), C.find(e.end));
+
+				//remove any edge with both endpoints in the merged component
+				for(let i = 0; i < E.length; i++){
+					if(cmp.includes(E[i].start) && cmp.includes(E[i].end)){
+						E.splice(i,1);
+						i--;
+					};
+				};
+			};
+
+			//calculte total weight of MST
+			let sum = 0;
+			T.forEach(function(edge){
+				sum += edge.weight;
+			});
+
+			return [sum, T];
+		};
+
+		function prim(graph){
+			let G = graph.clone();//don't change original graph
+			let E = G.edges.sort(function(a,b){return a.weight - b.weight});//sort edge list of G by weight in ascending order
+			let C = [0];//list of vertices in T. Can start at any vertex, but this one is always in the graph
+			let T = [];//edge list of MST
+
+			while(E.length > 0){
+				for(let i = 0; i < E.length; i++){
+					//find shortest edge with start or end point in vertex list
+					if(C.includes(E[i].start)){
+						C.push(E[i].end);//add new vertex to C
+						T.push(E[i]);//add edge to T
+						E.splice(i,1);//remove edge from E
+						break;
+					}
+					else if(C.includes(E[i].end)){
+						C.push(E[i].start)//add new vertex to C
+						T.push(E[i]);//add edge to T
+						E.splice(i,1);//remove edge from E
+						break;
+					};
+				};
+
+				//remove edges that would make a cycle in T
+				for(let i = 0; i < E.length; i++){
+					if(C.includes(E[i].start) && C.includes(E[i].end)){
+						E.splice(i,1);
+						i--;
+					};
+				};
+			};
+
+			//calculate total weight of MST
+			let sum = 0;
+			T.forEach(function(edge){
+				sum += edge.weight;
+			});
+
+			return [sum, T];
+		};
+
+		function kruskalOP(graph){
+			let G = graph.clone();//don't change original graph
+			let E = G.edges.sort(function(a,b){return b.weight - a.weight});//sort edge list of G by weight in descending order
+			let C = new DisjointSet(G.vertices);//list of connected components, initially just disjoint vertices
+			let T = [];//edge list of MST
+
+			while(E.length > 0){
+				let e = E[0];//take longest edge
+				T.push(e);
+
+				//merge components of e's endpoints
+				let cmp = C.merge(C.find(e.start), C.find(e.end));
+
+				//remove any edge with both endpoints in the merged component
+				for(let i = 0; i < E.length; i++){
+					if(cmp.includes(E[i].start) && cmp.includes(E[i].end)){
+						E.splice(i,1);
+						i--;
+					};
+				};
+			};
+
+			//calculte total weight of MST
+			let sum = 0;
+			T.forEach(function(edge){
+				sum += edge.weight;
+			});
+
+			return [sum, T];
+		};
+
+		function primOP(graph){
+			let G = graph.clone();//don't change original graph
+			let E = G.edges.sort(function(a,b){return b.weight - a.weight});//sort edge list of G by weight in descending order
+			let C = [0];//list of vertices in T. Can start at any vertex, but this one is always in the graph
+			let T = [];//edge list of MST
+
+			while(E.length > 0){
+				for(let i = 0; i < E.length; i++){
+					//find longest edge with start or end point in vertex list
+					if(C.includes(E[i].start)){
+						C.push(E[i].end);//add new vertex to C
+						T.push(E[i]);//add edge to T
+						E.splice(i,1);//remove edge from E
+						break;
+					}
+					else if(C.includes(E[i].end)){
+						C.push(E[i].start)//add new vertex to C
+						T.push(E[i]);//add edge to T
+						E.splice(i,1);//remove edge from E
+						break;
+					};
+				};
+
+				//remove edges that would make a cycle in T
+				for(let i = 0; i < E.length; i++){
+					if(C.includes(E[i].start) && C.includes(E[i].end)){
+						E.splice(i,1);
+						i--;
+					};
+				};
+			};
+
+			//calculate total weight of MST
+			let sum = 0;
+			T.forEach(function(edge){
+				sum += edge.weight;
+			});
+
+			return [sum, T];
+		};
+
+		function chromatic(graph){
+			if(graph.edges.length == 0){
+				//if graph has no edges then p(x)=x^v
+				return (new Polynomial({1: 1}).pow(graph.vertices))
+			}
+			else if(graph.isComplete()){
+				let poly = new Polynomial('x');
+				for(var i = 1; i < graph.vertices; i++){
+					poly = poly.mul(new Polynomial({0:-i, 1:1}));
+				};
+
+				return poly;
+			}
+			else{
+				let Gminus = graph.clone();
+				Gminus.makeSimple();
+				let e = Gminus.removeEdge(0);
+				let Gmerge = Gminus.clone();
+				Gmerge.edges.forEach(function(edge){
+					if(edge.start == e.end){
+						edge.start = e.start;
+					}
+					else if(edge.end == e.end){
+						edge.end = e.start;
+					};
+				});
+				Gmerge.removeVertex(e.end);
+				Gmerge.makeSimple();
+
+				return chromatic(Gminus).sub(chromatic(Gmerge));
+			};
+		};
+
+		function chromaticNumber(graph){
+			let Gpoly = chromatic(graph);
+			let CN = 0;
+
+			while(Gpoly.eval(CN) == 0){
+				CN++;
+			};
+
+			return CN;
+		};
+
+		function completeGraph(n){
+			let edges = [];
+
+			for(let i = 0; i < n; i++){
+				for(let j = i+1; j < n; j++){
+					edges.push(new Edge(i, j));
+				};
+			};
+
+			return (new Graph(n, edges));
+		};
+
+		function factors(n){
+			let facts = [1, n];
+			let limit = Math.sqrt(n);
+
+			for(let i = 2; i < limit; i++){
+				if(n%i == 0){
+					facts.push(i, n/ i);
+				};
+			};
+			if(Number.isInteger(limit)){
+				facts.push(limit);
+			};
+
+			return facts;
+		};
+
+		function rationalFactor(poly){//only works if poly has integer coefficients and is non zero
+			let p = poly.clone();
+			let pFactors = [];
+			let possibleFactors = [];
+			let leading = p.lc();
+			let constant = p.eval(0);
+			let degree = 0;
+			let output = "";
+
+			if(leading === undefined){
+				return "0";
+			}
+			else if(leading < 0){
+				output = "-";
+				p = p.neg();
+			};
+
+			while(constant == 0){
+				degree++;
+				p = p.div(new Polynomial('x'))
+				constant = p.eval(0);
+			};
+
+			if(degree == 1){
+				pFactors.push("x");
+			}
+			else if(degree > 1){
+				pFactors.push("x^"+degree.toString());
+			};
+
+			let bb = factors(Math.abs(constant));
+			let aa = factors(Math.abs(leading));
+
+			for(let i = 0; i < bb.length; i++){
+				for(let j = 0; j < aa.length; j++){
+					possibleFactors.push([aa[j], bb[i]]);
+				};
+			};
+
+			while(possibleFactors.length > 0){
+				let a = possibleFactors[0][0];
+				let b = possibleFactors[0][1];
+				let x = -b/ a;
+				if(Number.isInteger(x)){
+					a = 1;
+					b = -x;
+				};
+
+				degree = 0;
+				while(p.eval(x) == 0){
+					degree++;
+					p = p.div(new Polynomial({1:a, 0:b}));
+				};
+				if(degree == 1 && a == 1){
+					pFactors.push("(x+"+b.toString()+")");
+				}
+				else if(degree > 1 && a == 1){
+					pFactors.push("(x+"+b.toString()+")"+"^"+degree.toString());
+				}
+				else if(degree == 1 && a > 1){
+					pFactors.push("("+a.toString()+"x+"+b.toString()+")");
+				}
+				else if(degree > 1 && a > 1){
+					pFactors.push("("+a.toString()+"x+"+b.toString()+")"+"^"+degree.toString());
+				};
+
+				x = b/ a;
+				degree = 0;
+				while(p.eval(x) == 0){
+					degree++;
+					p = p.div(new Polynomial({1:a, 0:-b}));
+				};
+				if(degree == 1 && a == 1){
+					pFactors.push("(x-"+b.toString()+")");
+				}
+				else if(degree > 1 && a == 1){
+					pFactors.push("(x-"+b.toString()+")"+"^"+degree.toString());
+				}
+				else if(degree == 1 && a > 1){
+					pFactors.push("("+a.toString()+"x-"+b.toString()+")");
+				}
+				else if(degree > 1 && a > 1){
+					pFactors.push("("+a.toString()+"x-"+b.toString()+")"+"^"+degree.toString());
+				};
+
+				possibleFactors.shift();
+			};
+
+			if(p.degree() == 0 && p.lc() != 1){
+				output += p.lc().toString();
+			};
+
+			while(pFactors.length > 0){
+				//output factors
+				output += pFactors.shift();
+			};
+			if(p.degree() > 1){
+				//output irreducible factor if there is one
+				output += "("+p.toString()+")";
+			};
+
+			if((output.match(/\(/g) || []).length == 1 && output[0] == '(' && output[output.length-1] == ')'){
+				//remove outer brackets if only one term
+				output = output.slice(1,output.length-1);
+			};
+
+			return output;
+		};
+
+		function cloneArray(inputArray){
+			let outputArray = [];
+
+			for(const e of inputArray){
+				outputArray.push(e);
+			};
+
+			return outputArray;
+		};
+
+		function shuffleArray(inputArray){
+			let outputArray = [];
+			let workingArray = cloneArray(inputArray);
+
+			while(workingArray.length > 0){
+				outputArray.push(workingArray.splice(Math.floor(Math.random()*Math.floor(workingArray.length)), 1)[0]);
+			};
+
+			return outputArray;
+		};
+
+		function shuffleArray2(array){
+			let shuffledArray = [];
+			let tempArray = [];
+			
+			for(const elem of array){
+				tempArray.push(elem);
+			};
+		
+			while(tempArray.length > 0){
+				shuffledArray = shuffledArray.concat(tempArray.splice(Math.floor(Math.random()*tempArray.length), 1));
+			};
+		
+			return shuffledArray;
+		};
+
+		function shuffleArray3(array){
+			for(let i = array.length - 1; i > 0; i--){
+				const j = Math.floor(Math.random() * (i + 1));
+				[array[i], array[j]] = [array[j], array[i]];
+			};
+		};
+
+		function buildIf(m){
+			let k = m%5;
+			let n = Math.floor((m-1)/ 5)+1;
+
+			if(k === 0){
+				k = 5;
+			}
+
+			let output = "IF(SUM('Hard Huge " + ((n-1)*50+1).toString() + "-" + (n*50).toString() + "'!$H$" + ((k-1)*22+13).toString() + ":$H$" + ((k-1)*22+21).toString() + ")<60, 99, 'Hard Huge " + ((n-1)*50+1).toString() + "-" + (n*50).toString() + "'!$H" + ((k-1)*22+13).toString() + ")";
+
+			return output;
+		}
+
+		function buildIfSeason(n){
+			let output = "IF(SUM('Hard Huge " + ((n-1)*50+1).toString() + "-" + (n*50).toString() + "'!$H$111:$H$119)<300, 999, 'Hard Huge " + ((n-1)*50+1).toString() + "-" + (n*50).toString() + "'!$H111)";
+
+			return output;
+		}
+
+		function textBuilder(){
+			//let output = "=MIN('Hard Huge 1-50'!$H111,"
+			let output = "=MIN('Hard Huge 1-50'!$H13,"
+
+			for(let i=2; i<=50; i++){
+				output += buildIf(i) + ",";
+			};
+
+			output = output.substring(0,output.length-1);
+			output += ")"
+
+			console.log(output);
+		};
+
+		function output(){
+			//document.getElementById("outputBox").value = binomialCoefficient(7,document.getElementById("inputBox").value);
+			//document.getElementById("outputBox").value = factorial(document.getElementById("inputBox").value);
+			//document.getElementById("outputBox").value = gurpsProb(document.getElementById("inputBox").value);
+			//document.getElementById("outputBox").innerHTML = numSolutions().count;
+			//document.getElementById("outputBox").innerHTML = beaver();
+			//document.getElementById("outputBox").value = error();
+			var text = "";
+			var input = parseInt(document.getElementById("inputBox").value,10);
+			document.getElementById("outputBox").innerHTML = integerRoot(input)
+			//console.log("here")
+			/*for(var i = 0; i < 11; i++){
+				//text+=trees(i, input)+", ";
+				//text+=iot(i, input)+", ";
+				//text+=Math.pow(i, 3)+", ";
+				//text+=(trees(i, input)/ input)+", ";
+				//text+=seq(i)+", ";
+				//text+=bigSchroder(i)+", ";
+				//text+=fourary(i)+", ";
+				//text+=fussCatalan(i,input)+", ";
+				//text+=recur(i)+", ";
+				//text+=Math.round(Math.pow(0.5*(1+Math.pow(5, 0.5)),i)+Math.pow(0.5*(1-Math.pow(5, 0.5)),i)).toString()+", ";//
+				//text+=weirdTree(i).toString()+", ";
+				text+=iot(i,input).toString()+", ";
+			};
+			text=text.substring(0,text.length-2);//remove last comma and space
+			document.getElementById("outputBox").innerHTML = text;*/
+			//text+=numSolutions()[0];
+			//console.log(extendedGCD(17346,3544))
+			//let test = new DisjointSet(5);
+			//let test2 = test.merge(0,1);
+			//test.print();
+			//test2 = [17];
+			//test.print();
+			//console.log(test2)
+			//text = test.find(3);
+			//document.getElementById("outputBox").innerHTML = text;
+			//var gr = new Graph(8, [new Edge(0,1,6), new Edge(0,2,10), new Edge(0,5,3), new Edge(0,6,6), new Edge(1,5,2), new Edge(2,3,7), new Edge(2,5,1), new Edge(3,4,3), new Edge(3,7,4), new Edge(4,7,4), new Edge(5,6,1), new Edge(6,7,9), new Edge(3,6,5)]);
+			//var gr = new Graph(9, [new Edge(0,1,1), new Edge(0,3,4), new Edge(1,2,3), new Edge(1,4,2), new Edge(2,5,1), new Edge(3,4,4), new Edge(3,6,4), new Edge(4,5,3), new Edge(4,7,1), new Edge(5,8,2), new Edge(6,7,5), new Edge(7,8,3)]);
+			//var gr = new Graph(8, [new Edge(0,1,2), new Edge(0,2,3), new Edge(1,2,4), new Edge(1,3,1), new Edge(1,4,5), new Edge(2,5,4), new Edge(2,6,4), new Edge(3,4,6), new Edge(4,5,2), new Edge(4,7,1), new Edge(5,7,3), new Edge(5,6,5)]);
+			//var gr = new Graph(12, [new Edge(0,1,3), new Edge(0,3,2), new Edge(1,2,2), new Edge(2,4,5), new Edge(2,10,4), new Edge(3,4,4), new Edge(3,7,5), new Edge(4,5,1), new Edge(4,9,4), new Edge(5,6,3), new Edge(6,10,3), new Edge(7,8,3), new Edge(7,11,6), new Edge(8,9,5), new Edge(10,11,1)]);
+			//console.log(kruskal(gr));
+			//console.log(prim(gr));
+			//console.log(kruskalOP(gr));
+			//console.log(primOP(gr));
+			//let str = "(x-2)(x+3)";
+			//console.log((str.match(/\(/g) || []).length)
+			//let x = 2;
+			//let poly1 = new Polynomial("x+4");
+			//let poly2 = new Polynomial("-2x^2+4x");
+			//console.log(poly2.lm());
+			//console.log(rationalFactor(poly2));
+			//console.log(poly2.lc())
+			//console.log(poly1.toLatex());
+			//let gr2 = new Graph(4, [new Edge(0,1), new Edge(0,2), new Edge(1,3), new Edge(2,3)]);
+			//let gr2 = completeGraph(18);
+			//console.log(gr2.isComplete())
+			//gr2.removeEdge(0);
+			//console.log(gr2.isComplete())
+			//let gr3 = new Graph(7, [new Edge(0,1), new Edge(0,2), new Edge(1,3), new Edge(2,3), new Edge(4,5), new Edge(4,6), new Edge(5,6)]);
+			//let gr4 = new Graph(8, [new Edge(0,1), new Edge(0,2), new Edge(1,3), new Edge(2,1), new Edge(2,3), new Edge(2,4), new Edge(4,5), new Edge(3,6), new Edge(3,7), new Edge(6,7), new Edge(4,3)]);
+			//let gr4 = new Graph(7, [new Edge(0,1), new Edge(0,2), new Edge(1,3), new Edge(2,3), new Edge(1,4), new Edge(1,5), new Edge(3,5), new Edge(3,4), new Edge(4,6), new Edge(6,5)]);
+			//let gr4 = new Graph(6, [new Edge(0,1), new Edge(0,2), new Edge(1,3), new Edge(2,3), new Edge(1,4), new Edge(3,4), new Edge(0,5), new Edge(2,5), new Edge(4,5)]);
+			//let gr5 = new Graph(10, [new Edge(0,1), new Edge(1,2), new Edge(2,3), new Edge(3,4), new Edge(0,4), new Edge(5,6), new Edge(7,6), new Edge(7,8), new Edge(8,9), new Edge(5,9), new Edge(0,5), new Edge(1,5), new Edge(1,6), new Edge(2,6), new Edge(2,7), new Edge(3,7), new Edge(3,8), new Edge(4,8), new Edge(4,9), new Edge(0,9)]);
+			//let poly3 = chromatic(gr4);
+			//console.log(leftRiemannSum())
+			//console.log(poly3.toString());
+			//console.log(rationalFactor(poly3));
+			//console.log(chromaticNumber(gr4));
+			//console.log(numSolutions().count);
+			//console.log(recur(4))
+			//console.log((-2/ 5 + 3/ 3)*Math.pow(-3,3)+ 2*Math.pow(2,3) / 5)
+			//console.log(gr2);
+			//gr2.removeVertex(1);
+			//console.log(gr2);
+			//console.log(new Polynomial({'3': '4', 5: 9}))
+			//console.log(rationalFactor(chromatic(gr2)));
+			//console.log(String.fromCharCode(105));
+			//console.log(Math.max(1,undefined))
+			//bruteCRT();
+			/*let t0 = performance.now();
+			for(let i = 0; i < 1000; i++){
+				kruskal(gr);
+			};
+			let t1 = performance.now();
+			console.log("Time to run function:", t1-t0, "milliseconds.");*/
+			/*let x = [[5]];
+			let y = x[0];
+			console.log("x = ", x, "y = ", y);
+			x[0] = [3];
+			console.log("x = ", x, "y = ", y);
+			y = 7;
+			console.log("x = ", x, "y = ", y);*/
+			/*let arr = [];
+			for(let i = 0; i < 13; i++){
+				arr.push(i)
+			}
+			let t0 = performance.now();
+			for(let i = 0; i < 100; i++){
+				shuffleArray3(arr);
+			};
+			let t1 = performance.now();
+			console.log("Time to run function:", t1-t0, "milliseconds.");
+			console.log(arr);*/
+			//console.log(integerRoot(56, 0, 56));
+		};
+	
+		//textBuilder();
+	</script>
+
+</head>
+
+<body onload="output()">
+	<div style="text-align: center">
+		<p>
+			Input: <input type="number" id="inputBox" value=1 step=1 min=1 onchange="output()">
+		</p>
+		<p>
+			<div class="flex-container">
+				Output: <div id="outputBox" style="margin-left:3pt"></div>
+			</div>
+		</p>
+	</div>
+	<div style="display:none">
+		<a href="http://mathjs.org/docs/expressions/parsing.html" target="blank"> Implement math.js library!</a>
+	</div>
+<!--
+	<button id="button" onclick="setColor('words')">Click</button>
+	<div id = "words" style="color: red">Some Text</div>
+	<button id="button2" onclick="setColor('words2')">Click</button>
+	<div id = "words2" style="color: blue">Some Other Text</div>
+	<button onclick="console.log(document.getElementsByClassName('pcr-last-color'))">Stuff</button>
+
+	<div id="box"></div>
+
+	<div class="pcr-close-button">x</div>
+-->
+	<div style="position: absolute; bottom: 10px; right: 10px">
+		<a href="../index.html">&lt;&lt; Back to Jaznet</a>
+	</div>
+</body>
+</html>
