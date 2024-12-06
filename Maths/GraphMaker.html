@@ -364,7 +364,7 @@
 		let editMode = "add";
 		let graphMode = "math";
 		let defaultPadding = 20;
-		//let cyNeedsResize = false;
+		let cyCurrentWidth = 0;
 		let undoStack = [];
 		let redoStack = [];
 		let touching = false;
@@ -2735,6 +2735,10 @@
 		function resizeCy(){
 			setCyDivSize();
 			cy.resize();
+
+			let shiftFactor = (document.getElementById("cyContainer").offsetWidth - cyCurrentWidth)/(2*cy.zoom());
+			cy.nodes().shift('x', shiftFactor);
+			cyCurrentWidth = document.getElementById("cyContainer").offsetWidth;
 		}
 
 		window.addEventListener("resize", function(event){
@@ -2745,6 +2749,7 @@
 		document.addEventListener("DOMContentLoaded", function(event){
 			setCyDivSize();
 			cy = makeCy(document.getElementById("cyContainer"));//Build graph
+			cyCurrentWidth = document.getElementById("cyContainer").offsetWidth;
 			cy.autounselectify(true);
 
 			changeEditMode(editMode);
@@ -3787,8 +3792,6 @@
 			if(gui.style.display == "none"){
 				gui.style.display = "block";
 				resizeCy();
-				console.log("now")
-				cy.nodes().shift(200);
 			}
 			else{
 				gui.style.display = "none";
