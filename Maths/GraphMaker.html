@@ -2735,8 +2735,6 @@
 		function resizeCy(){
 			setCyDivSize();
 			cy.resize();
-			console.log(cy);
-			//nodes.shift()
 		}
 
 		window.addEventListener("resize", function(event){
@@ -3789,6 +3787,7 @@
 			if(gui.style.display == "none"){
 				gui.style.display = "block";
 				resizeCy();
+				cy.nodes().shift(200);
 			}
 			else{
 				gui.style.display = "none";
