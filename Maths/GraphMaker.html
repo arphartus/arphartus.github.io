@@ -1,0 +1,4133 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset=utf-8/>
+	<title>Graph Maker</title>
+	<link rel="shortcut icon" href="../favicon.ico">
+	<link rel="stylesheet" href="../CSS/w3.css">
+	<link rel="stylesheet" href="../CSS/w3-colors-metro.css">
+	<style>
+		body{
+			font: normal 16px Arial, sans-serif;
+			color: #fff;
+			background-color: #673ab7;
+			overflow: hidden;
+			body: 100vh;
+			position: fixed
+		}
+		h1{
+			font-size: 32px;
+			margin: 0px;
+			text-align: center;
+			font-weight: bold;
+			padding-bottom: 5px;
+			border-bottom: 1px solid black;
+		}
+		ul{
+			margin-top: 0px;
+			padding-left: 25px;
+			font: normal 12px Arial, sans-serif;
+			text-align: left;
+		}
+		li{
+			margin-left: 0px;
+		}
+		/*input[type="submit"]{
+			margin-top: 0px;
+			font: normal 16px Arial, sans-serif;
+			width: 100%;
+			border: 0.5px solid black;
+		}*/
+		sub{
+			font-size: 0.6em;
+		}
+		sup{
+			font-size: 0.6em;
+		}
+		.topmenu{
+			width: 1.5em !important;
+			height: 1.5em !important;
+			text-align: center !important;
+			position: absolute !important;
+			background-color: inherit;
+			background: none !important;
+			color: #fff;
+			border: none !important;
+			padding: 0px;
+			font-weight: bold !important;
+			font-size: 16pt !important;
+			cursor: pointer !important;
+			outline: inherit !important;
+		}
+		.topmenu.mouseover{
+			color: black !important;
+			outline: 0 !important;
+			outline-offset: 0  !important;
+			background-image: none  !important;
+			-webkit-box-shadow: none !important;
+			box-shadow: none !important;
+		}
+		#hamburger{
+			left: 7px;
+			top: 7px;
+		}
+		#undo{
+			right: 75px;
+			top: 7px;
+			padding-top: 5px;
+			display: none;
+		}
+		#redo{
+			right: 35px;
+			top: 7px;
+			padding-top: 5px;
+			display: none;
+		}
+		.myButton{
+			margin-top: 0px;
+			font: normal 16px Arial, sans-serif;
+			width: 100%;
+			border: 0.5px solid black;
+			display: inline-block;
+			padding: 7.5px 15px;
+			vertical-align: middle;
+			overflow: hidden;
+			text-decoration: none;
+			color: inherit;
+			background-color: inherit;
+			text-align: center;
+			cursor: pointer;
+			white-space: nowrap
+		}
+		.myButton:hover{
+			outline: 0 !important;
+			outline-offset: 0 !important;
+			background-image: none !important;
+			-webkit-box-shadow: none !important;
+			box-shadow: none;
+		}
+		.myButton.mouseover{
+			box-shadow: 0 8px 16px 0 rgba(0, 0, 25, 0.2) , 0 8px 20px 0 rgba(0,0,0,0.19) inset !important;
+		}
+		.myButton:focus{
+			outline:none !important;
+		}
+		.selected{
+			color:#000;
+			background-color: #ffff00;
+		}
+		.unselected{
+			color:#000;
+			background-color: #ffffdd;
+		}
+		.action{
+			color: #fff;
+			background-color: #009688;
+		}
+		.toggle{
+			color: #000000;
+			background-color: #00dd44;
+		}
+		.toggle-super{
+			color: #ffffff;
+			background-color: #b30000;
+		}
+		#highlight.selected{
+			outline: 2px solid #ffff00 !important;
+			outline-offset: -2px !important;
+			border: 0.5px solid #000;
+		}
+		#highlight.unselected{
+			border: 0.5px solid #000;
+		}
+		#editMode{
+			margin-top: 0px;
+			padding:8px 16px;
+			font: normal 16px Arial, sans-serif;
+			width: 100%;
+			border: 0.5px solid black;
+			color:#000;
+			background-color: #ffff00;
+		}
+		.container{
+			display: flex;
+			margin-top: 0px;
+			padding-top: 0px;
+			width: 100%;
+			justify-content: flex-start;
+			align-content: flex-start;
+			border-top: none;
+			border-bottom: 1px solid black;
+		}
+		.fixed{
+			width: 200px;
+			min-width: 200px;
+			text-align: center;
+			padding: 0px;
+			margin: 0px;
+		}
+		.flex-item{
+			flex-grow: 0;
+		}
+		.spacer{
+			width: 20px;
+		}
+/*		#algorithmOutput{
+			position: absolute;
+			z-index: 100;
+			bottom: 42px;
+			padding: 5px;
+			text-align: center;
+			border: 1px solid green;
+			display: none;
+			font: normal 30px Verdana;
+			background-color: #673ab7;
+		}*/
+		#cyContainer{
+			z-index: 10;
+			display: block;
+			border: 1px solid black;
+			touch-action: none;
+			background-color: #fff;
+		}
+		#jaznet:hover{
+			color: #000;
+		}
+		::-webkit-scrollbar{
+  			width: 10px;
+			display: none;
+		}
+		::-webkit-scrollbar-track{
+			box-shadow: inset 0 0 5px grey; 
+			border-radius: 10px;
+		}
+		::-webkit-scrollbar-thumb{
+			background: #470077; 
+			border-radius: 10px;
+		}
+		::-webkit-scrollbar-thumb:hover{
+			background: #b30000; 
+		}
+		.mySwal{
+			margin-top: 0px !important;
+			zoom: 0.65;
+		}
+		.sideSwal{
+			margin: 0px !important;
+			width: 308px !important;
+			zoom: 0.65;
+		}
+		.mySwal-icon{
+			margin: 0.6em 1.875em 0.7em !important;
+		}
+		.mySwal-cancel{
+			background-color: #b30000 !important;
+		}
+		.mySwal-swap{
+			background-color: #30d685 !important;
+		}
+		.mySwal-button:hover{
+			background-image: -webkit-gradient(linear, left top, left bottom, from(rgba(0, 0, 0, 0.1)), to(rgba(0, 0, 0, 0.1))) !impotant;
+			background-image: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)) !important;
+		}
+		.mySwal-input{
+			margin: auto;
+			margin-top: 10px !important;
+			margin-bottom: 10px !important;
+			text-align: center;
+		}
+		.mySwal-textarea{
+			height: 5em !important;
+			margin: auto;
+			margin-top: 10px !important;
+			margin-bottom: 10px !important;
+			text-align: center;
+		}
+		.mySwal-input-small{
+			height: 36px;
+			text-align: center;
+			margin: 10px auto !important;
+			padding: 0px;
+		}
+		.mySwal-actions{
+			margin-top: 10px !important;
+		}
+		.mySwal-title{
+			margin: auto !important;
+		}
+		.slider{
+			-webkit-appearance: none;
+			width: 80%;
+			height: 12px !important;
+			text-align: center !important;
+			border-radius: 5px;  
+			background: rgba(192, 64, 192, 0.5);
+			outline: none;
+			opacity: 0.9;
+			-webkit-transition: .2s;
+			transition: opacity .2s;
+			margin-top: 8px;
+			margin-bottom: 24px;
+		}
+		.slider::-webkit-slider-thumb{
+			-webkit-appearance: none;
+			appearance: none;
+			width: 25px;
+			height: 25px;
+			border-radius: 50%; 
+			background: #673ab7;
+			cursor: pointer;
+		}
+		.slider::-moz-range-thumb{
+			width: 25px;
+			height: 25px;
+			border-radius: 50%;
+			background: #673ab7;
+			cursor: pointer;
+		}
+		.slider-value{
+			width: 50px !important;
+			height: 36px !important;
+			text-align: center !important;
+			margin: 0px auto !important;
+			padding: 0px !important;
+		}
+		.mySwal-slider-value{
+			width: 50px !important;
+			height: 36px !important;
+			text-align: center !important;
+			margin: auto;
+			margin-top: 0px !important;
+			margin-bottom: 10px !important;
+			padding: 0px !important;
+		}
+		.slider.mini{
+			width: 40% !important;
+		}
+		.pickr{
+			visibility: hidden;
+			position: absolute !important;
+			left: 298px;
+			top: 10px;
+		}
+		.pcr-app{
+			width: 222px !important;
+		}
+		.pcr-close-button{
+			cursor: pointer;
+			position: absolute;
+			right: 1px;
+			top: 1px;
+			font-family: verdana;
+			font-size: 16px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			text-align: center;
+			height: 1.2ex !important;
+			padding: 0.3em 0em 0.4em;
+			border-radius: 0px;
+			margin: 0 !important;
+			color: #75797e;
+			background-color: #f1f3f4;
+		}
+		.pcr-close-button:hover{
+			background-color: #ff4040;
+			color: #f1f3f4
+		}
+	</style>
+
+	<script src="../JS/cytoscape.min.js"></script>
+	<script src="../JS/polynomial.min.js"></script>
+	<script src="../JS/modernizr-custom.js"></script>
+	<script src="../JS/sweetalert2.all.min.js"></script>
+
+	<!--COLOR PICKER-->
+	<link rel="stylesheet" href="../CSS/pickr.theme.monolith.min.css">
+	<script type="text/javascript" src="../JS/pickr.js"></script>
+
+	<!--<script src="../node_modules/require/bin/require-command.js"></script>
+	<script src="../node_modules/cytoscape-edgehandles/cytoscape-edgehandles.js"></script>-->
+
+	<script>
+//GLOBAL VARIABLES
+		let cy;
+		const firstLabel = 'A'.charCodeAt(0);
+		let nodeLabel = firstLabel;
+		let edgePinning = true;
+		let simpleCy = {value: true};
+		let directedCy = {value: false};
+		let weightedCy = {value: false};
+		let flowCy = {value: false};
+		let cyTypes = [simpleCy, directedCy, weightedCy, flowCy]
+		let editMode = "add";
+		let graphMode = "math";
+		let defaultPadding = 20;
+		//let cyNeedsResize = false;
+		let undoStack = [];
+		let redoStack = [];
+		let touching = false;
+		let pan = {x: 0, y: 0};
+		let zoom = 1;
+		let undoing = false;
+		let dijkstraHighlighting = false;
+		let activatePickr;
+		let highlightColor = "#00b000";
+
+//STYLES
+		let parallelLabels = function(edge){
+			return (edge.data("label") + "\n\n\u2060");
+			//return edge.data("label");
+		};
+
+		let flowLabel = function(edge){
+			return (edge.data("flowLabel") + "\n\n\u2060");
+		};
+
+		function updateStyleFunctions(){
+			cy.style().selector('edge.flow').style({'label': flowLabel}).update();
+		};
+
+		function highlightStyle(color){
+			let clsName = "highlight"+color.substring(1);
+
+			cy.style()
+				.selector('node.'+clsName).style({
+					'border-width': 3,
+					'border-color': color,
+				})
+				.selector('edge.'+clsName).style({
+					'line-color': color,
+					'target-arrow-color': color,
+				});
+		};
+
+		function updateStyles(){
+			cy.style().clear();
+			cy.style(cyStyles);//.update();
+
+			//fix highlighting
+			cy.elements().forEach(function(elt){
+				elt.classes().forEach(function(cls){
+					if(cls.includes("highlight")){
+						let color = '#'+cls.substring(9);
+						highlightStyle(color, true);
+					};
+				});
+			});
+		};
+
+		let cyStyles = [
+			{
+				selector: 'node',
+				style: {
+					'background-color': '#8888ff',
+					'label': 'data(label)',
+					//'content': '<div>hello</div>',
+					'text-wrap': 'wrap',
+					'text-halign': 'center',
+					'text-valign': 'center',
+					'height': '30px',
+					'width': '30px',
+				}
+			},
+
+			{
+				selector: 'edge',
+				style: {
+					'width': 3,
+					'line-color': '#cc44cc',
+					'target-arrow-color': '#cc44cc',
+					'target-arrow-shape': 'none',
+					'curve-style': 'haystack',
+				}
+			},
+
+			{
+				selector: 'edge.weighted',
+				style: {
+					'label': 'data(weight)',
+					/*'text-margin-y': -10*/
+				}
+			},
+
+			{
+				selector: 'edge.labelled',
+				style: {
+					'label': 'data(label)',
+					'text-wrap': 'wrap',
+					/*'text-margin-y': -10*/
+				}
+			},
+
+			{
+				selector: 'edge.flow',
+				style: {
+					/*'label': 'data(label)',
+					'font-weight': 'bold',
+					'line-color': '#ff8000',
+					'text-margin-y': -10*/
+					'label': flowLabel,
+					'text-wrap': 'wrap' ,
+					'edge-text-rotation': 'autorotate',
+					'text-background-opacity': 0,
+				}
+			},
+
+			{
+				selector: 'node.cut',
+				style: {
+					'border-width': 3,
+					'border-color': '#008000'
+				}
+			},
+
+			{
+				selector: 'node.noncut',
+				style: {
+					'border-width': 3,
+					'border-color': '#800000'
+				}
+			},
+
+			{
+				selector: 'edge.cut',
+				style: {
+					'line-color': '#000080',
+					'target-arrow-color': '#000080',
+				}
+			},
+
+			{
+				selector: 'edge.moving',
+				style: {
+					'visibility': 'hidden',
+				}
+			},
+
+			{
+				selector: 'node.moving',
+				style: {
+					'content': '',
+					'label': '',
+				}
+			},
+
+			{
+				selector: 'node.highlight',
+				style: {
+					'border-width': 3,
+					'border-color': '#008000'
+				}
+			},
+
+			{
+				selector: 'edge.highlight',
+				style: {
+					'line-color': '#008000',
+					'target-arrow-color': '#008000',
+				}
+			},
+
+			{
+				selector: 'node.lowlight',
+				style: {
+					'opacity': 0.5,
+				}
+			},
+
+			{
+				selector: 'edge.lowlight',
+				style: {
+					'opacity': 0.5,
+				}
+			},
+
+			{
+				selector: 'node.kruskal',
+				style: {
+					'border-width': 3,
+					'border-color': '#008000'
+				}
+			},
+
+			{
+				selector: 'edge.kruskal',
+				style: {
+					'line-color': '#008000',
+				}
+			},
+
+			{
+				selector: 'edge.nonkruskal',
+				style: {
+					'opacity': 0.5,
+				}
+			},
+
+			{
+				selector: 'node.dijkstra',
+				style: {
+					'border-width': 3,
+					'border-color': '#008000'
+				}
+			},
+
+			{
+				selector: 'edge.dijkstra',
+				style: {
+					'line-color': '#008000',
+				}
+			},
+
+			{
+				selector: 'node.nondijkstra',
+				style: {
+					'opacity': 0.5,
+				}
+			},
+
+			{
+				selector: 'edge.nondijkstra',
+				style: {
+					'opacity': 0.5,
+				}
+			},
+		];
+
+//LAYOUTS
+		let layouts = {
+			circleLayout: {
+				name: "circle",
+
+				fit: true, // whether to fit the viewport to the graph
+				padding: defaultPadding, // the padding on fit
+				boundingBox: undefined, // constrain layout bounds; { x1, y1, x2, y2 } or { x1, y1, w, h }
+				avoidOverlap: true, // prevents node overlap, may overflow boundingBox and radius if not enough space
+				nodeDimensionsIncludeLabels: false, // Excludes the label when calculating node bounding boxes for the layout algorithm
+				spacingFactor: undefined, // Applies a multiplicative factor (>0) to expand or compress the overall area that the nodes take up
+				radius: undefined, // the radius of the circle
+				startAngle: 3 / 2 * Math.PI, // where nodes start in radians
+				sweep: undefined, // how many radians should be between the first and last node (defaults to full circle)
+				clockwise: true, // whether the layout should go clockwise (true) or counterclockwise/anticlockwise (false)
+				sort: function(a, b){return a.data('label').localeCompare(b.data('label'));},//undefined, // a sorting function to order the nodes; e.g. function(a, b){ return a.data('weight') - b.data('weight') }
+				animate: true, // whether to transition the node positions
+				animationDuration: 500, // duration of animation in ms if enabled
+				animationEasing: undefined, // easing of animation if enabled
+				animateFilter: function ( node, i ){ return true; }, // a function that determines whether the node should be animated.  All nodes animated by default on animate enabled.  Non-animated nodes are positioned immediately when the layout starts
+				ready: undefined, // callback on layoutready
+				stop: undefined, // callback on layoutstop
+				transform: function (node, position ){ return position; } // transform a given node position. Useful for changing flow direction in discrete layouts 
+			},
+
+			gridLayout: {
+				name: "grid",
+
+				fit: true, // whether to fit the viewport to the graph
+				padding: defaultPadding, // the padding on fit
+				rows: 1,
+				sort: function(a, b){return a.data('label').localeCompare(b.data('label'));},//undefined, // a sorting function to order the nodes; e.g. function(a, b){ return a.data('weight') - b.data('weight') }
+				animate: true, // whether to transition the node positions
+				animationDuration: 500, // duration of animation in ms if enabled
+			},
+
+			breadthfirstLayout: {
+				name: 'breadthfirst',
+
+				fit: true, // whether to fit the viewport to the graph
+				directed: true, // whether the tree is directed downwards (or edges can point in any direction if false)
+				padding: defaultPadding, // padding on fit
+				circle: false, // put depths in concentric circles if true, put depths top down if false
+				grid: false, // whether to create an even grid into which the DAG is placed (circle:false only)
+				spacingFactor: 1.75, // positive spacing factor, larger => more space between nodes (N.B. n/a if causes overlap)
+				boundingBox: undefined, // constrain layout bounds; { x1, y1, x2, y2 } or { x1, y1, w, h }
+				avoidOverlap: true, // prevents node overlap, may overflow boundingBox if not enough space
+				nodeDimensionsIncludeLabels: false, // Excludes the label when calculating node bounding boxes for the layout algorithm
+				roots: undefined, // the roots of the trees
+				maximal: false, // whether to shift nodes down their natural BFS depths in order to avoid upwards edges (DAGS only)
+				animate: true, // whether to transition the node positions
+				animationDuration: 500, // duration of animation in ms if enabled
+				animationEasing: undefined, // easing of animation if enabled,
+				animateFilter: function ( node, i ){ return true; }, // a function that determines whether the node should be animated.  All nodes animated by default on animate enabled.  Non-animated nodes are positioned immediately when the layout starts
+				ready: undefined, // callback on layoutready
+				stop: undefined, // callback on layoutstop
+				transform: function (node, position ){ return position; } // transform a given node position. Useful for changing flow direction in discrete layouts
+			},
+
+			randomLayout: {
+				name: 'random',
+
+				fit: true, // whether to fit to viewport
+				padding: defaultPadding, // fit padding
+				boundingBox: undefined, // constrain layout bounds; { x1, y1, x2, y2 } or { x1, y1, w, h }
+				animate: true, // whether to transition the node positions
+				animationDuration: 500, // duration of animation in ms if enabled
+				animationEasing: undefined, // easing of animation if enabled
+				animateFilter: function ( node, i ){ return true; }, // a function that determines whether the node should be animated.  All nodes animated by default on animate enabled.  Non-animated nodes are positioned immediately when the layout starts
+				ready: undefined, // callback on layoutready
+				stop: undefined, // callback on layoutstop
+				transform: function (node, position ){ return position; } // transform a given node position. Useful for changing flow direction in discrete layouts 
+			},
+
+			concentricLayout: {
+				name: 'concentric',
+
+				fit: true, // whether to fit the viewport to the graph
+				padding: defaultPadding, // the padding on fit
+				startAngle: 3 / 2 * Math.PI, // where nodes start in radians
+				sweep: undefined, // how many radians should be between the first and last node (defaults to full circle)
+				clockwise: true, // whether the layout should go clockwise (true) or counterclockwise/anticlockwise (false)
+				equidistant: false, // whether levels have an equal radial distance betwen them, may cause bounding box overflow
+				minNodeSpacing: 150, // min spacing between outside of nodes (used for radius adjustment)
+				boundingBox: undefined, // constrain layout bounds; { x1, y1, x2, y2 } or { x1, y1, w, h }
+				avoidOverlap: true, // prevents node overlap, may overflow boundingBox if not enough space
+				nodeDimensionsIncludeLabels: false, // Excludes the label when calculating node bounding boxes for the layout algorithm
+				height: undefined, // height of layout area (overrides container height)
+				width: undefined, // width of layout area (overrides container width)
+				spacingFactor: undefined, // Applies a multiplicative factor (>0) to expand or compress the overall area that the nodes take up
+				concentric: function( node ){ // returns numeric value for each node, placing higher nodes in levels towards the centre
+					return node.degree();
+				},
+				levelWidth: function( nodes ){ // the letiation of concentric values in each level
+					return nodes.maxDegree() / 4;
+				},
+				animate: true, // whether to transition the node positions
+				animationDuration: 500, // duration of animation in ms if enabled
+				animationEasing: undefined, // easing of animation if enabled
+				animateFilter: function ( node, i ){ return true; }, // a function that determines whether the node should be animated.  All nodes animated by default on animate enabled.  Non-animated nodes are positioned immediately when the layout starts
+				ready: undefined, // callback on layoutready
+				stop: undefined, // callback on layoutstop
+				transform: function (node, position ){ return position; } // transform a given node position. Useful for changing flow direction in discrete layouts
+			},
+		};
+
+//GRAPH OBJECT
+		function makeCy(cyContainer){//builds a graph
+			let myCy = cytoscape({
+				container: cyContainer,
+/* //Test data
+				elements: [ // list of graph elements to start with
+					{ // node a
+						data: {id: 'a', label: 'a'}
+					},
+					{ // node b
+						data: {id: 'b', label: 'b'}
+					},
+					{ // node c
+						data: {id: 'c', label: 'c'}
+					},
+
+					{ // edge ab
+						data: {id: 'ab', source: 'a', target: 'b', weight: 10}
+					},
+					{ // edge ac
+						data: {id: 'ac', source: 'c', target: 'a', weight: 500}
+					},
+					{ // edge bc
+						data: {id: 'bc', source: 'b', target: 'c', weight: 1}
+					}
+				],
+*/
+				style: cyStyles,
+
+				touchTapThreshold: 8,
+				desktopTapThreshold: 4,
+				userPanningEnabled: true,
+			});
+
+			return myCy;
+		};
+
+//LAYOUT FUNCTION
+		function layoutGraph(graph, layoutName){//Runs a layout on a graph
+			setUndo("layout");
+			let layout = graph.layout(layouts[layoutName]);
+			layout.run();
+		};
+
+//OVERLAP CHECKING
+		function overlapping(nodeA, nodeB, tolerance){//Determines if two nodes overlap within certain tolerance
+			let delta = 35;//0;
+			if(typeof tolerance == "number"){
+				delta += tolerance;
+			};
+
+/*			let boxA = {
+				x1: nodeA.boundingbox().x1 + delta,
+				x2: nodeA.boundingbox().x2 - delta,
+				y1: nodeA.boundingbox().y1 + delta,
+				y2: nodeA.boundingbox().y2 - delta,
+			};
+			let boxB = {
+				x1: nodeB.boundingbox().x1 + delta,
+				x2: nodeB.boundingbox().x2 - delta,
+				y1: nodeB.boundingbox().y1 + delta,
+				y2: nodeB.boundingbox().y2 - delta,
+			};
+
+			if((boxA.x1 >= boxB.x1 && boxA.x1 <= boxB.x2 || boxA.x2 >= boxB.x1 && boxA.x2 <= boxB.x2) && (boxA.y1 >= boxB.y1 && boxA.y1 <= boxB.y2 || boxA.y2 >= boxB.y1 && boxA.y2 <= boxB.y2)){*/
+
+			if(Math.pow(nodeA.position().x - nodeB.position().x, 2) + Math.pow(nodeA.position().y - nodeB.position().y, 2) <= Math.pow(delta, 2)){
+				return true;
+			}
+			else{
+				return false;
+			};
+		};
+
+		function offset(node, edge){//Calculates distance from node to edge
+			let x = node.position('x');
+			let y = node.position('y');
+			let x1 = edge.source().position('x');
+			let y1 = edge.source().position('y');
+			let x2 = edge.target().position('x');
+			let y2 = edge.target().position('y');
+			let m = (y2 - y1)/ (x2 - x1);
+			let k = y1 - m*x1;
+
+			if(isNaN(m) || Math.abs(m) > 100000){//If close enough to vertical - avoids number overflow
+				let between = false;
+				if((y1 >= y && y >= y2) || (y1 <= y && y <= y2)){
+					between = true;
+				};
+				return {x: x1 - x, y: 0, d: Math.abs(x1 - x), b: between};
+			}
+			else if(Math.abs(m) <= 0.00001){//If close enough to horizontal - avoids number overflow
+				let between = false;
+				if((x1 >= x && x >= x2) || (x1 <= x && x <= x2)){
+					between = true;
+				};
+				return {x: 0, y: y1 - y, d: Math.abs(y1 - y), b: between};
+			}
+			else{
+				let xVal = (y-k)/ m - x;
+				let yVal = m*x+k - y;
+			 	let dVal = Math.abs(xVal*yVal)/ Math.sqrt(Math.pow(xVal, 2) + Math.pow(yVal, 2));
+				let between = false;
+				if((Math.abs(m) <= 1 && ((x1 >= x && x >= x2) || (x1 <= x && x <= x2))) || (Math.abs(m) >= 1 && ((y1 >= y && y >= y2) || (y1 <= y && y <= y2)))){
+					between = true;
+				};
+				 return {x: xVal, y: yVal, d: dVal, b: between};
+			};
+		};
+
+//MAKE SIMPLE
+		function makeSimple(graph){
+			graph.edges().forEach(function(elt){
+				//for every edge if parallel set is non trivial remove all other edges.
+				graph.$('#'+elt.id()).parallelEdges().forEach(function(elmt, index){
+					if(index > 0){
+						graph.remove(elmt);
+					};
+				});
+				//if edge is a loop, then remove if
+				if(elt.isLoop()){
+					graph.remove(elt);
+				};
+			});
+		};
+
+//EDGE MIRRORING AND EDGE REVERSAL
+		function mirrorEdge(edge, source, target, userData, graph){
+			if(graph === undefined){
+				graph = cy;
+			};
+
+			//copies edge data to a new edge with given source and target
+			let data = edge.data();
+			let classes = edge.classes();
+
+			graph.add([{
+				group: "edges",
+				data: {source: source, target: target, newlyAdded: true}
+			}]);
+
+			let mirror = graph.edges("[newlyAdded]")[0];
+			mirror.data(data);
+			mirror.data(userData);
+			mirror.classes(classes);
+			mirror.removeData("newlyAdded");
+		};
+
+		function reverseEdge(edge){
+			//creates a new edge that is the reverse of the given edge
+			mirrorEdge(edge, edge.target().id(), edge.source().id());
+		};
+
+//MERGE NODES
+		function merge(graph, node, elt, simple, directed, flow){
+			if(simple || flow){//if simple graph remove edges connecting the two nodes
+				graph.edges("edge[source = '"+node.id()+"']edge[target = '"+elt.id()+"']").forEach(function(elmt){
+					graph.remove(elmt);
+				});
+				graph.edges("edge[source = '"+elt.id()+"']edge[target = '"+node.id()+"']").forEach(function(elmt){
+					graph.remove(elmt);
+				});
+			};
+
+			graph.edges("edge[source = '"+node.id()+"']").forEach(function(elmt, index){
+				if((simple || flow) && !directed && (graph.edges("edge[source = '"+elt.id()+"']edge[target = '"+elmt.target().id()+"']").length != 0 || graph.edges("edge[source = '"+elmt.target().id()+"']edge[target = '"+elt.id()+"']").length != 0)){
+					//if edge alredy exists then don't build it
+				}
+				else if((simple || flow) && graph.edges("edge[source = '"+elt.id()+"']edge[target = '"+elmt.target().id()+"']").length != 0){
+					//if edge alredy exists then don't build it
+				}
+				else{
+					mirrorEdge(elmt, elt.id(), elmt.target().id(), undefined, graph);
+				};
+				graph.remove(elmt);
+			});
+
+			graph.edges("edge[target = '"+node.id()+"']").forEach(function(elmt){
+				if((simple || flow) && !directed && (graph.edges("edge[source = '"+elmt.source().id()+"']edge[target = '"+elt.id()+"']").length != 0 || graph.edges("edge[source = '"+elt.id()+"']edge[target = '"+elmt.source().id()+"']").length != 0)){
+					//if edge alredy exists then don't build it
+				}
+				else if((simple || flow) && graph.edges("edge[source = '"+elmt.source().id()+"']edge[target = '"+elt.id()+"']").length != 0){
+					//if edge alredy exists then don't build it
+				}
+				else{
+					mirrorEdge(elmt, elmt.source().id(), elt.id(), undefined, graph);
+				};
+				graph.remove(elmt);
+			});
+
+			graph.remove(node);
+		};
+
+//LABELS FOR FLOW DIAGRAMS
+		function labelFlow(flow, capacity){
+			return flow.toString()+' / '+capacity.toString();
+		};
+
+//UNDO/REDO AND JSON MANIPULATION
+		function cyToJSON(_json, _labelOffset){
+			let json = _json;
+			let labelOffset = _labelOffset;
+			let graphTypes = "";
+
+			if(json == undefined){
+				json = cy.json();
+			};
+
+			if(labelOffset == undefined){
+				labelOffset = 0;
+			};
+
+			//determine graph type
+			cyTypes.forEach(function(type){
+				if(type.value){
+					graphTypes = graphTypes + "1";
+				}
+				else{
+					graphTypes = graphTypes + "0";
+				};
+			});
+
+			return JSON.stringify(json)+'@'+(nodeLabel + labelOffset).toString()+'#'+graphTypes;
+		};
+
+		function cyFromJSON(jsonString){
+			let atIndex = jsonString.lastIndexOf('@');
+			if(atIndex == -1){
+				Swal.fire({
+					position: 'top',
+					title: "Invalid File",
+					icon: 'error',
+					customClass: {
+						container: 'mySwal',
+						icon: 'mySwal-icon',
+						actions: 'mySwal-actions',
+					},
+				});
+			}
+			else{
+				let json = jsonString.substring(0, atIndex);
+				let userData = jsonString.substring(atIndex + 1);
+				let hashIndex = userData.lastIndexOf('#');
+				let graphTypes = "";
+				if(hashIndex == -1){
+					nodeLabel = Number(userData);
+				}
+				else{
+					nodeLabel = Number(userData.substring(0, hashIndex));
+					graphTypes = userData.substring(hashIndex + 1);
+				};
+				cy.json(JSON.parse(json));
+				return graphTypes;
+			};
+		};
+
+		function setUndo(_json, labelOffset){
+			let json = _json;
+			let changeViewport = true;
+			if(json == undefined){
+				json = cy.json();
+			}
+			else if(json == "layout"){
+				json = cy.json();
+				changeViewport = false;
+			};
+			undoStack.push({json: cyToJSON(json, labelOffset), changeViewport: changeViewport});
+			document.getElementById("undo").style.display = "block";
+			redoStack = [];
+			document.getElementById("redo").style.display = "none";
+		};
+
+//MOUSE AND TOUCH CONTROLS
+		function mouseControls(){
+			let neighbors;
+			let tapFree = true;
+			let moved;
+			let json;
+			let nodeClasses;
+
+			async function getLabel(placeholder){
+				let inputValue = "";
+				if(placeholder != undefined){
+					inputValue = placeholder;
+				};
+
+				let inputType = "text";
+				let inputClass = "mySwal-input";
+				if(graphMode == "freeform"){
+					inputType = "textarea";
+					inputClass = "mySwal-textarea";
+				};
+
+				let {value: inputText} = await Swal.fire({
+					position: 'top',
+					title: 'Please enter a label!',
+					input: inputType,
+					inputValue: inputValue,
+					icon: "info",
+					imageHeight: "5px",
+					showCancelButton: true,
+					allowOutsideClick: true,
+					customClass: {
+						container: 'mySwal',
+						icon: 'mySwal-icon',
+						actions: 'mySwal-actions',
+						input: inputClass,
+						cancelButton: 'mySwal-cancel',
+					},
+					onOpen: function(){
+						let input = swal.getInput()
+						input.select()
+					}
+				})/*.then((result) => {
+					if(result.value && result.dismiss !== Swal.DismissReason.cancel){
+						console.log(result.value)
+						return result.value;
+					}
+					else if(result.dismiss === Swal.DismissReason.cancel){
+						console.log(placeholder)
+						return placeholder;
+					};
+				});*/
+
+				//if(inputText){
+					return inputText;
+				//};
+			};
+
+			async function getWeight(placeholder){
+				let inputValue = "0";
+				if(placeholder != undefined){
+					inputValue = placeholder;
+				};
+
+				let {value: inputText} = await Swal.fire({
+					position: 'top',
+					title: 'Please enter a weight!',
+					input: 'number',
+					inputValue: inputValue,
+					icon: "info",
+					imageHeight: "5px",
+					showCancelButton: false,
+					allowEscapeKey: false,
+					allowOutsideClick: false,
+					customClass: {
+						container: 'mySwal',
+						icon: 'mySwal-icon',
+						actions: 'mySwal-actions',
+						input: 'mySwal-input',
+					},
+					inputValidator: (value) => {
+						if(!value){
+							return 'Weight required!'
+						};
+					},
+					onOpen: function(){
+						let input = swal.getInput()
+						input.select()
+					}
+				});
+	
+				if(inputText){
+					return Number(inputText);
+				};
+			};
+
+			async function getFlow(capPlaceholder, flwPlaceholder){
+				let cap = 0;
+				let flw = 0;
+				if(capPlaceholder != undefined){
+					cap = capPlaceholder;
+				};
+				if(flwPlaceholder != undefined){
+					flw = flwPlaceholder;
+				};
+
+				let swap = false;
+				let cancelled = false;
+				let capacityValue;
+				let flowValue;
+
+				await Swal.fire({
+					position: 'top',
+					title: 'Please enter capacity and flow',
+					html: `<span style = "font-size: 17pt;">Capacity</span>
+					<input type = "number"
+						id = "capacity"
+						value = ${cap}
+						min = 0
+						tabindex = "1"
+						class = "mySwal-input-small"
+						onFocus = "this.select()"
+					><br>
+					<span style = "font-size: 17pt">Flow</span>
+					<input type = "number"
+						id = "flow"
+						value = ${flw}
+						min = 0
+						tabindex = "2"
+						class = "mySwal-input-small"
+						onFocus = "this.select()"
+					><br>
+					<input
+						type = "submit"
+						id = "okButton"
+						class = "swal2-styled swal2-confirm mySwal-button"
+						style = "margin-top: 11.25px"
+						onclick = "Swal.close();"
+						value = "OK"
+					>
+					<input
+						type = "submit"
+						id = "swapButton"
+						class = "swal2-styled swal2-confirm mySwal-button mySwal-swap"
+						style = "margin-top: 11.25px;"
+						value = "Swap"
+					>`,
+					focusConfirm: false,
+					icon: "info",
+					imageHeight: "5px",
+					showConfirmButton: false,
+					showCancelButton: false,
+					allowOutsideClick: false,
+					allowEscapeKey: false,
+					customClass: {
+						container: 'mySwal',
+						icon: 'mySwal-icon',
+					},
+					onOpen: () => {
+						capacityInput = Swal.getContent().querySelector('#capacity');
+						flowInput = Swal.getContent().querySelector('#flow');
+						okButton = Swal.getContent().querySelector('#okButton');
+
+						//make sure flow is not greater than capacity
+						capacityInput.addEventListener('input', () => {
+							let cap = Number(capacityInput.value);
+							let flw = Number(flowInput.value);
+
+							if(cap < 0){
+								capacityInput.value = "0";
+							};
+
+							if(flw > cap){
+								flowInput.value = capacityInput.value;
+							};
+						});
+
+						flowInput.addEventListener('input', () => {
+							let cap = Number(capacityInput.value);
+							let flw = Number(flowInput.value);
+
+							if(flw < 0){
+								flowInput.value = "0";
+							};
+
+							if(flw > cap){
+								flowInput.value = capacityInput.value;
+							};
+						});
+
+						//autoclick "OK" on enter key
+						document.getElementsByClassName("swal2-popup")[0].addEventListener("keyup", function(event){
+							//Number 13 is the "Enter" key on the keyboard
+							if(event.keyCode === 13){
+							//Cancel the default action, if needed
+							event.preventDefault();
+							//Trigger the button element with a click
+							okButton.click();
+							};
+						});
+
+						//get button clicking to work
+						swapButton.addEventListener('click', () => {
+							swap = true;
+							Swal.close();
+						});
+					},
+				});
+
+				if(capacityInput.value && flowInput.value){
+					return {capacity: Number(capacityInput.value), flow: Number(flowInput.value), swap: swap};
+				};
+			};
+
+			cy.on('viewport', function(){
+				//Set undo on graph pan or zoom
+				if(!undoing){
+					pan = {x: cy.pan().x, y: cy.pan().y};
+					zoom = cy.zoom();
+				};
+			});
+
+			cy.on('grab', 'node', function(evt){
+				if(editMode == "add"){//Adds a new edge when dragging a node
+					json = cy.json();
+					let node = evt.target;
+					let nodeId = node.id();
+					nodeClasses = node.classes();
+					node.classes(['node', 'moving']);
+					dummyNodeLabel = node.data().label;
+					node.data('label', "");
+					neighbors = node.neighborhood();
+
+					cy.add([{
+						group: "nodes",
+						data: {id: "Dummy", label: dummyNodeLabel},
+						position: {x: node.position('x'), y: node.position('y')},
+					}]);
+
+					cy.$('#Dummy').classes(nodeClasses);
+
+					neighbors.edges().forEach(function(elt){
+						let sourceId = elt.source().id();
+						let targetId = elt.target().id();
+
+						if(sourceId == nodeId && targetId == nodeId){
+							mirrorEdge(elt, "Dummy", "Dummy");
+						}
+						else if(sourceId == nodeId){
+							mirrorEdge(elt, "Dummy", targetId);
+						}
+						else if(targetId == nodeId){
+							mirrorEdge(elt, sourceId, "Dummy");
+						};
+						elt.addClass('moving');
+					});
+
+					cy.add([{
+						group: "edges",
+						data: {source: "Dummy", target: nodeId}
+					}]);
+				}
+				else if(editMode == "edit"){
+					json = cy.json();
+					moved = {x: evt.target.position('x'), y: evt.target.position('y')};
+				}
+				else if(editMode == "move"){
+					json = cy.json();
+					moved = {x: evt.target.position('x'), y: evt.target.position('y')};
+				};
+			});
+
+			cy.on('free', 'node', function(evt){
+				if(editMode == "add"){//on release build edge
+					let node = evt.target;
+					let nodeId = node.id();
+					let dummy = cy.$('#Dummy');
+					let endpoint = "none";
+					let nodeAdded = -1;
+					let changed = true;
+
+					/*neighbors.edges().forEach(function(elt){
+						elt.removeClass('moving');
+					});*/
+
+					cy.nodes().forEach(function(elt){//check whether endpoint is different to startpoint
+						if(overlapping(node, elt) && nodeId != elt.id()){
+							endpoint = elt.id();
+						};
+					});
+
+					if(overlapping(node, dummy) && graphMode == "freeform" && !simpleCy.value){
+						if(!weightedCy.value){
+							cy.add([{
+								group: "edges",
+								data: {source: nodeId, target: nodeId}
+							}]);
+						}
+						else{
+							new Promise(function(resolve, reject){
+								resolve(getLabel());
+							})
+							.then(function(label){
+								if(!label){
+									label = "";
+								}
+								cy.add([{
+									group: "edges",
+									data: {source: nodeId, target: nodeId, label: label, newlyAdded: true},
+								}]);
+								cy.edges('[newlyAdded]')[0].addClass('labelled').removeData("newlyAdded");
+							});
+						};
+					}
+					else if(overlapping(node, dummy)){
+						changed = false;
+					};
+
+					if(endpoint == "none"){//if endpoint is a free space then make a new node
+						let newNode = String.fromCharCode(nodeLabel);
+						nodeAdded = nodeLabel;
+
+						cy.add([{
+							group: "nodes",
+							data: {id: nodeAdded, label: newNode},
+							position: {x: node.position('x'), y: node.position('y')},
+						}]);
+
+						if(weightedCy.value && graphMode == "freeform"){
+							new Promise(function(resolve, reject){
+								resolve(getLabel());
+							})
+							.then(function(label){
+								if(!label){
+									label = "";
+								}
+								cy.add([{
+									group: "edges",
+									data: {source: nodeId, target: nodeAdded, label: label, newlyAdded: true},
+								}]);
+								cy.edges('[newlyAdded]')[0].addClass('labelled').removeData("newlyAdded");
+							});
+						}
+						else if(weightedCy.value && !flowCy.value){
+							new Promise(function(resolve, reject){
+								resolve(getWeight());
+							})
+							.then(function(weight){
+								cy.add([{
+									group: "edges",
+									data: {source: nodeId, target: nodeAdded, weight: weight, newlyAdded: true},
+								}]);
+								cy.edges('[newlyAdded]')[0].addClass('weighted').removeData("newlyAdded");
+							});
+						}
+						else if(flowCy.value){
+							new Promise(function(resolve, reject){
+								resolve(getFlow());
+							})
+							.then(function(result){
+								if(!result.swap){
+									cy.add([{
+										group: "edges",
+										data: {source: nodeId, target: nodeAdded, weight: result.capacity, flow: result.flow, flowLabel: labelFlow(result.flow, result.capacity), newlyAdded: true},
+									}]);
+								}
+								else{
+									cy.add([{
+										group: "edges",
+										data: {source: nodeAdded, target: nodeId, weight: result.capacity, flow: result.flow, flowLabel: labelFlow(result.flow, result.capacity), newlyAdded: true},
+									}]);
+								};
+								cy.edges('[newlyAdded]')[0].addClass('flow').removeData("newlyAdded");
+							});
+						}
+						else{
+							cy.add([{
+								group: "edges",
+								data: {source: nodeId, target: nodeAdded}
+							}]);
+						};
+						nodeLabel++;
+					}
+					else if((simpleCy.value || flowCy.value) && !directedCy.value && (cy.edges("edge[source = '"+nodeId+"']edge[target = '"+endpoint+"']").length != 0 || cy.edges("edge[source = '"+endpoint+"']edge[target = '"+nodeId+"']").length != 0)){
+						//if new edge is actually an old edge then don't build it
+						changed = false;
+					}
+					else if((simpleCy.value || flowCy.value) && cy.edges("edge[source = '"+nodeId+"']edge[target = '"+endpoint+"']").length != 0){
+						//if new edge is actually an old edge then don't build it
+						changed = false;
+					}
+					else{
+						if(weightedCy.value && graphMode == "freeform"){
+							new Promise(function(resolve, reject){
+								resolve(getLabel());
+							})
+							.then(function(label){
+								if(label === undefined){
+									label = "";
+								};
+
+								if(endpoint == "Dummy"){
+									endpoint = nodeId;
+								};
+
+								cy.add([{
+									group: "edges",
+									data: {source: nodeId, target: endpoint, label: label, newlyAdded: true},
+								}]);
+								cy.edges('[newlyAdded]')[0].addClass('labelled').removeData("newlyAdded");
+							});
+						}
+						else if(weightedCy.value && !flowCy.value && graphMode == "math"){
+							new Promise(function(resolve, reject){
+								resolve(getWeight());
+							})
+							.then(function(weight){
+								cy.add([{
+									group: "edges",
+									data: {source: nodeId, target: endpoint, weight: weight, newlyAdded: true},
+								}]);
+								cy.edges('[newlyAdded]')[0].addClass('weighted').removeData("newlyAdded");
+							});
+						}
+						else if(flowCy.value){
+							new Promise(function(resolve, reject){
+								resolve(getFlow());
+							})
+							.then(function(result){
+								if(!result.swap){
+									cy.add([{
+										group: "edges",
+										data: {source: nodeId, target: endpoint, weight: result.capacity, flow: result.flow, flowLabel: labelFlow(result.flow, result.capacity), newlyAdded: true},
+									}]);
+								}
+								else{
+									cy.add([{
+										group: "edges",
+										data: {source: endpoint, target: nodeId, weight: result.capacity, flow: result.flow, flowLabel: labelFlow(result.flow, result.capacity), newlyAdded: true},
+									}]);
+								};
+
+								cy.edges('[newlyAdded]')[0].addClass('flow').removeData("newlyAdded");
+							});
+						}
+						else{
+							cy.add([{
+								group: "edges",
+								data: {source: nodeId, target: endpoint}
+							}]);
+						};
+					};
+
+					//restore node to its original position and delete dummy node
+					node.position({x: dummy.position('x'), y: dummy.position('y')})
+					node.classes(nodeClasses);
+					node.data('label', dummyNodeLabel);
+					cy.remove(dummy);
+
+					//reshow edges and fix flow visibility
+					neighbors.edges().forEach(function(elt){
+						elt.removeClass('moving');
+						if(elt.hasClass("flow")){
+							elt.removeClass('flow');
+							elt.addClass('flow');
+						};
+					});
+
+					if(nodeAdded != -1 && edgePinning){
+						//If edgepinning and new node is added pin nearby edges
+						let pin = cy.$('#'+nodeAdded);
+						let pinId = pin.id();
+						let closest = {d: Infinity};
+
+						cy.edges().forEach(function(elt){
+							let nodeOffset = offset(pin, elt);
+							if((nodeOffset.d <= pin.width()/ 2 || isNaN(nodeOffset.d)) && nodeOffset.b && elt.target().id() != pinId){
+								let start = elt.source().id();
+								let end = elt.target().id();
+								if(nodeOffset.d < closest.d){
+									closest = nodeOffset;
+								};
+
+								if((simpleCy.value || flowCy.value) && !directedCy.value && (cy.edges("edge[source = '"+start+"']edge[target = '"+nodeAdded+"']").length != 0 || cy.edges("edge[source = '"+nodeAdded+"']edge[target = '"+start+"']").length != 0)){
+									//if new edge is actually an old edge or reverse of an old edge then don't build it
+									changed = false;
+								}
+								else if((simpleCy.value || flowCy.value) && cy.edges("edge[source = '"+start+"']edge[target = '"+nodeAdded+"']").length != 0){
+									//if new edge is actually an old edge then don't build it
+									changed = false;
+								}
+								else{
+									mirrorEdge(elt, start, nodeAdded);
+								};
+
+								if((simpleCy.value || flowCy.value) && !directedCy.value && (cy.edges("edge[source = '"+nodeAdded+"']edge[target = '"+end+"']").length != 0 || cy.edges("edge[source = '"+end+"']edge[target = '"+nodeAdded+"']").length != 0)){
+									//if new edge is actually an old edge or reverse of an old edge then don't build it
+									changed = false;
+								}
+								else if((simpleCy.value || flowCy.value) && cy.edges("edge[source = '"+nodeAdded+"']edge[target = '"+end+"']").length != 0){
+									//if new edge is actually an old edge then don't build it
+									changed = false;
+								}
+								else{
+									//if edge had flow or weight change the second edge to have 0 flow or weight
+									let edgeData = {};
+									if(typeof elt.data("flow") !== 'undefined'){
+										edgeData.weight = 0;
+										edgeData.flow = 0;
+										edgeData.flowLabel = labelFlow(0, 0);
+									}
+									else if(typeof elt.data("weight") !== 'undefined'){
+										edgeData.weight = 0;
+									};
+
+									mirrorEdge(elt, nodeAdded, end, edgeData);
+								};
+
+								cy.remove(elt);
+							};
+						});
+
+						if(closest.x == 0 || closest.y == 0){
+							pin.position({x: pin.position('x') + closest.x, y: pin.position('y') + closest.y});
+						}
+						else if(closest.d < Infinity){
+							let moveFactor = (closest.x * closest.y) / (Math.pow(closest.x, 2) + Math.pow(closest.y, 2));
+							pin.position({
+								x: pin.position('x') + Math.sign(closest.x)*Math.abs(closest.y*moveFactor),
+								y: pin.position('y') + Math.sign(closest.y)*Math.abs(closest.x*moveFactor)
+							});
+						};
+					};
+
+					if(changed){
+						if(nodeAdded == -1){
+							setUndo(json);
+						}
+						else{
+							setUndo(json, -1);
+						};
+					};
+				}
+				else if(editMode == "edit"){
+					let node = evt.target;
+
+					if(node.position('x') != moved.x || node.position('y') != moved.y){
+						setUndo(json);
+					};
+
+					cy.nodes().forEach(function(elt){//check whether dragged onto another node
+						if(overlapping(node, elt, 2) && node.id() != elt.id()){
+							//if overlapping then merge two nodes
+							merge(cy, node, elt, simpleCy.value, directedCy.value, flowCy.value);
+						};
+					});
+				}
+				else if(editMode == "move"){
+					let node = evt.target;
+
+					if(node.position('x') != moved.x || node.position('y') != moved.y){
+						setUndo(json);
+					};
+				};
+			});
+
+			cy.on("tap", "node", function(e){
+				if(editMode == "add"){
+					tapFree = false;
+				}
+				/*else if(editMode == "delete"){
+					setUndo();
+					cy.remove(e.target);
+				}*/
+				else if(editMode == "edit"){
+					new Promise(function(resolve, reject){
+						resolve(getLabel(e.target.data('label')));
+					})
+					.then(function(newLabel){
+						if(newLabel === undefined){
+							newLabel = e.target.data('label');
+						}
+
+						if(newLabel != e.target.data('label')){
+							setUndo();
+							e.target.data('label', newLabel);
+						};
+					});
+				};
+			});
+
+			cy.on("tap", "edge", function(e){
+				let edge = e.target;
+
+				if(editMode == "add"){
+					tapFree = false;
+					setUndo();
+					cy.add([{
+						group: "nodes",
+						data: {id: nodeLabel, label: String.fromCharCode(nodeLabel)},
+						renderedPosition: {x: e.renderedPosition.x, y: e.renderedPosition.y},
+					}]);
+
+					let node = cy.$('#'+nodeLabel);
+
+					cy.nodes().forEach(function(elt){
+						if(overlapping(node, elt) && node.id() != elt.id()){
+							cy.remove(node);
+						};
+					});
+
+					if(cy.$('#'+nodeLabel).isNode() && edgePinning){
+						let nodeOffset = offset(node, edge);
+						if(nodeOffset.x == 0 || nodeOffset.y == 0){
+							node.position({x: node.position('x') + nodeOffset.x, y: node.position('y') + nodeOffset.y});
+						}
+						else{
+							let moveFactor = (nodeOffset.x * nodeOffset.y) / (Math.pow(nodeOffset.x, 2) + Math.pow(nodeOffset.y, 2));
+							node.position({
+								x: node.position('x') + Math.sign(nodeOffset.x)*Math.abs(nodeOffset.y*moveFactor),
+								y: node.position('y') + Math.sign(nodeOffset.y)*Math.abs(nodeOffset.x*moveFactor)
+							});
+						};
+
+						cy.edges().forEach(function(elt){
+							let dist = offset(node, elt).d;
+
+							if((dist <= node.width()/ 2 || isNaN(dist)) && offset(node, elt).b){
+								let start = elt.source().id();
+								let end = elt.target().id();
+
+								if(simpleCy.value && !directedCy.value && (cy.edges("edge[source = '"+start+"']edge[target = '"+nodeLabel+"']").length != 0 || cy.edges("edge[source = '"+nodeLabel+"']edge[target = '"+start+"']").length != 0)){
+									//if new edge is actually an old edge or reverse of an old edge then don't build it
+								}
+								else if(simpleCy.value && cy.edges("edge[source = '"+start+"']edge[target = '"+nodeLabel+"']").length != 0){
+									//if new edge is actually an old edge then don't build it
+								}
+								else{
+									mirrorEdge(elt, start, nodeLabel);
+								};
+
+								if(simpleCy.value && !directedCy.value && (cy.edges("edge[source = '"+nodeLabel+"']edge[target = '"+end+"']").length != 0 || cy.edges("edge[source = '"+end+"']edge[target = '"+nodeLabel+"']").length != 0)){
+									//if new edge is actually an old edge then don't build it
+								}
+								else if(simpleCy.value && cy.edges("edge[source = '"+nodeLabel+"']edge[target = '"+end+"']").length != 0){
+									//if new edge is actually an old edge then don't build it
+								}
+								else{
+									let edgeData = {};
+									if(typeof elt.data("flow") !== 'undefined'){
+										edgeData.weight = 0;
+										edgeData.flow = 0;
+										edgeData.flowLabel = labelFlow(0, 0);
+									}
+									else if(typeof elt.data("weight") !== 'undefined'){
+										edgeData.weight = 0;
+									};
+									mirrorEdge(elt, nodeLabel, end, edgeData);
+								};
+
+								cy.remove(elt);
+							};
+
+						});
+						nodeLabel++;
+					}
+					else if(cy.$('#'+nodeLabel).isNode()){
+						nodeLabel++;
+					};
+				}
+				/*else if(editMode == "delete"){
+					setUndo();
+					cy.remove(edge);
+				}*/
+				else if(editMode == "edit" && weightedCy.value && graphMode == "freeform"){
+					new Promise(function(resolve, reject){
+						resolve(getLabel(edge.data('label')));
+					})
+					.then(function(newLabel){
+						if(newLabel === undefined){
+							newLabel = edge.data('label');
+						}
+
+						if(newLabel != edge.data('label')){
+							setUndo();
+							edge.data('label', newLabel);
+							edge.addClass("labelled")
+						};
+					});
+				}
+				else if(editMode == "edit" && weightedCy.value && !flowCy.value){
+					new Promise(function(resolve, reject){
+						resolve(getWeight(edge.data('weight')));
+					})
+					.then(function(newWeight){
+						if(newWeight != edge.data('weight')){
+							setUndo();
+							edge.data('weight', newWeight);
+							edge.addClass("weighted")
+						};
+					});
+				}
+				else if(editMode == "edit" && flowCy.value){
+					let edgeData = edge.data();
+					let oldWeight = edgeData.weight;
+					let oldFlow = edgeData.flow;
+
+					new Promise(function(resolve, reject){
+						resolve(getFlow(oldWeight, oldFlow));
+					})
+					.then(function(result){
+						if(result.capacity != oldWeight || result.flow != oldFlow){
+							setUndo();
+							edge.data({
+								weight: result.capacity,
+								flow: result.flow,
+								flowLabel: labelFlow(result.flow, result.capacity),
+							});
+							edge.addClass("flow");
+						};
+
+						if(result.swap){
+							reverseEdge(edge);
+							cy.remove(edge);
+						};
+					});
+				};;
+			});
+
+			cy.on("tap", function(e){
+				if(editMode == "add" && tapFree){
+					setUndo();
+					cy.add([{
+						group: "nodes",
+						data: {id: nodeLabel, label: String.fromCharCode(nodeLabel)},
+						renderedPosition: {x: e.renderedPosition.x, y: e.renderedPosition.y},
+					}]);
+					//nodeLabel++;
+
+					let node = cy.$('#'+nodeLabel);
+
+					cy.nodes().forEach(function(elt){
+						if(overlapping(node, elt) && node.id() != elt.id()){
+							cy.remove(node);
+						};
+					});
+
+					if(cy.$('#'+nodeLabel).isNode()){
+						nodeLabel++;
+					};
+				}
+				tapFree = true;
+			});
+
+			cy.on("select", function(e){
+				let eles = cy.$(':selected');
+
+				if(eles.length > 0 && !dijkstraHighlighting){
+					eles.forEach(function(elt){
+						elt.unselect();
+					});
+					setUndo();
+				};
+
+				if(editMode == "highlight" && !undoing && !dijkstraHighlighting){
+					eles.forEach(function(elt){
+						let color = highlightColor;
+						//color = document.getElementById("highlightColor").value;
+						let clsName = "highlight"+color.substring(1);
+						if(!JSON.stringify(cy.style().json()).includes("highlight"+color)){
+							highlightStyle(color);
+						};
+
+						if(elt.hasClass(clsName)){
+							elt.removeClass(clsName);
+						}
+						else{
+							elt.classes().forEach(function(cls){
+								if(cls.includes("highlight")){
+									elt.removeClass(cls);
+								};
+							});
+							elt.addClass(clsName);
+						};
+					});
+				}
+				else if(editMode == "delete" && !undoing && !dijkstraHighlighting){
+					eles.forEach(function(elt){
+						cy.remove(elt);
+					});
+				};
+				dijkstraHighlighting = false;
+				/*let elt = e.target;
+				elt.unselect();
+				if(editMode == "highlight" && !undoing){
+					setUndo();
+					let color = document.getElementById("highlightColor").value;
+					let clsName = "highlight"+color.substring(1);
+					if(!JSON.stringify(cy.style().json()).includes("highlight"+color)){
+						cy.style()
+							.selector('node.'+clsName).style({
+								'border-width': 3,
+								'border-color': color,
+							})
+							.selector('edge.'+clsName).style({
+								'line-color': color,
+								'target-arrow-color': color,
+							})
+						.update();
+					};
+
+					if(elt.hasClass(clsName)){
+						elt.removeClass(clsName);
+					}
+					else{
+						elt.classes().forEach(function(cls){
+							if(cls.includes("highlight")){
+								elt.removeClass(cls);
+							};
+						});
+						elt.addClass(clsName);
+					};
+				};*/
+				//elt.unselect();
+			});
+		};
+
+//CHROMATIC POLYNOMIALS - REQUIRES MY GRAPH STRUCTURE
+		function Edge(start, end, weight){
+			this.start = start;
+			this.end = end;
+			this.weight = weight;
+			
+			this.clone = function(){
+				return new Edge(this.start, this.end, this.weight, this.directed)
+			};
+		};
+
+		function Graph(vertices, edges){
+			this.vertices = vertices || 0;
+			this.edges = edges || [];
+
+			this.clone = function(){
+				let edgesClone = [];
+				this.edges.forEach(function(edge){
+					edgesClone.push(edge.clone());
+				});
+				return new Graph(this.vertices, edgesClone);
+			};
+
+			this.removeVertex = function(index){
+				this.vertices--;
+				for(let i = 0; i < this.edges.length; i++){
+					let e = this.edges[i];
+					if(e.start == index || e.end == index){
+						this.edges.splice(i,1);
+						i--
+					}
+					else if(e.start > index && e.end > index){
+						e.start--;
+						e.end--;
+					}
+					else if(e.start > index){
+						e.start--;
+					}
+					else if(e.end > index){
+						e.end--;
+					};
+				};
+			};
+
+			this.removeEdge = function(index){
+				let edge = this.edges[index];
+				this.edges.splice(index,1);
+				return edge;
+			};
+
+			this.removeLoops = function(){
+				for(let i = 0; i < this.edges.length; i++){
+					if(this.edges[i].start == this.edges[i].end){
+						this.removeEdge(i);
+						i--
+					};
+				};
+			};
+
+			this.makeSimple = function(bias){
+				this.removeLoops();
+				for(let i = 0; i < this.edges.length; i++){
+					let start = this.edges[i].start;
+					let end = this.edges[i].end;
+					for(let j = i+1; j < this.edges.length; j++){
+						if((this.edges[j].start == start && this.edges[j].end == end) || (this.edges[j].end == start && this.edges[j].start == end)){
+							this.removeEdge(j);
+							j--;
+						};
+					};
+				};
+			};
+
+			this.isComplete = function(){
+				let G = this.clone();
+				G.makeSimple();
+				if(G.edges.length == (G.vertices*(G.vertices - 1)/ 2)){
+					return true;
+				}
+				else{
+					return false;
+				};
+			};
+
+			this.totalWeight = function(){
+				let sum = 0;
+				this.edges.forEach(function(edge){
+					sum += edge.weight;
+				});
+
+				return sum;
+			};
+		};
+
+		function cyToGraph(){
+			let nodes = [];
+			let edges = [];
+
+			cy.nodes().forEach(function(elt){
+				nodes.push(elt.id());
+			});
+
+			cy.edges().forEach(function(elt){
+				let start = nodes.indexOf(elt.source().id());
+				let end = nodes.indexOf(elt.target().id());
+				edges.push(new Edge(start, end, 0));
+			});
+
+			return (new Graph(nodes.length, edges));
+		};
+
+		function chromatic(graph){
+			if(graph.edges.length == 0){
+				//if graph has no edges then p(x)=x^v
+				return (new Polynomial({1: 1}).pow(graph.vertices))
+			}
+			else if(graph.isComplete()){
+				let poly = new Polynomial('x');
+				for(var i = 1; i < graph.vertices; i++){
+					poly = poly.mul(new Polynomial({0:-i, 1:1}));
+				};
+
+				return poly;
+			}
+			else{
+				let Gminus = graph.clone();
+				let e = Gminus.removeEdge(0);
+				let Gmerge = Gminus.clone();
+				Gmerge.edges.forEach(function(edge){
+					if(edge.start == e.end){
+						edge.start = e.start;
+					}
+					else if(edge.end == e.end){
+						edge.end = e.start;
+					};
+				});
+				Gmerge.removeVertex(e.end);
+				Gmerge.makeSimple();
+
+				return chromatic(Gminus).sub(chromatic(Gmerge));
+			};
+		};
+
+		function chrom(G){
+			let numV = G.nodes().length;
+			let numE = G.edges().length;
+			if(numE == 0){
+				return (new Polynomial({1: 1}).pow(numV));
+			}
+			else if(numE == numV*(numV-1)/ 2){
+				let poly = new Polynomial('x');
+				for(var i = 1; i < numV; i++){
+					poly = poly.mul(new Polynomial({0:-i, 1:1}));
+				};
+
+				return poly;
+			}
+			else{
+				let Gminus = cytoscape();
+				Gminus.json(G.json());
+				let Gmerge = cytoscape();
+				Gmerge.json(G.json());
+
+				let e = Gminus.edges()[0];
+				Gminus.remove(e);
+				e = Gmerge.edges()[0];
+				merge(Gmerge, e.target(), e.source(), true, false);
+
+				return chrom(Gminus).sub(chrom(Gmerge));
+			};
+		};
+
+		function chromaticNumber(graph){
+			let Gpoly = chromatic(graph);
+			let CN = 0;
+
+			while(Gpoly.eval(CN) == 0){
+				CN++;
+			};
+
+			return CN;
+		};
+
+//POLYNOMIAL FACTORISATION
+		function factors(n){
+			let facts = [1, n];
+			let limit = Math.sqrt(n);
+
+			for(let i = 2; i < limit; i++){
+				if(n%i == 0){
+					facts.push(i, n/ i);
+				};
+			};
+			if(Number.isInteger(limit)){
+				facts.push(limit);
+			};
+
+			return facts;
+		};
+
+		function rationalFactor(poly){//only works if poly has integer coefficients and is non zero
+			let p = poly.clone();
+			let pFactors = [];
+			let possibleFactors = [];
+			let leading = p.lc();
+			let constant = p.eval(0);
+			let degree = 0;
+			let output = "";
+
+			if(leading === undefined){
+				return "0";
+			}
+			else if(leading < 0){
+				output = "-";
+				p = p.neg();
+			};
+
+			while(constant == 0){
+				degree++;
+				p = p.div(new Polynomial('x'))
+				constant = p.eval(0);
+			};
+
+			if(degree == 1){
+				pFactors.push("x");
+			}
+			else if(degree > 1){
+				pFactors.push("x^"+degree.toString());
+			};
+
+			let bb = factors(Math.abs(constant));
+			let aa = factors(Math.abs(leading));
+
+			for(let i = 0; i < bb.length; i++){
+				for(let j = 0; j < aa.length; j++){
+					possibleFactors.push([aa[j], bb[i]]);
+				};
+			};
+
+			while(possibleFactors.length > 0){
+				let a = possibleFactors[0][0];
+				let b = possibleFactors[0][1];
+				let x = -b/ a;
+				if(Number.isInteger(x)){
+					a = 1;
+					b = -x;
+				};
+
+				degree = 0;
+				while(p.eval(x) == 0){
+					degree++;
+					p = p.div(new Polynomial({1:a, 0:b}));
+				};
+				if(degree == 1 && a == 1){
+					pFactors.push("(x+"+b.toString()+")");
+				}
+				else if(degree > 1 && a == 1){
+					pFactors.push("(x+"+b.toString()+")"+"^"+degree.toString());
+				}
+				else if(degree == 1 && a > 1){
+					pFactors.push("("+a.toString()+"x+"+b.toString()+")");
+				}
+				else if(degree > 1 && a > 1){
+					pFactors.push("("+a.toString()+"x+"+b.toString()+")"+"^"+degree.toString());
+				};
+
+				x = b/ a;
+				degree = 0;
+				while(p.eval(x) == 0){
+					degree++;
+					p = p.div(new Polynomial({1:a, 0:-b}));
+				};
+				if(degree == 1 && a == 1){
+					pFactors.push("(x-"+b.toString()+")");
+				}
+				else if(degree > 1 && a == 1){
+					pFactors.push("(x-"+b.toString()+")"+"^"+degree.toString());
+				}
+				else if(degree == 1 && a > 1){
+					pFactors.push("("+a.toString()+"x-"+b.toString()+")");
+				}
+				else if(degree > 1 && a > 1){
+					pFactors.push("("+a.toString()+"x-"+b.toString()+")"+"^"+degree.toString());
+				};
+
+				possibleFactors.shift();
+			};
+
+			if(p.degree() == 0 && p.lc() != 1){
+				output += p.lc().toString();
+			};
+
+			while(pFactors.length > 0){
+				//output factors
+				output += pFactors.shift();
+			};
+			if(p.degree() > 1){
+				//output irreducible factor if there is one
+				output += "("+p.toString()+")";
+			};
+
+			if((output.match(/\(/g) || []).length == 1 && output[0] == '(' && output[output.length-1] == ')'){
+				//remove outer brackets if only one term
+				output = output.slice(1,output.length-1);
+			};
+
+			return output;
+		};
+
+		function wrapDepth(fn, max, message){
+			let depth = 0;
+			return function(){
+				if(++depth > max){
+					window.alert(message);
+					throw "Too much recursion";
+				};
+				let out = fn.apply(null, [].slice.call(arguments, 0));
+				console.log(depth);
+				depth--;
+				return out;
+			};
+		};
+
+//STRING MANIPULATION
+		function spliceString(str, index, count, add){
+			// We cannot pass negative indexes directly to the 2nd slicing operation.
+			if(index < 0){
+				index = str.length + index;
+				if(index < 0){
+					index = 0;
+				};
+			};
+
+			return str.slice(0, index) + (add || "") + str.slice(index + count);
+		};
+
+		function mathToHTML(string){
+			while(string.indexOf('^') > -1){
+				let start = string.indexOf('^');
+				string = spliceString(string, start, 1, "<sup>");
+				start += 4;
+				if(string.charAt(start+1) == '('){
+					let bracketCount = 0;
+					for(let i = start; i < string.length; i++){
+						if(string.charAt(i) == '('){
+							bracketCount++;
+						}
+						else if(string.charAt(i) == ')'){
+							bracketCount--;
+							if(bracketCount == 0){
+								string = spliceString(string, i, 1, "</sup>");
+								string = spliceString(string, start+1, 1, "");
+								break;
+							};
+						};
+					};
+				}
+				else if(/\d/.test(string.charAt(start+1))){
+					for(let i = start+2; i <= string.length; i++){
+						if(!/\d/.test(string.charAt(i)) && i < string.length){
+							string = spliceString(string, i, 0, "</sup>");
+							break;
+						}
+						else if(i == string.length){
+							string += "</sup>";
+							break;
+						};
+					};
+				}
+				else{
+					string = spliceString(string, start+2, 0, "</sup>");
+				};
+			};
+
+			while(string.indexOf('_') > -1){
+				let start = string.indexOf('_');
+				string = spliceString(string, start, 1, "<sub>");
+				start += 4;
+				if(string.charAt(start+1) == '('){
+					let bracketCount = 0;
+					for(let i = start; i < string.length; i++){
+						if(string.charAt(i) == '('){
+							bracketCount++;
+						}
+						else if(string.charAt(i) == ')'){
+							bracketCount--;
+							if(bracketCount == 0){
+								string = spliceString(string, i, 1, "</sub>");
+								string = spliceString(string, start+1, 1, "");
+								break;
+							};
+						};
+					};
+				}
+				else if(/\d/.test(string.charAt(start+1))){
+					for(let i = start+2; i <= string.length; i++){
+						if(!/\d/.test(string.charAt(i)) && i < string.length){
+							string = spliceString(string, i, 0, "</sub>");
+							break;
+						}
+						else if(i == string.length){
+							string += "</sub>";
+							break;
+						};
+					};
+				}
+				else{
+					string = spliceString(string, start+2, 0, "</sub>");
+				};
+			};
+
+			return string;
+		};
+
+//PRESET GRAPHS
+		function petersen(n, k, swap){
+			newGraph();
+			let angle = 2*Math.PI / n;
+			let radius = Math.max(25 / Math.sin(angle / 2), 125);
+
+			for(let i = 0; i < n; i++, nodeLabel++){
+				let xInner = radius*Math.cos(Math.PI / 2 - i*angle);
+				let yInner = -radius*Math.sin(Math.PI / 2 - i*angle);
+				let xOuter = 2*xInner;
+				let yOuter = 2*yInner;
+
+				if(swap){
+					xOuter = xInner;
+					yOuter = yInner;
+					xInner *= 2;
+					yInner *= 2;
+				};
+
+				cy.add([{
+					group: "nodes",
+					data: {id: nodeLabel, label: String.fromCharCode(nodeLabel)},
+					position: {x: xOuter, y: yOuter},
+				},
+				{
+					group: "nodes",
+					data: {id: nodeLabel+n, label: String.fromCharCode(nodeLabel+n)},
+					position: {x: xInner, y: yInner},
+				}]);
+			};
+
+			nodeLabel+=n;
+
+			for(let i = 0; i < n; i++){
+				cy.add([{
+					group: "edges",
+					data: {source: firstLabel+i, target: firstLabel+(i+1)%n},
+				},
+				{
+					group: "edges",
+					data: {source: firstLabel+i+n, target: firstLabel+(i+k)%n+n},
+				},
+				{
+					group: "edges",
+					data: {source: firstLabel+i, target: firstLabel+i+n},
+				}]);
+			};
+			cy.fit(defaultPadding);
+		};
+
+		function wheel(n){
+			newGraph();
+			let angle = 2*Math.PI / (n-1);
+			let radius = Math.max(50 / Math.sin(angle / 2), 150);
+
+			for(let i = 0; i < n-1; i++, nodeLabel++){
+				cy.add([{
+					group: "nodes",
+					data: {id: nodeLabel, label: String.fromCharCode(nodeLabel)},
+					position: {x: radius*Math.cos(Math.PI / 2 - i*angle), y: -radius*Math.sin(Math.PI / 2 - i*angle)},
+				}]);
+			};
+
+			cy.add([{
+				group: "nodes",
+				data: {id: nodeLabel, label: String.fromCharCode(nodeLabel)},
+				position: {x: 0, y: 0},
+			}]);
+			nodeLabel++
+
+			for(let i = 0; i < n-1; i++){
+				cy.add([{
+					group: "edges",
+					data: {source: firstLabel+i, target: firstLabel+(i+1)%(n-1)},
+				},
+				{
+					group: "edges",
+					data: {source: firstLabel+i, target: firstLabel+n-1},
+				}]);
+			};
+			cy.fit(defaultPadding);
+		};
+
+		function complete(n){
+			newGraph();
+			let angle = 2*Math.PI / n;
+			let radius = Math.max(83 / Math.sin(angle / 2), 150);
+
+			for(let i = 0; i < n; i++, nodeLabel++){
+				cy.add([{
+					group: "nodes",
+					data: {id: nodeLabel, label: String.fromCharCode(nodeLabel)},
+					position: {x: radius*Math.cos(Math.PI / 2 - i*angle), y: -radius*Math.sin(Math.PI / 2 - i*angle)},
+				}]);
+			};
+
+			for(let i = 0; i < n; i++){
+				for(let j = i+1; j < n; j++){
+					cy.add([{
+						group: "edges",
+						data: {source: firstLabel+i, target: firstLabel+j},
+					}]);
+				};
+			};
+			cy.fit(defaultPadding);
+		};
+
+		function cycle(n){
+			newGraph();
+			let angle = 2*Math.PI / n;
+			let radius = Math.max(83 / Math.sin(angle / 2), 150);
+
+			for(let i = 0; i < n; i++, nodeLabel++){
+				cy.add([{
+					group: "nodes",
+					data: {id: nodeLabel, label: String.fromCharCode(nodeLabel)},
+					position: {x: radius*Math.cos(Math.PI / 2 - i*angle), y: -radius*Math.sin(Math.PI / 2 - i*angle)},
+				}]);
+			};
+
+			for(let i = 0; i < n; i++){
+				cy.add([{
+					group: "edges",
+					data: {source: firstLabel+i, target: firstLabel+(i+1)%n},
+				}]);
+			};
+			cy.fit(defaultPadding);
+		};
+
+//LOAD/SAVE GRAPH
+		function download(text, name, type, eltId){
+			let elt = document.getElementById(eltId);
+			let file = new Blob([text], {type: type});
+			elt.href = URL.createObjectURL(file);//window.location.href = URL.createObjectURL(file);
+			elt.download = name;//window.location.download = name;
+			elt.click();
+		};
+
+		function setGraphTypes(graphTypes){
+			for(let i = 0; i < graphTypes.length; i++){
+				if(graphTypes.charAt(i) == '1'){
+					cyTypes[i].value = true;
+				}
+				else{
+					cyTypes[i].value = false;
+				};
+			};
+		};
+
+		function fixTypes(check){
+			//fix types
+			weightedCy.value = !weightedCy.value;
+			changeType("weighted", check);
+			flowCy.value = !flowCy.value;
+			changeType("flow", check);
+		};
+
+		function loadSequence(file){
+			setUndo("layout");
+			setGraphTypes(cyFromJSON(file.target.result));
+			updateStyles();
+			centerGraph();
+			changeEditMode(editMode);
+			fixTypes(true);
+		};
+
+		function readJSONFile(evt){
+			//Retrieve the first (and only!) File from the FileList object
+			let file = evt.target.files[0]; 
+
+			if(file){
+				let reader = new FileReader();
+				reader.onload = function(e){
+					loadSequence(e);
+				};
+				reader.readAsText(file);
+				document.getElementById('fileInput').value = "";//reset so onchange will be triggered on file reload
+			}
+			else{
+				Swal.fire({
+					position: 'top',
+					title: "Failed to load file!",
+					icon: "error",
+					customClass: {
+						container: 'mySwal',
+						icon: 'mySwal-icon',
+						actions: 'mySwal-actions',
+					},
+				});
+				//alert("Failed to load file!");
+			};
+		};
+
+		function printGraph(){
+			let elt = document.getElementById("printLink");
+			let file = cy.png();
+			elt.href = file;//URL.createObjectURL(file);//window.location.href = URL.createObjectURL(file);
+			elt.download = name;//window.location.download = name;
+			elt.click();
+			//document.getElementById('saveGraph').blur();
+		};
+
+		function saveGraph(local){
+			if(!local){
+				//code for downloading file
+				download(cyToJSON(), 'graph.gr', 'text/plain', "saveLink");
+			}
+			else{
+				//code for using browser storage
+				if(typeof(Storage) !== "undefined" && window.location.protocol !== "file:"){
+					// Code for localStorage/sessionStorage.
+					let count = 1;
+					while(localStorage.getItem("cy"+count.toString()) !== null){
+						count++;
+					};
+					localStorage.setItem("cy"+count.toString(), cyToJSON());
+					//alert("Your graph is saved with key "+count.toString());
+					Swal.fire({
+						position: 'top',
+						title: "Your graph is saved with key "+count.toString(),
+						icon: "success",
+						customClass: {
+							container: 'mySwal',
+							icon: 'mySwal-icon',
+							actions: 'mySwal-actions',
+						},
+					});
+				}
+				else{
+					//alert("No local storage available!");// Sorry! No Web Storage support..
+					Swal.fire({
+						position: 'top',
+						title: "No local storage available!",
+						icon: "warning",
+						customClass: {
+							container: 'mySwal',
+							icon: 'mySwal-icon',
+							actions: 'mySwal-actions',
+						},
+					});
+				};
+			};
+			//document.getElementById('saveGraph').blur();
+		};
+
+		function loadGraph(local){
+			if(!local){
+				//code for uploading file
+				document.getElementById('fileInput').addEventListener('change', readJSONFile, false);
+				document.getElementById('fileInput').click();
+			}
+			else{
+				//code for using browser storage
+				if(typeof(Storage) !== "undefined" && window.location.protocol !== "file:"){
+					async function getSaveIndex(){
+						let {value: inputText} = await Swal.fire({
+							position: 'top',
+							title: 'Enter your save file key',
+							input: 'number',
+							inputValue: "1",
+							icon: "info",
+							imageHeight: "5px",
+							showCancelButton: true,
+							customClass: {
+								container: 'mySwal',
+								icon: 'mySwal-icon',
+								actions: 'mySwal-actions',
+							},
+							/*inputValidator: (value) => {
+								if(!value){
+									return 'You need to write something!'
+								};
+							},*/
+						});
+			
+						if(inputText){
+							let file = localStorage.getItem("cy"+inputText.toString())
+		
+							if(file){
+								loadSequence(file);
+							}
+							else{
+								Swal.fire({
+									position: 'top',
+									title: "Invalid key!",
+									icon: "error",
+									customClass: {
+										container: 'mySwal',
+										icon: 'mySwal-icon',
+										actions: 'mySwal-actions',
+									},
+								});
+							};
+						};
+					};
+					getSaveIndex();
+				}
+				else{
+					//alert("No local storage available!");// Sorry! No Web Storage support..
+					Swal.fire({
+						position: 'top',
+						title: "No local storage available!",
+						icon: "warning",
+						customClass: {
+							container: 'mySwal',
+							icon: 'mySwal-icon',
+							actions: 'mySwal-actions',
+						},
+					});
+				};
+			};
+			//document.getElementById('loadGraph').blur();
+		};
+
+//HIGHLIGHT
+		function removeHighlights(elt){
+			let hasChanged = false;
+
+			elt.classes().forEach(function(cls){
+				if(cls.includes("highlight") || cls.includes("lowlight") || cls.includes("kruskal") || cls.includes("dijkstra") || cls.includes("cut")){
+					elt.removeClass(cls);
+					hasChanged = true;
+				};
+			});
+
+			return hasChanged;
+		};
+
+		function removeAllHighlights(){
+			let hasChanged = false;
+			let json = cy.json();
+
+			cy.elements().forEach(function(elt){
+				if(removeHighlights(elt)){
+					hasChanged = true;
+				};
+			});
+
+			if(hasChanged){
+				setUndo(json);
+			};
+		};
+
+		function changeHighlight(color){
+			let pattern = /[c-fC-F]/;
+			let highlightButton = document.getElementById("highlight");
+			let highlightBar = document.getElementById("highlightBar");
+			highlightButton.style['background-color'] = highlightBar.style['background-color'] = color;
+			if(pattern.test(color.charAt(3)) || (pattern.test(color.charAt(1)) && pattern.test(color.charAt(5)))){
+				highlightButton.style['color'] = highlightBar.style['color'] = "#000000";
+			}
+			else{
+				highlightButton.style['color'] = highlightBar.style['color'] = "#ffffff";
+			};
+		};
+
+		//COLOR PICKER
+		function makePickr(){
+			let maxSwatches = 21;
+			let permanentSwatchesIndex = 15;
+
+			let swatches = [
+				'#ff0000',
+				'#ff8000',
+				'#ffff00',
+				'#80ff00',
+				'#00ff00',
+				'#00ff80',
+				'#00ffff',
+				'#0080ff',
+				'#0000ff',
+				'#8000ff',
+				'#ff00ff',
+				'#ff0080',
+				'#ffffff',
+				'#000000',
+				highlightColor,
+			];
+
+			let pickr = new Pickr({
+				el: document.getElementById("pickr"),
+				theme: 'monolith',
+				lockOpacity: true,
+				closeOnScroll: true,
+				comparison: true,
+				closeWithKey: 'Enter',
+
+				swatches: swatches,
+
+				components: {
+					preview: true,
+					opacity: true,
+					hue: true,
+
+					interaction: {
+						hex: true,
+						rgba: true,
+						hsva: false,
+						input: true,
+						clear: false,
+						save: false,
+						cancel: false,
+					},
+				},
+			});
+
+			//Build pickr close button
+			let closeButton = document.createElement("SPAN");
+			closeButton.appendChild(document.createTextNode("\u00d7"));
+			closeButton.classList.add("pcr-close-button");
+			closeButton.addEventListener('click', () => pickr.hide());
+			document.getElementsByClassName('pcr-app')[0].appendChild(closeButton);
+
+			activatePickr = function(){
+				let selectColor = function(color, instance){
+					highlightColor = color.toHEXA().toString();
+					changeHighlight(highlightColor);
+				};
+
+				let closePickr = function(){
+					let newColor = pickr.getColor().toHEXA().toString().toLowerCase();
+					let found = false;
+
+					for(const color of swatches){
+						if(color.toLowerCase() == newColor){
+							found = true;
+							break;
+						};
+					};
+
+					if(!found){
+						pickr.addSwatch(newColor);
+						swatches.push(newColor);
+					};
+
+					if(swatches.length > maxSwatches){
+						pickr.removeSwatch(permanentSwatchesIndex);
+						swatches.splice(permanentSwatchesIndex, 1);
+					};
+
+					pickr.off('change', selectColor);
+					pickr.off('hide', closePickr);
+					document.removeEventListener("keydown", cancelPickr);
+				};
+
+				let cancelPickr = function(event){
+					if(event.which == 27){
+						pickr.setColor(pickr._lastColor.toHEXA().toString());
+						pickr.hide();
+					};
+				};
+
+				pickr.setColor(highlightColor);
+				pickr.on('change', selectColor);
+				pickr.on('hide', closePickr);
+				document.addEventListener("keydown", cancelPickr, {passive: true});
+				document.getElementsByClassName('pcr-button')[0].click();
+			};
+		};
+
+//SET EDGE STYLE
+		function setEdgeStyle(){
+			switch(graphMode){
+				case "math":
+					cy.style().selector('node').style({'label': 'data(label)', 'height': '30px', 'width': '30px'}).update();
+
+					if((simpleCy.value && directedCy.value) || flowCy.value){
+						cy.style().selector('edge').style({'curve-style': 'straight', 'target-arrow-shape': 'triangle'}).update();
+					}
+					else if(simpleCy.value){
+						cy.style().selector('edge').style({'curve-style': 'haystack', 'target-arrow-shape': 'none'}).update();
+					}
+					else{
+						cy.style().selector('edge').style({'curve-style': 'bezier', 'target-arrow-shape': 'triangle'}).update();
+					};
+					break;
+				case "freeform":
+					switch(directedCy.value){
+						case true:
+							cy.style().selector('edge').style({'curve-style': 'bezier', 'target-arrow-shape': 'triangle'}).update();
+							break;
+						case false:
+							cy.style().selector('edge').style({'curve-style': 'bezier', 'target-arrow-shape': 'none'}).update();
+							break;
+					};
+
+					switch(weightedCy.value){
+						case true:
+							cy.style().selector('node').style({'label': 'data(label)', 'height': '30px', 'width': '30px'}).update();
+							cy.edges().forEach(function(edge){
+								if(edge.data('label') !== undefined){
+									edge.addClass("labelled");
+								};
+							});
+							break;
+						case false:
+							cy.style().selector('node').style({'label': "", 'height': '10px', 'width': '10px'}).update();
+							cy.edges().forEach(function(edge){
+								edge.removeClass("labelled");
+							});
+							break;
+					};
+					break;
+			};
+		};
+
+//SET DIV SIZE
+		function setCyDivSize(){
+			let cyWidth = window.innerWidth - document.getElementById("guiDiv").clientWidth;
+			let cyHeight = window.innerHeight - document.getElementById("header1").clientHeight;
+			document.getElementById("cyContainer").style.width = cyWidth.toString()+"px";
+			document.getElementById("cyContainer").style.height = cyHeight.toString()+"px";
+			document.getElementById("guiDiv").style.height = (cyHeight - document.getElementById("jaznetBox").clientHeight).toString()+"px";
+		};
+
+//RESIZE
+		function resizeCy(){
+			setCyDivSize();
+			cy.resize();
+			//cy.center();
+			//cy.fit(defaultPadding);
+		}
+
+		window.addEventListener("resize", function(event){
+			resizeCy();
+		});
+
+//ONLOAD - MAKE IT SO!!!
+		document.addEventListener("DOMContentLoaded", function(event){
+			setCyDivSize();
+			cy = makeCy(document.getElementById("cyContainer"));//Build graph
+			cy.autounselectify(true);
+
+			changeEditMode(editMode);
+			setEdgeStyle();
+			openTab("editing");
+			makePickr();
+			changeHighlight(highlightColor);
+
+			setEventListeners();
+			mouseControls();
+		}, Modernizr.passiveeventlisteners ? {passive: true} : false);
+
+//ALGORITHMS
+		function chromaticPolynomial(){
+			let div = document.getElementById("algorithmOutput");
+			//let textDiv = document.getElementById("algorithmOutputInnerDiv");
+			//let cyDiv = document.getElementById("cyContainer");
+			//let rect = cyDiv.getBoundingClientRect();
+			let output = "p<sub>G</sub>(x) = "
+			//let needsResize = true;
+
+			//div.style.left = rect.left.toString()+"px";
+			//div.style.width = (rect.right - rect.left - 12).toString()+"px";
+			div.style.display = "block";
+			//div.style['font-size'] = (10).toString()+"pt"
+
+			let graph = cyToGraph();
+			graph.makeSimple();
+			if(graph.vertices == 0){
+				output += 0;
+			}
+			else if(graph.isComplete()){
+				output += 'x';
+				for(let i = 1; i < graph.vertices; i++){
+					output += "(x-"+i.toString()+')'
+				};
+			}
+			else if(graph.edges.length < 25){
+				output += mathToHTML(rationalFactor(chromatic(graph)));
+			}
+			else{
+				output = "Graph too large to compute chromatic polynomial!"
+			};
+
+			div.innerHTML = output;
+			//cyDiv.style.height = (rect.bottom - rect.top - parseInt(div.clientHeight) - 6).toString()+"px";
+			//cy.resize();
+			//cy.fit(defaultPadding);
+			//cyNeedsResize = true;
+		};
+
+		function mst(){
+			let div = document.getElementById("algorithmOutput");
+			let totalWeight = 0;
+
+			checkUnweightedEdges();
+			removeAllHighlights();
+
+			cy.elements().kruskal(function(edge){
+				let edgeWeight = Number(edge.data("weight"));
+				if(isNaN(edgeWeight)){
+					return Infinity;
+				}
+				else{
+					return edgeWeight;
+				};
+			})
+			.forEach(function(elt){
+				elt.addClass("kruskal");
+				if(elt.isEdge()){
+					totalWeight += Number(elt.data("weight"));
+				};
+			});
+
+			cy.elements().forEach(function(elt){
+				if(!elt.hasClass("kruskal")){
+					elt.addClass("nonkruskal");
+				};
+			});
+
+			div.style.display = "block";
+			div.innerHTML = "Total weight is " + totalWeight.toString();
+		};
+
+		function dijkstra(){
+			let root;
+			let undoButton = document.getElementById("undo");
+			let redoButton = document.getElementById("redo");
+			let cyDiv = document.getElementById("cyContainer");
+
+			removeAllHighlights();
+			//Disable normal controls
+			undoButton.style['pointer-events'] = "none";
+			redoButton.style['pointer-events'] = "none";
+			cy.userPanningEnabled(false);
+			cy.autounselectify(true);
+			cy.nodes().ungrabify();
+			cy.removeAllListeners();
+			cyDiv.removeEventListener('mousedown', closeAlgorithmDiv);
+			cyDiv.removeEventListener('touchstart', closeAlgorithmDiv);
+
+			Swal.fire({
+				position: 'top-left',
+				title: "Select start point",
+				icon: "info",
+				showCancelButton: false,
+				allowOutsideClick: false,
+				confirmButtonText: "Cancel",
+				customClass: {
+					container: 'sideSwal',
+					confirmButton: 'mySwal-cancel',
+				},
+			}).then((result) => {
+				if(result.value || result.dismiss === Swal.DismissReason.esc){
+					//On cancel re-enable normal controls
+					undoButton.style['pointer-events'] = "auto";
+					redoButton.style['pointer-events'] = "auto";
+					changeEditMode(editMode);
+					cy.removeAllListeners();
+					mouseControls();
+					cyDiv.addEventListener('mousedown', closeAlgorithmDiv);
+					cyDiv.addEventListener('touchstart', closeAlgorithmDiv, Modernizr.passiveeventlisteners ? {passive: true} : false);
+				};
+			});
+
+			cy.one("tap", "node", function(e){
+				root = e.target;
+				root.addClass("dijkstra");
+				let dijk = cy.elements().dijkstra(root, function(edge){return Number(edge.data('weight'))});
+
+				Swal.close();
+				Swal.fire({
+					position: 'top-left',
+					title: "Select end point",
+					icon: "info",
+					showCancelButton: false,
+					allowOutsideClick: false,
+					confirmButtonText: "Cancel",
+					customClass: {
+						container: 'sideSwal',
+						confirmButton: 'mySwal-cancel',
+					},
+				}).then((result) => {
+					if(result.value || result.dismiss === Swal.DismissReason.esc){
+						//On cancel re-enable normal controls
+						root.removeClass("dijkstra");
+						undoButton.style['pointer-events'] = "auto";
+						redoButton.style['pointer-events'] = "auto";
+						changeEditMode(editMode);
+						cy.removeAllListeners();
+						mouseControls();
+						cyDiv.addEventListener('mousedown', closeAlgorithmDiv);
+						cyDiv.addEventListener('touchstart', closeAlgorithmDiv, Modernizr.passiveeventlisteners ? {passive: true} : false);
+					};
+				});
+
+				cy.one("tap", "node", function(e){
+					let endPoint = e.target;
+					let div = document.getElementById("algorithmOutput");
+
+					div.style.display = "block";
+					div.innerHTML = "Distance from "+root.data('label')+" to "+endPoint.data('label')+" is "+dijk.distanceTo(endPoint);
+
+					dijk.pathTo(endPoint).forEach(function(elt){
+						elt.addClass('dijkstra');
+					});
+					cy.elements().forEach(function(elt){
+						if(!elt.hasClass("dijkstra")){
+							elt.addClass("nondijkstra");
+						};
+					});
+
+					//Re-enable normal controls
+					undoButton.style['pointer-events'] = "auto";
+					redoButton.style['pointer-events'] = "auto";
+					changeEditMode(editMode);
+					mouseControls();
+					cyDiv.addEventListener('mousedown', closeAlgorithmDiv);
+					cyDiv.addEventListener('touchstart', closeAlgorithmDiv, Modernizr.passiveeventlisteners ? {passive: true} : false);
+					Swal.close();
+
+					//wierd highlighting bug fix
+					dijkstraHighlighting = true;
+				});
+			});
+		};
+
+//FLOW ALGORITHMS
+		function getSourceAndSink(warn){
+			let sources = cy.collection();
+			let sinks = cy.collection();
+
+			cy.nodes().forEach(function(node){
+				let isSource = true;
+				let isSink = true;
+
+				if(node.neighborhood().edges().length == 0){
+					isSource = false;
+					isSink = false;
+				};
+
+				node.neighborhood().edges().forEach(function(elt){
+					if(elt.source() != node){
+						isSource = false;
+					};
+					if(elt.target() != node){
+						isSink = false;
+					};
+				});
+
+				if(isSource){
+					sources = sources.union(node);
+				}
+				else if(isSink){
+					sinks = sinks.union(node);
+				};
+			});
+
+			if(sources.length == 0 && sinks.length == 0 && warn){
+				Swal.fire({
+					position: 'top',
+					title: "No source or sink in network!",
+					icon: "error",
+					customClass: {
+						container: 'mySwal',
+						icon: 'mySwal-icon',
+						actions: 'mySwal-actions',
+					},
+				});
+			}
+			else if(sources.length == 0 && warn){
+				Swal.fire({
+					position: 'top',
+					title: "No source in network!",
+					icon: "error",
+					customClass: {
+						container: 'mySwal',
+						icon: 'mySwal-icon',
+						actions: 'mySwal-actions',
+					},
+				});
+			}
+			else if(sinks.length == 0 && warn){
+				Swal.fire({
+					position: 'top',
+					title: "No sink in network!",
+					icon: "error",
+					customClass: {
+						container: 'mySwal',
+						icon: 'mySwal-icon',
+						actions: 'mySwal-actions',
+					},
+				});
+			};
+
+			return {sources: sources, sinks: sinks};
+		};
+
+		function checkFlows(warn){
+			let missingFlow = false;
+
+			cy.edges().forEach(function(elt){
+				let cap = Number(elt.data("weight"));
+				let flw = Number(elt.data("flow"));
+
+				if(isNaN(cap) || cap < 0){
+					cap = 0;
+					flw = 0;
+					missingFlow = true;
+				}
+				else if(isNaN(flw) || flw < 0){
+					flw = 0;
+					missingFlow = true;
+				}
+				else if(flw > cap){
+					flw = cap;
+					missingFlow = true;
+				};
+
+				elt.data({weight: cap, flow: flw, flowLabel: labelFlow(flw, cap)});
+				elt.addClass("flow");
+			});
+
+			if(missingFlow && warn){
+				Swal.fire({
+					position: 'top',
+					title: "Some edge flows have been changed!",
+					icon: "warning",
+					customClass: {
+						container: 'mySwal',
+						icon: 'mySwal-icon',
+						actions: 'mySwal-actions',
+					},
+				});
+			};
+
+			return missingFlow;
+		};
+
+		function validateFlow(warn){
+			let valid = true;
+			let ss = getSourceAndSink();
+			let invalidNodes = [];
+
+			let eles = cy.nodes();
+			eles = eles.difference(ss.sources.union(ss.sinks));
+
+			if(checkFlows(false)){
+				//this should be impossible
+				valid = false;
+			};
+
+			eles.forEach(function(node){
+				let nodeId = node.id();
+				let flowIn = 0;
+				let flowOut = 0;
+
+				cy.edges("[source = '"+nodeId+"']").forEach(function(edge){
+					flowIn += Number(edge.data("flow"));
+				});
+
+				cy.edges("[target = '"+nodeId+"']").forEach(function(edge){
+					flowOut += Number(edge.data("flow"));
+				});
+
+				if(flowIn != flowOut){
+					valid = false;
+					invalidNodes.push(node.data("label"));
+				};
+			});
+
+			if(warn && valid){
+				Swal.fire({
+					position: 'top',
+					title: "Flow is valid!",
+					icon: "success",
+					confirmButtonText: "Thanks",
+					customClass: {
+						container: 'mySwal',
+						icon: 'mySwal-icon',
+						actions: 'mySwal-actions',
+					},
+				});
+			}
+			else if(warn && !valid){
+				let warnStatement = "Invalid flow at node";
+
+				switch(invalidNodes.length){
+					case 0:
+						//should be impossible
+						warnStatement = "Missing flow!\n"+"This should be impossible!!!";
+						break;
+					case 1:
+						warnStatement += " "+invalidNodes[0]+".";
+						break;
+					default:
+						warnStatement += "s ";
+						for(let i = 0; i < invalidNodes.length - 1; i++){
+							warnStatement += invalidNodes[i] + ", ";
+						};
+						warnStatement = warnStatement.substring(0, warnStatement.length-2)+" and "+invalidNodes[invalidNodes.length - 1]+".";
+						break;
+				};
+
+				Swal.fire({
+					position: 'top',
+					title: warnStatement,
+					icon: "warning",
+					customClass: {
+						container: 'mySwal',
+						icon: 'mySwal-icon',
+						actions: 'mySwal-actions',
+					},
+				});
+			};
+
+			return valid;
+		};
+
+		function maxFlow(){
+			let totalFlow = 0;
+			let ss = getSourceAndSink(true);
+			let sources = ss.sources;
+			let sinks = ss.sinks;
+			let source = sources[0];
+			let sink = sinks[0];
+			let cut;
+			let terminate = false;
+
+			if(source && sink){
+				setUndo();
+				removeAllHighlights();
+
+				if(!validateFlow(false)){
+					cy.edges().forEach(function(edge){
+						edge.data("flow", 0);
+					});
+
+					Swal.fire({
+						position: 'top',
+						title: "Invalid flow!\n"+"Setting all flows to 0 before running algorithm.",
+						icon: "warning",
+						customClass: {
+							container: 'mySwal',
+							icon: 'mySwal-icon',
+							actions: 'mySwal-actions',
+						},
+					});
+				};
+
+				if(sources.length > 1){
+					//if multiple sources build an edge with infinite flow from designated source to other sources
+					sources.forEach(function(alternateSource){
+						if(alternateSource != source){
+							cy.add([{
+								group: "edges",
+								data: {source: source.id(), target: alternateSource.id(), weight: Infinity, flow: Infinity, dummyEdge: true},
+							}]);
+						};
+					});
+				};
+
+				if(sinks.length > 1){
+					//if multiple sinks build an edge with infinite flow from other sinks to designated sink
+					sinks.forEach(function(alternateSink){
+						if(alternateSink != sink){
+							cy.add([{
+								group: "edges",
+								data: {source: alternateSink.id(), target: sink.id(), weight: Infinity, flow: Infinity, dummyEdge: true},
+							}]);
+						};
+					});
+				};
+
+				while(!terminate){
+					//keep augmenting flow until sink cannot be reached
+					augmentFlow();
+				};
+
+				//remove dummy source and sink edges
+				cy.remove("edge[dummyEdge]");
+
+				//highlight the minimum cut
+				cut.forEach(function(node){
+					node.addClass("cut");
+				});
+
+				let noncut = cut.complement();
+				noncut.forEach(function(node){
+					node.addClass("noncut");
+				});
+
+				cy.edges().forEach(function(edge){
+					if(cut.contains(edge.source()) && noncut.contains(edge.target())){
+						edge.addClass("cut");
+						totalFlow += edge.data("weight");
+					};
+				});
+
+				//update edge labels
+				cy.edges().forEach(function(edge){
+					edge.data('flowLabel', labelFlow(edge.data('flow'), edge.data('weight')));
+				});
+
+				//display minimum cut in algortihm div
+				let div = document.getElementById("algorithmOutput");
+				div.style.display = "block";
+				div.innerHTML = "Maximum flow is " + totalFlow.toString();
+			};
+
+			function addReverseFlows(){
+				cy.edges("[source != '"+source.id()+"'][target != '"+sink.id()+"'][flow != 0]").forEach(function(edge){
+					cy.add([{
+						group: "edges",
+						data: {source: edge.target().id(), target: edge.source().id(), weight: 0, flow: -1*edge.data("flow"), reverse: true}
+					}]);
+				});
+			};
+
+			function augmentFlow(){
+				//add reverse flows
+				addReverseFlows();
+
+				//calculate slack for each edge
+				cy.edges().forEach(function(edge){
+					let slack = Number(edge.data("weight")) - Number(edge.data("flow"));
+
+					if(isNaN(slack)){
+						//problem with Infinity - Infinity = NaN
+						slack = Infinity;
+					};
+
+					edge.data("slack", slack);
+				});
+
+				let foundSink = false;
+				//perform depth first search for sink on subgraph with slack
+				let dfs = cy.elements("node, edge[slack > 0]").dfs({
+					roots: source,
+					directed: true,
+
+					visit: function(v, e, u, i, depth){
+						if(v == sink){
+							foundSink = true;
+							return true;
+						};
+					},
+				});
+
+				if(foundSink){
+					//reduce dfs edge list to a single path from source to sink
+					let currentNode = sink;
+					let pathEdges = cy.collection();
+
+					while(currentNode != source){
+						let currentEdge = dfs.path.edges("[target = '"+currentNode.id()+"']")[0];
+						currentNode = currentEdge.source();
+						pathEdges = pathEdges.union(currentEdge);
+					};
+
+					//find path's slack
+					let pathSlack = Infinity;
+
+					pathEdges.forEach(function(edge){
+						pathSlack = Math.min(pathSlack, Number(edge.data("slack")));
+					});
+
+					//augment flow
+					pathEdges.forEach(function(edge){
+						if(edge.data("reverse")){
+							//if reverse flow then reduce flow in acutal edge
+							let reverseEdge = cy.edges("[source = '"+edge.target().id()+"'][target = '"+edge.source().id()+"']")[0];
+							reverseEdge.data("flow", Number(reverseEdge.data("flow")) - pathSlack);
+						}
+						else{
+							//otherwise increase flow in edge
+							edge.data("flow", Number(edge.data("flow")) + pathSlack);
+						};
+					});
+				}
+				else{
+					cut = dfs.path.nodes()
+					terminate = true;
+				};
+
+				//remove reverse flows
+				cy.remove("edge[reverse]");
+			};
+		};
+
+//HTML SCRIPTS
+		function centerGraph(){
+			pan = cy.pan();
+			zoom = cy.zoom();
+			cy.fit(defaultPadding);
+		};
+
+		function makeGrid(){
+			layouts.gridLayout.rows = Math.round(Math.sqrt(cy.nodes().length));
+			layoutGraph(cy, "gridLayout")
+		};
+
+		function newGraph(){
+			setUndo("layout");
+			cy.remove(cy.nodes());
+			cy.pan({x: 0, y: 0});
+			cy.zoom(1);
+			nodeLabel = firstLabel;
+		};
+
+		function changeEditMode(mode){
+			let item = document.getElementById(editMode);
+			item.classList.remove("selected");
+			item.classList.add("unselected");
+
+			editMode = mode;
+			item = document.getElementById(editMode);
+			item.classList.remove("unselected");
+			item.classList.add("selected");
+
+			switch(editMode){
+				case "move":
+					cy.userPanningEnabled(true);
+					cy.autounselectify(true);
+					cy.nodes().grabify();
+					break;
+				case "delete":
+					cy.userPanningEnabled(false);
+					cy.autounselectify(false);
+					cy.nodes().ungrabify();
+					break;
+				case "highlight":
+					cy.userPanningEnabled(false);
+					cy.autounselectify(false);
+					cy.nodes().ungrabify();
+					break;
+				default:
+					cy.userPanningEnabled(false);
+					cy.autounselectify(true);
+					cy.nodes().grabify();
+			};
+		};
+
+		function checkUnweightedEdges(){
+			if(cy.edges('[^weight]').length > 0){
+				Swal.fire({
+					position: 'top',
+					title: "There are unweighted edges!",
+					icon: "warning",
+					customClass: {
+						container: 'mySwal',
+						icon: 'mySwal-icon',
+						actions: 'mySwal-actions',
+					},
+				});
+				//window.alert("There are unweighted edges.")
+			};
+		};
+
+		function changeType(type, check){
+			if(type == "weighted"){
+				weightedCy.value = !weightedCy.value;
+				if(weightedCy.value == true){
+					document.getElementById(type).value = "Weighted";
+
+					if(check){
+						checkUnweightedEdges();
+					};
+
+					cy.edges('[weight]').forEach(function(elt){
+						elt.addClass('weighted');
+					});
+				}
+				else{
+					document.getElementById(type).value = "Unweighted";
+					cy.edges('[weight]').forEach(function(elt){
+						elt.removeClass('weighted');
+					});
+				};
+			}
+			else if(type == "flow"){
+				flowCy.value = !flowCy.value;
+				setEdgeStyle();
+				if(flowCy.value == true){
+					document.getElementById(type).value = "Flow Diagram";
+					document.getElementById("weighted").style.display = "none";
+
+
+					checkFlows(check);
+
+					cy.edges('[flowLabel]').forEach(function(elt){
+						elt.removeClass('weighted');
+						elt.addClass('flow');
+					});
+				}
+				else{
+					document.getElementById(type).value = "Simple Graph";
+					document.getElementById("weighted").style.display = "block";
+
+					cy.edges().forEach(function(elt){
+						elt.removeClass('flow');
+					});
+
+					if(weightedCy.value){
+						cy.edges('[weight]').forEach(function(elt){
+							elt.addClass('weighted');
+						});
+					};
+				};
+			};
+
+			if(simpleCy.value && !weightedCy.value && !flowCy.value){
+				edgePinning = true;
+			}
+			else{
+				edgePinning = true;
+			}
+		};
+
+		function changeFreeformType(type){
+			let button = document.getElementById(type);
+
+			switch(type){
+				case "freeform-simple":
+					simpleCy.value = !simpleCy.value;
+					if(simpleCy.value){
+						button.value = "Simple";
+					}
+					else{
+						button.value = "Pseudo";
+					};
+					break;
+				case "freeform-labelled":
+					weightedCy.value = !weightedCy.value;
+					if(weightedCy.value){
+						button.value = "Labelled";
+					}
+					else{
+						button.value = "Unlabelled";
+					};
+					break;
+				case "freeform-directed":
+					directedCy.value = !directedCy.value;
+					if(button.value == "Undirected"){
+						button.value = "Directed";
+					}
+					else{
+						button.value = "Undirected";
+					};
+					break;
+			};
+			setEdgeStyle();
+		};
+
+		function changeMode(){
+			let modeButton = document.getElementById("mode");
+			let mathTypeTab = document.getElementById("type");
+			let freeformTypeTab = document.getElementById("freeformType");
+			let algorithmsButton = document.getElementById("algorithmsButton");
+			let typeButton = document.getElementById("typeButton");
+			let freeformTypeButton = document.getElementById("freeformTypeButton");
+			let loadSaveButton = document.getElementById("loadSaveButton");
+
+			if(graphMode == "math"){
+				graphMode = "freeform";
+				modeButton.value = "Freeform Mode";
+				simpleCy.value = false;
+				directedCy.value = true;
+				weightedCy.value = false;
+				algorithmsButton.style.display = "none";
+				typeButton.style.display = "none";
+				freeformTypeButton.style.display = "block";
+				loadSaveButton.style.display = "none";
+				if(mathTypeTab.style.display == "block"){
+					openTab("freeformType");
+				};
+			}
+			else{
+				graphMode = "math";
+				modeButton.value = "Math Mode";
+				simpleCy.value = true;
+				directedCy.value = false;
+				weightedCy.value = false;
+				algorithmsButton.style.display = "block";
+				typeButton.style.display = "block";
+				freeformTypeButton.style.display = "none";
+				loadSaveButton.style.display = "block";
+				if(freeformTypeTab.style.display == "block"){
+					openTab("type");
+				};
+			};
+			setEdgeStyle();
+		};
+
+		function closeAlgorithmDiv(){
+			//if(cyNeedsResize){
+				document.getElementById("algorithmOutput").style.display = "none";
+				cy.elements().forEach(function(elt){
+					elt.removeClass("kruskal");
+					elt.removeClass("nonkruskal");
+					elt.removeClass("dijkstra");
+					elt.removeClass("nondijkstra");
+					elt.removeClass("cut");
+					elt.removeClass("noncut");
+				});
+				//cy.removeAllListeners();
+				//changeEditMode(editMode);
+				//mouseControls();
+				//setCyDivSize();
+				//cy.resize();
+				//cy.fit(defaultPadding);
+				//cyNeedsResize = false;
+			//};
+		};
+
+		function preset(graphType){
+			let minVert = 3;
+			let maxVert = 100;
+
+			if(graphType == "wheel"){
+				minVert = 4;
+			};
+
+			let defaultVert = minVert;
+			if(graphType == "petersen"){
+				defaultVert = 5;
+			};
+
+			async function getVertexNumber(){
+				let {value: inputText} = await Swal.fire({
+					position: 'top',
+					title: 'Number of vertices?',
+					html: `<input type = "range"
+						id = "range-slider"
+						class = "slider"
+						value = ${defaultVert}
+						min = ${minVert}
+						max = ${maxVert}
+						step = 1
+					>`,
+					input: 'number',
+					inputValue: defaultVert,
+					inputAttributes: {
+						min: minVert,
+						max: maxVert,
+						step: 1,
+					},
+					icon: "info",
+					imageHeight: "5px",
+					showCancelButton: true,
+					allowOutsideClick: true,
+					customClass: {
+						container: 'mySwal',
+						icon: 'mySwal-icon',
+						input: 'mySwal-slider-value',
+						actions: 'mySwal-actions',
+					},
+					onOpen: () => {
+						const inputRange = Swal.getContent().querySelector('#range-slider');
+						const inputNumber = Swal.getInput();
+/*
+						// remove default output
+						inputRange.nextElementSibling.remove()
+						inputRange.style.width = '100%'
+*/
+						// sync input[type=number] with input[type=range]
+						inputRange.addEventListener('input', () => {
+							inputNumber.value = inputRange.value;
+						});
+
+						// sync input[type=range] with input[type=number]
+						inputNumber.addEventListener('change', () => {
+							inputRange.value = inputNumber.value;
+						});
+					},
+				});
+
+				if(inputText){
+					return Number(inputText);
+				};
+			};
+
+			async function getPetersen(){
+				let minN = 3;
+				let maxN = 49;
+				let defaultN = 5;
+
+				let minK = 1;
+				let maxK = Math.floor((defaultN - 1) / 2);
+				let defaultK = 2;
+
+				let swap = false;
+				let cancelled = false;
+
+				await Swal.fire({
+					position: 'top',
+					title: 'Petersen graph parameters',
+					html: `<span style = "font-size: 20pt;">n</span>
+					<input type = "range"
+						id = "nValue-slider"
+						class = "slider"
+						style = "width: 60%; margin: 10px"
+						value = ${defaultN}
+						min = ${minN}
+						max = ${maxN}
+						step = 1
+					>
+					<input type = "number"
+						id = "nValue"
+						class = "slider-value"
+						value = ${defaultN}
+						min = ${minN}
+						max = ${maxN}
+						step = 1
+						tabindex = "1"
+					><br>
+					<span style = "font-size: 20pt;">k</span>
+					<input type = "range"
+						id = "kValue-slider"
+						class = "slider"
+						style = "width: 60%; margin: 10px"
+						value = ${defaultK}
+						min = ${minK}
+						max = ${maxK}
+						step = 1
+					>
+					<input type = "number"
+						id = "kValue"
+						class = "slider-value"
+						value = ${defaultK}
+						min = ${minK}
+						max = ${maxK}
+						step = 1
+						tabindex = "2"
+						style = "margin-top: 15px !important;"
+					><br>
+					<input
+						type = "submit"
+						id = "okButton"
+						class = "swal2-styled swal2-confirm mySwal-button"
+						style = "margin-top: 20px"
+						onclick = "Swal.close();"
+						value = "OK"
+					>
+					<input
+						type = "submit"
+						id = "swapButton"
+						class = "swal2-styled swal2-confirm mySwal-button mySwal-swap"
+						style = "margin-top: 20px;"
+						value = "Swap"
+					>
+					<input
+						type = "submit"
+						id = "cancelButton"
+						class = "swal2-styled swal2-cancel mySwal-cancel mySwal-button"
+						style = "margin-top: 20px"
+						value = "Cancel"
+					>`,
+					focusConfirm: false,
+					icon: "info",
+					imageHeight: "5px",
+					showConfirmButton: false,
+					showCancelButton: false,
+					allowEscapeKey: false,
+					allowOutsideClick: true,
+					customClass: {
+						container: 'mySwal',
+						icon: 'mySwal-icon',
+					},
+					onOpen: () => {
+						const nRange = Swal.getContent().querySelector('#nValue-slider');
+						const nValue = Swal.getContent().querySelector('#nValue');
+						const kRange = Swal.getContent().querySelector('#kValue-slider');
+						const kValue = Swal.getContent().querySelector('#kValue');
+						//const nValue = Swal.getInput();
+	
+						// sync input[type=number] with input[type=range] and adjust other slider
+						nRange.addEventListener('change', () => {
+							nValue.value = nRange.value;
+	
+							kRange.max = kValue.max = Math.floor((nValue.value - 1) / 2);
+							if(kValue.value > kValue.max){
+								kRange.value = kValue.value = kValue.max;
+							};
+						});
+
+						// sync input[type=range] with input[type=number] and adjust other slider
+						nValue.addEventListener('change', () => {
+							nRange.value = nValue.value;
+
+							kRange.max = kValue.max = Math.floor((nValue.value - 1) / 2);
+							if(kValue.value > kValue.max){
+								kRange.value = kValue.value = kValue.max;
+							};
+						});
+
+						// sync input[type=number] with input[type=range]
+						kRange.addEventListener('change', () => {
+							kValue.value = kRange.value;
+						});
+
+						// sync input[type=range] with input[type=number]
+						kValue.addEventListener('change', () => {
+							kRange.value = kValue.value;
+						});
+
+						//autoclick "OK" on enter key
+						document.getElementsByClassName("swal2-popup")[0].addEventListener("keyup", function(event){
+							//Number 13 is the "Enter" key on the keyboard
+							if(event.keyCode === 13){
+							//Cancel the default action, if needed
+							event.preventDefault();
+							//Trigger the button element with a click
+							okButton.click();
+							};
+						});
+
+						//get button clicking to work
+						swapButton.addEventListener('click', () => {
+							swap = true;
+							Swal.close();
+						});
+
+						cancelButton.addEventListener('click', () => {
+							cancelled = true;
+							Swal.close();
+						});
+					},
+				});
+
+				if(nValue.value && kValue.value){
+					if(cancelled){
+						return "cancelled";
+					}
+					else{
+						return {n: Number(nValue.value), k: Number(kValue.value), swap: swap};
+					};
+				};
+			};
+
+			new Promise(function(resolve, reject){
+				switch(graphType){
+					case "petersen":
+						resolve(getPetersen());
+						break;
+					default:
+						resolve(getVertexNumber());
+				};
+			})
+			.then(function(result){
+				if(result !== undefined){
+					switch(graphType){
+						case "wheel":
+							wheel(result);
+							break;
+						case "complete":
+							complete(result);
+							break;
+						case "cycle":
+							cycle(result);
+							break;
+						case "petersen":
+							if(result !== "cancelled"){
+								petersen(result.n, result.k, result.swap);
+							};
+							break;
+					};
+				};
+			});
+		};
+
+		function highlight(){
+			changeEditMode("highlight");
+			//document.getElementById('highlightColor').click();
+			activatePickr();
+		};
+
+		function hamburger(){
+			let gui = document.getElementById("guiDiv");
+			if(gui.style.display == "none"){
+				gui.style.display = "block";
+				resizeCy();
+			}
+			else{
+				gui.style.display = "none";
+				resizeCy();
+			};
+		};
+
+		function closeTab(tab){
+			if(tab == "editing"){
+				if(editMode == "highlight"){
+					document.getElementById("highlightBar").style.display = "block";
+				}
+				else{
+					let editModeBar = document.getElementById("editMode");
+					let editText = editMode.charAt(0).toUpperCase() + editMode.slice(1);
+					editModeBar.style.display = "block";
+					editModeBar.value = editText;
+				};
+			};
+
+			document.getElementById(tab).style.display = "none";
+		};
+
+		function openTab(theTab){
+		 	let tabList = ["editing", "layout", "algorithm", "type", "load/save", "preset", "test", "freeformType"];
+			let alreadyOpen = false;
+
+			if(document.getElementById(theTab).style.display == "block"){
+				alreadyOpen = true;
+			};
+
+			tabList.forEach(function(tab){
+				closeTab(tab);
+			});
+
+			if(!alreadyOpen){
+				document.getElementById(theTab).style.display = "block";
+			};
+
+			if(theTab != "load/save"){
+				closeAlgorithmDiv();
+			};
+
+			if(theTab == "editing" && !alreadyOpen){
+				document.getElementById("editMode").style.display = "none";
+				document.getElementById("highlightBar").style.display = "none";
+			}
+			else if(theTab == "algorithm"){
+				let divs = ["chromatic", "kruskal", "dijkstra", "maxFlow", "validateFlow"];
+				divs.forEach(function(div){
+					document.getElementById(div).style.display = "none";
+				});
+
+				if(flowCy.value){
+					document.getElementById("maxFlow").style.display = "block";
+					document.getElementById("validateFlow").style.display = "block";
+				}
+				else if(simpleCy.value && !weightedCy.value && !directedCy.value){
+					document.getElementById("chromatic").style.display = "block";
+				}
+				else if(simpleCy.value && weightedCy.value && !directedCy.value){
+					document.getElementById("kruskal").style.display = "block";
+					document.getElementById("dijkstra").style.display = "block";
+				};
+			};
+		};
+
+		function undo(){
+			if(undoStack.length > 0){
+				undoing = true;
+				let item = undoStack.pop();
+				redoStack.push({json: cyToJSON(), changeViewport: item.changeViewport});
+				document.getElementById("redo").style.display = "block";
+				cy.json(cyFromJSON(item.json));
+
+				updateStyleFunctions();
+				fixTypes(false);
+
+				if(item.changeViewport){
+					cy.pan(pan);
+					cy.zoom(zoom);
+				}
+				else{
+					pan = cy.pan();
+					zoom = cy.zoom();
+				};
+
+				if(undoStack.length == 0){
+					document.getElementById("undo").style.display = "none";
+				};
+				changeEditMode(editMode);//sets grabify and panning to proper setting
+			};
+			undoing = false;
+		};
+
+		function redo(){
+			if(redoStack.length > 0){
+				undoing = true;
+				let item = redoStack.pop();
+				undoStack.push({json: cyToJSON(), changeViewport: item.changeViewport});
+				document.getElementById("undo").style.display = "block";
+				cy.json(cyFromJSON(item.json));
+
+				updateStyleFunctions();
+				fixTypes(false);
+
+				if(item.changeViewport){
+					cy.pan(pan);
+					cy.zoom(zoom);
+				}
+				else{
+					pan = cy.pan();
+					zoom = cy.zoom();
+				};
+
+				if(redoStack.length == 0){
+					document.getElementById("redo").style.display = "none";
+				};
+				changeEditMode(editMode);//sets grabify and panning to proper setting
+			};
+			undoing = false;
+		};
+
+//LISTENERS & FUNCTIONS FOR GETTING HOVER TO BEHAVE ON TOUCH EVENTS
+		function mouseover(elt){
+			if(elt.getAttribute('touching') == 'false'){
+				elt.classList.add('mouseover');
+			};
+		};
+
+		function mouseout(elt){
+			elt.classList.remove('mouseover');
+			elt.setAttribute('touching', 'false');
+		};
+
+		function touchstart(elt){
+			elt.setAttribute('touching', 'true');
+		};
+
+		function setEventListeners(){
+			cy.on('layoutstop', function(e){
+				pan = {x: cy.pan().x, y: cy.pan().y};
+				zoom = cy.zoom();
+			});
+	
+			function hoverListeners(){
+				let hoverDivs = document.getElementsByTagName("input");
+
+				for(let i = 0; i < hoverDivs.length; i++){
+					let elt = hoverDivs[i];
+					if(elt.type.toLowerCase() == 'submit'){
+						elt.addEventListener('mouseover', function(){mouseover(elt)});
+						elt.addEventListener('mouseout', function(){mouseout(elt)});
+						elt.addEventListener('touchstart', function(){touchstart(elt)}, Modernizr.passiveeventlisteners ? {passive: true} : false);
+						elt.setAttribute('touching', 'false');
+					};
+				};
+			};
+
+			function closeAlgorithmDivListener(){
+				let elts = ["header1", "cyContainer", "editMode", "dijkstra"];
+
+				elts.forEach(function(eltId){
+					let elt = document.getElementById(eltId);
+					elt.addEventListener('mousedown', closeAlgorithmDiv);
+					elt.addEventListener('touchstart', closeAlgorithmDiv, Modernizr.passiveeventlisteners ? {passive: true} : false);
+				});
+			};
+
+			hoverListeners();
+			closeAlgorithmDivListener();
+		};
+
+//UNDER DEVELOPMENT
+		function animateTest(){
+			cy.nodes().forEach(function(node){
+				var ani = node.animation({
+					style: {'background-color': 'red', 'border-width': 4, 'border-color': 'green'},
+					duration: 1000
+				});
+
+				ani.play();
+
+				ani.promise('completed').then(function(){ //on next completed
+					ani.reverse() //switch animation direction
+					ani.rewind() //optional but makes intent clear
+					.play() //start again
+					//.apply() //sets to particular place
+				});
+			});
+		};
+
+function font_to_char(classname) {
+   var span = document.createElement('span');
+   span.innerHTML = classname;
+   span.style.display = 'none';
+   document.body
+     .insertBefore(span, document.body.firstChild);
+   var char = window
+     .getComputedStyle(span, ':before')
+     .content
+     .replace(/'|"/g, '');
+   span.remove();
+   return char;
+ }
+
+		function graphData(){
+			console.log(cy.nodes().length, cy.edges().length);
+			//cy.edges()[0].removeClass("flow")
+			//cy.edges()[0].addClass("flow")
+			console.log(font_to_char('\uf173'));
+
+			//console.log(cy.nodes()[0].data("label"))
+			//cy.nodes()[0].removeData("label");
+			//console.log(cy.nodes("[label]").length)
+			//let data = cy.edges()[0].data();
+			//delete data.id;
+			//console.log(data)
+			//console.log(cy.pan(), cy.zoom());
+			//console.log(nodeLabel)
+
+			//setUndo("layout");
+			//let num = parseInt(prompt("Please enter a positive integer!", 5));
+			//petersen(num);
+			//wheel(num);
+			//complete(num);
+
+			//animateTest();
+		};
+	</script>
+</head>
+
+<body>
+	<h1 id="header1">
+		<input type="submit" id="hamburger" class="topmenu" value="&#x2630;" onclick="hamburger()"/>
+		<div>Graph Maker</div>
+		<input type="submit" id="undo" class="topmenu" value="&#x21B6;" onclick="undo()"/>
+		<input type="submit" id="redo" class="topmenu" value="&#x21B7;" onclick="redo()"/>
+	</h1>
+	<div class="container">
+		<div class="fixed" id="guiDiv" style="overflow-y: auto">
+			<input type="submit" class = "myButton toggle-super" id="mode" value="Math Mode" onclick="changeMode()" style="display: block"/>
+			<input type="submit" class="myButton header" id="loadSaveButton" value="Load/Save" onclick="openTab('load/save')"/>
+			<div id="load/save" style="display: none">
+				<input type="submit" class = "myButton action" id="loadGraph" value="Load Graph" onclick="loadGraph()"/>
+				<input type="submit" class = "myButton action" id="saveGraph" value="Save Graph" onclick="saveGraph()"/>
+				<input type="submit" class = "myButton action" id="printGraph" value="Print Graph" onclick="printGraph()"/>
+			</div>
+
+			<input type="submit" class="myButton header" id="editingButton" value="Editing" onclick="openTab('editing')"/>
+			<div id="editing" style="display: none">
+				<input type="submit" class = "myButton unselected" id="add" value="Add" onclick="changeEditMode(this.id)"/>
+				<input type="submit" class = "myButton unselected" id="delete" value="Delete" onclick="changeEditMode(this.id)"/>
+				<input type="submit" class = "myButton unselected" id="move" value="Move" onclick="changeEditMode(this.id)"/>
+				<input type="submit" class = "myButton unselected" id="edit" value="Edit" onclick="changeEditMode(this.id)"/>
+				<input type="submit" class = "myButton unselected" id="highlight" value="Highlight" onclick="highlight()"/>
+				<input type="color" id="highlightColor" onchange="changeHighlight(this.value)" value="#00b000" style="display: none"/>
+				<input type="submit" class = "myButton action" id="clear" value="New Graph" onclick="newGraph()"/>
+			</div>
+			<input type="submit" class = "myButton selected" id="editMode" onclick="openTab('editing')"/>
+			<input type="submit" class = "myButton selected" id="highlightBar" value="Highlight" onclick="highlight()"/>
+
+			<input type="submit" class="myButton header" id="typeButton" value="Graph Type" onclick="openTab('type')"/>
+			<div id="type" style="display: none">
+				<input type="submit" class = "myButton toggle" id="flow" value="Simple Graph" onclick="changeType(this.id, true)"/>
+				<input type="submit" class = "myButton toggle" id="weighted" value="Unweighted" onclick="changeType(this.id, true)"/>
+				<!--<input type="submit" class = "myButton toggle-super" id="mode" value="Math Mode" onclick="changeMode()"/>
+				<div id="mathMode">
+					<input type="submit" class = "myButton toggle" id="flow" value="Simple Graph" onclick="changeType(this.id, true)"/>
+					<input type="submit" class = "myButton toggle" id="weighted" value="Unweighted" onclick="changeType(this.id, true)"/>
+				</div>
+				<div id="freeformMode" style="display: none">
+					<input type="submit" class = "myButton toggle" id="freeform-simple" value="Simple" onclick="changeFreeformType(this.id, true)"/>
+					<input type="submit" class = "myButton toggle" id="freeform-weighted" value="Unweighted" onclick="changeFreeformType(this.id, true)"/>
+					<input type="submit" class = "myButton toggle" id="freeform-directed" value="Undirected" onclick="changeFreeformType(this.id, true)"/>
+				</div>-->
+			</div>
+
+			<input type="submit" class="myButton header" id="freeformTypeButton" value="Graph Type" onclick="openTab('freeformType')" style="display: none"/>
+			<div id="freeformType" style="display: none">
+<!--				<input type="submit" class = "myButton toggle" id="freeform-simple" value="Simple" onclick="changeFreeformType(this.id)"/>-->
+				<input type="submit" class = "myButton toggle" id="freeform-labelled" value="Unlabelled" onclick="changeFreeformType(this.id)"/>
+				<input type="submit" class = "myButton toggle" id="freeform-directed" value="Directed" onclick="changeFreeformType(this.id)"/>
+			</div>
+
+			<input type="submit" class="myButton header" id="layoutButton" value="Layout" onclick="openTab('layout')"/>
+			<div id="layout" style="display: none">
+				<input type="submit" class = "myButton action" id="circleLayout" value="Circle Layout" onclick="layoutGraph(cy, this.id)"/>
+				<input type="submit" class = "myButton action" id="gridLayout" value="Grid Layout" onclick="makeGrid()"/>
+				<input type="submit" class = "myButton action" id="concentricLayout" value="Concentric Layout" onclick="layoutGraph(cy, this.id)"/>
+				<input type="submit" class = "myButton action" id="breadthfirstLayout" value="Breadth-First Layout" onclick="layoutGraph(cy, this.id)"/>
+				<input type="submit" class = "myButton action" id="randomLayout" value="Random Layout" onclick="layoutGraph(cy, this.id)"/>
+				<input type="submit" class = "myButton action" id="center" value="Centre Graph" onclick="centerGraph()"/>
+			</div>
+
+			<input type="submit" class="myButton header" id="presetsButton" value="Preset Graphs" onclick="openTab('preset')"/>
+			<div id="preset" style="display: none">
+				<input type="submit" class = "myButton action" id="complete" value="Complete Graph" onclick="preset(this.id)"/>
+				<input type="submit" class = "myButton action" id="cycle" value="Cycle Graph" onclick="preset(this.id)"/>
+				<input type="submit" class = "myButton action" id="wheel" value="Wheel Graph" onclick="preset(this.id)"/>
+				<input type="submit" class = "myButton action" id="petersen" value="Petersen Graph" onclick="preset(this.id)"/>
+			</div>
+
+			<input type="submit" class="myButton header" id="algorithmsButton" value="Algorithms" onclick="openTab('algorithm')"/>
+			<div id="algorithm" style="display: none">
+				<input type="submit" class="myButton action" id="chromatic" value="Chromatic Polynomial" onclick="chromaticPolynomial()"/>
+				<input type="submit" class="myButton action" id="kruskal" value="Minimal Spanning Tree" onclick="mst()"/>
+				<input type="submit" class="myButton action" id="dijkstra" value="Shortest Path" onclick="dijkstra()"/>
+				<input type="submit" class="myButton action" id="maxFlow" value="Maximum Flow" onclick="maxFlow()"/>
+				<input type="submit" class="myButton action" id="validateFlow" value="Validate Flow" onclick="validateFlow(true)"/>
+				<div id="algorithmOutput" style="padding: 10px; background-color: #fff; color: #000; border: 0.5px solid black; display: none"></div>
+			</div>
+
+			<input type="submit" class="myButton header" id="testButton" value="Testing" onclick="openTab('test')" style="display: none"/>
+			<div id="test" style="display: none">
+				<input type="submit" class = "myButton action" id="graphData" value="Data" onclick="graphData()"/>
+				<!--<input type="submit" class = "myButton action" style="background: #009688 url(../images/fire_ball-2.png) center no-repeat;" value="" onclick="console.log(&#x1f4f7 &#x1f50d &#x2315 &#x1f4be &#x1f5aa &#x1f5ab)"/>-->
+				<p style="margin:0pt; padding-top:5px;">To Do</p>
+				<ul>
+					<li>Freeform mode</li>
+						<ul>
+							<li>Snap to grid</li>
+						</ul>
+					<li>Static flows</li>
+					<li>Cycle Detection</li>
+					<li>Button icons</li>
+				</ul>
+				<input type="file" id="fileInput" accept=".gr" style="display:none"/>
+				<a id="saveLink" style="display:none">Click me!</a>
+				<a id="printLink" style="display:none">Click me!</a>
+			</div>
+
+			<div id="jaznetBox" style="position: fixed; bottom: 0px; text-align: center; width: inherit; padding: 8px;">
+				<a href="../index.html" id="jaznet" style="text-decoration: none;">&lt;&lt; Back to Jaznet</a>
+			</div>
+		</div>
+
+		<div class="flex-item" style="margin-top:0px; margin-left:0px">
+			<div id="cyContainer"></div>
+		</div>
+	</div>
+
+	<div id="pickr"></div>
+</body>
+</html>
