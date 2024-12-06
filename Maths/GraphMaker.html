@@ -2732,15 +2732,11 @@
 		};
 
 //RESIZE
-		function resizeCy(paddingFactor){
-			if(paddingFactor === undefined){
-				paddingFactor = defaultPadding;
-			};
-
+		function resizeCy(){
 			setCyDivSize();
 			cy.resize();
-			//cy.center();
-			cy.fit(paddingFactor);
+			console.log(cy.nodes);
+			//nodes.shift()
 		}
 
 		window.addEventListener("resize", function(event){
