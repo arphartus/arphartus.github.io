@@ -423,6 +423,7 @@
 				selector: 'node',
 				style: {
 					'background-color': '#6666ff',
+					'color': '#ffffff',
 					'label': 'data(label)',
 					//'content': '<div>hello</div>',
 					'text-wrap': 'wrap',
@@ -438,19 +439,13 @@
 				style: {
 					'width': 3,
 					'line-color': '#cc44cc',
+					'color': '#ffffff',
 					'target-arrow-color': '#cc44cc',
 					'target-arrow-shape': 'none',
 					'curve-style': 'haystack',
 				}
 			},
 			
-			{
-				selector: 'label',
-				style: {
-					'color': '#ffffff',
-				}
-			},
-
 			{
 				selector: 'edge.weighted',
 				style: {
@@ -2737,11 +2732,15 @@
 		};
 
 //RESIZE
-		function resizeCy(){
+		function resizeCy(paddingFactor){
+			if(paddingFactor === undefined){
+				paddingFactor = defaultPadding;
+			};
+
 			setCyDivSize();
 			cy.resize();
 			//cy.center();
-			//cy.fit(defaultPadding);
+			cy.fit(paddingFactor);
 		}
 
 		window.addEventListener("resize", function(event){
