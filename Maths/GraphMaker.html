@@ -220,9 +220,9 @@
 		.mySwal-icon{
 			margin: 0.6em 1.875em 0.7em !important;
 		}
-		.mySwal-cancel{
+		.mySwal-cancel, .swal2-cancel{
 			background-color: #b30000 !important;
-		}
+		}		
 		.mySwal-swap{
 			background-color: #30d685 !important;
 		}
@@ -338,10 +338,14 @@
 		}
 	</style>
 
+	<!--MATH STUFF-->
 	<script src="../JS/cytoscape.min.js"></script>
 	<script src="../JS/polynomial.min.js"></script>
+
+	<!--SWEET ALERT-->
+	<link rel="stylesheet" href="../CSS/swal-dark.css">
 	<script src="../JS/modernizr-custom.js"></script>
-	<script src="../JS/sweetalert2.all.min.js"></script>
+	<script src="../JS/sweetalert2.min.js"></script>
 
 	<!--COLOR PICKER-->
 	<link rel="stylesheet" href="../CSS/pickr.theme.monolith.min.css">
@@ -4038,7 +4042,7 @@ function font_to_char(classname) {
 	</h1>
 	<div class="container">
 		<div class="fixed" id="guiDiv" style="overflow-y: auto">
-			<input type="submit" class = "myButton toggle-super" id="mode" value="Math Mode" onclick="changeMode()" style="display: block"/>
+			<input type="submit" class = "myButton toggle-super" id="mode" value="Math Mode" onclick="changeMode()" style="display: none"/>
 			<input type="submit" class="myButton header" id="loadSaveButton" value="Load/Save" onclick="openTab('load/save')"/>
 			<div id="load/save" style="display: none">
 				<input type="submit" class = "myButton action" id="loadGraph" value="Load Graph" onclick="loadGraph()"/>
