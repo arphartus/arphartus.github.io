@@ -353,6 +353,7 @@
 	<script>
 //GLOBAL VARIABLES
 		let cy;
+		let cyDiv;
 		const firstLabel = 'A'.charCodeAt(0);
 		let nodeLabel = firstLabel;
 		let edgePinning = true;
@@ -364,7 +365,7 @@
 		let editMode = "add";
 		let graphMode = "math";
 		let defaultPadding = 20;
-		let cyCurrentWidth = 0;
+		let cyDimensions = {width: 0, height: 0};
 		let undoStack = [];
 		let redoStack = [];
 		let touching = false;
@@ -2726,19 +2727,23 @@
 		function setCyDivSize(){
 			let cyWidth = window.innerWidth - document.getElementById("guiDiv").clientWidth;
 			let cyHeight = window.innerHeight - document.getElementById("header1").clientHeight;
-			document.getElementById("cyContainer").style.width = cyWidth.toString()+"px";
-			document.getElementById("cyContainer").style.height = cyHeight.toString()+"px";
+			cyDiv.style.width = cyWidth.toString()+"px";
+			cyDiv.style.height = cyHeight.toString()+"px";
 			document.getElementById("guiDiv").style.height = (cyHeight - document.getElementById("jaznetBox").clientHeight).toString()+"px";
 		};
 
 //RESIZE
+		function setDimensions(){
+			cyDimensions.width = cyDiv.offsetWidth;
+			cyDimensions.height = cyDiv.offsetHeight;
+		};
+
 		function resizeCy(){
 			setCyDivSize();
 			cy.resize();
-
-			let shiftFactor = (document.getElementById("cyContainer").offsetWidth - cyCurrentWidth)/(2*cy.zoom());
-			cy.nodes().shift('x', shiftFactor);
-			cyCurrentWidth = document.getElementById("cyContainer").offsetWidth;
+			cy.nodes().shift('x', (cyDiv.offsetWidth - cyDimensions.width)/(2*cy.zoom()));
+			cy.nodes().shift('y', (cyDiv.offsetHeight - cyDimensions.height)/(2*cy.zoom()));
+			setDimensions();
 		}
 
 		window.addEventListener("resize", function(event){
@@ -2747,9 +2752,10 @@
 
 //ONLOAD - MAKE IT SO!!!
 		document.addEventListener("DOMContentLoaded", function(event){
+			cyDiv = document.getElementById("cyContainer");
 			setCyDivSize();
-			cy = makeCy(document.getElementById("cyContainer"));//Build graph
-			cyCurrentWidth = document.getElementById("cyContainer").offsetWidth;
+			cy = makeCy(cyDiv);//Build graph
+			setDimensions();
 			cy.autounselectify(true);
 
 			changeEditMode(editMode);
@@ -2838,7 +2844,6 @@
 			let root;
 			let undoButton = document.getElementById("undo");
 			let redoButton = document.getElementById("redo");
-			let cyDiv = document.getElementById("cyContainer");
 
 			removeAllHighlights();
 			//Disable normal controls
