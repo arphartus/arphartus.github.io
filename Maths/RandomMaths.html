@@ -1175,7 +1175,26 @@
 			console.log(output);
 		};
 
+		function opMapMaker(n,m){
+			let fnArray = [[]];
+
+			for(let i=0; i<n; i++){
+				let newFnArray = [];
+
+				for(let j=1; j<=m; j++){
+					for(each f in fnArray){
+						newFnArray.push(f.clone().push(j))
+					}
+				}
+
+				fnArray = newFnArray;
+			}
+
+			console.log(fnArray)
+		}
+
 		function output(){
+			opMapMaker(3,4)
 			//document.getElementById("outputBox").value = binomialCoefficient(7,document.getElementById("inputBox").value);
 			//document.getElementById("outputBox").value = factorial(document.getElementById("inputBox").value);
 			//document.getElementById("outputBox").value = gurpsProb(document.getElementById("inputBox").value);
