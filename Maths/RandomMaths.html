@@ -1182,7 +1182,7 @@
 				let newFnArray = [];
 
 				for(let j=1; j<=m; j++){
-					for(each f in fnArray){
+					for(let f of fnArray){
 						newFnArray.push(f.clone().push(j))
 					}
 				}
