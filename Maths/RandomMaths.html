@@ -1099,7 +1099,8 @@
 			return output;
 		};
 
-		function cloneArray(inputArray){
+		//To clone an array use array.slice()
+		/*function cloneArray(inputArray){
 			let outputArray = [];
 
 			for(const e of inputArray){
@@ -1107,11 +1108,11 @@
 			};
 
 			return outputArray;
-		};
+		};*/
 
 		function shuffleArray(inputArray){
 			let outputArray = [];
-			let workingArray = cloneArray(inputArray);
+			let workingArray = inputArray.slice();
 
 			while(workingArray.length > 0){
 				outputArray.push(workingArray.splice(Math.floor(Math.random()*Math.floor(workingArray.length)), 1)[0]);
@@ -1175,6 +1176,37 @@
 			console.log(output);
 		};
 
+		function monty(guess, switchDoor){
+			let goat = [0, 1, 2];
+			let car = Math.floor(Math.random()*3);
+			let reveal;
+
+			goat.splice(car, 1);
+
+			if(guess == car){
+				reveal = (car + Math.floor(Math.random()*2)*2 - 1)%3;
+			}
+			else{
+				reveal = (guess + 1)%2;
+			}
+
+			goat.splice(reveal, 1);
+
+			let doors = goat.slice();
+			doors.push(car);
+
+			if(switchDoor){
+				guess = doors[(guess+1)%2];
+			}
+
+			if(guess == car){
+				return "Win";
+			}
+			else{
+				return "Lose";
+			}
+		}
+
 		function countOPMaps(n,m){
 			let fnArray = [[]];
 			let count = 0;
@@ -1184,7 +1216,7 @@
 
 				for(let j=1; j<=m; j++){
 					for(const f of fnArray){
-						let newF = cloneArray(f);
+						let newF = f.slice();
 						let last = f[f.length-1];
 
 						if(last === undefined || j >= last){
@@ -1207,9 +1239,16 @@
 			//document.getElementById("outputBox").innerHTML = numSolutions().count;
 			//document.getElementById("outputBox").innerHTML = beaver();
 			//document.getElementById("outputBox").value = error();
+			/*let count = 0;
+			for(let i=0;i<10000;i++){
+				if(monty(Math.floor(Math.random()*3), false) == "Win"){
+					count++;
+				}
+			}*/
 			var text = "";
 			var input = parseInt(document.getElementById("inputBox").value,10);
-			document.getElementById("outputBox").innerHTML = countOPMaps(7,13)//integerRoot(input)
+			document.getElementById("outputBox").innerHTML = countOPMaps(4,7);
+			//integerRoot(input)
 			//console.log("here")
 			/*for(var i = 0; i < 11; i++){
 				//text+=trees(i, input)+", ";
